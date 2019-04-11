@@ -1,0 +1,45 @@
+﻿
+Microsoft Visual Studio Solution File, Format Version 12.00
+# Visual Studio Version 16
+VisualStudioVersion = 16.0.28803.156
+MinimumVisualStudioVersion = 10.0.40219.1
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "src", "src", "{66A73EAA-84CC-4337-B935-DEB6DCAF28B7}"
+EndProject
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Indice.Psd2.Cryptography", "src\Indice.Psd2.Cryptography\Indice.Psd2.Cryptography.csproj", "{352918EA-3375-4EBF-B256-FF109D7AF753}"
+EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Solution Items", "Solution Items", "{AFE13530-7E23-4420-9ADD-15FF2663B6A5}"
+	ProjectSection(SolutionItems) = preProject
+		.editorconfig = .editorconfig
+		README.md = README.md
+	EndProjectSection
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Indice.Psd2.Cryptography.Tests", "test\Indice.Psd2.Cryptography.Tests\Indice.Psd2.Cryptography.Tests.csproj", "{66B31386-719D-469A-9886-12EF68013F62}"
+EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "test", "test", "{FEF9802E-74D6-4EB4-940C-82860B709F09}"
+EndProject
+Global
+	GlobalSection(SolutionConfigurationPlatforms) = preSolution
+		Debug|Any CPU = Debug|Any CPU
+		Release|Any CPU = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(ProjectConfigurationPlatforms) = postSolution
+		{352918EA-3375-4EBF-B256-FF109D7AF753}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{352918EA-3375-4EBF-B256-FF109D7AF753}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{352918EA-3375-4EBF-B256-FF109D7AF753}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{352918EA-3375-4EBF-B256-FF109D7AF753}.Release|Any CPU.Build.0 = Release|Any CPU
+		{66B31386-719D-469A-9886-12EF68013F62}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{66B31386-719D-469A-9886-12EF68013F62}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{66B31386-719D-469A-9886-12EF68013F62}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{66B31386-719D-469A-9886-12EF68013F62}.Release|Any CPU.Build.0 = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(SolutionProperties) = preSolution
+		HideSolutionNode = FALSE
+	EndGlobalSection
+	GlobalSection(NestedProjects) = preSolution
+		{352918EA-3375-4EBF-B256-FF109D7AF753} = {66A73EAA-84CC-4337-B935-DEB6DCAF28B7}
+		{66B31386-719D-469A-9886-12EF68013F62} = {FEF9802E-74D6-4EB4-940C-82860B709F09}
+	EndGlobalSection
+	GlobalSection(ExtensibilityGlobals) = postSolution
+		SolutionGuid = {820CCF0D-E462-4B30-9694-1124EDF7632C}
+	EndGlobalSection
+EndGlobal
