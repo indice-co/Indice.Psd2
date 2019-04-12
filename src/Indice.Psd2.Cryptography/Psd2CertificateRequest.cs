@@ -73,9 +73,12 @@ namespace Indice.Psd2.Cryptography
         /// Roles of the PSD2 PSP 
         /// </summary>
         [Required]
-        public Psd2Roles Roles { get; set; } = new Psd2Roles();
+        public Psd2RoleFlags Roles { get; set; } = new Psd2RoleFlags();
 
-        public class Psd2Roles
+        /// <summary>
+        /// Wrapper class that holds requested Role flags to be included in the certificate.
+        /// </summary>
+        public class Psd2RoleFlags
         {
             /// <summary>
             /// Account Information
@@ -114,7 +117,7 @@ namespace Indice.Psd2.Cryptography
                 AuthorityName = "Bank of Greece",
                 AuthorizationNumber = "800000005",
                 ValidityInDays = 365,
-                Roles = new Psd2Roles {
+                Roles = new Psd2RoleFlags {
                     Aisp = true,
                     Aspsp = true,
                     Piisp = true,

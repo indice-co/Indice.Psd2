@@ -210,7 +210,7 @@ namespace Indice.Psd2.Cryptography
             extensions.Add(basicConstraints);
             var certificate = CreateSelfSignedCertificate(subject, extensions, notBefore, notAfter);
             if (RuntimeInformation.IsOSPlatform(OSPlatform.Windows)) {
-                certificate.FriendlyName = "Qualified website authentication certificate QWAC";
+                certificate.FriendlyName = "Root CA";
             }
             return certificate;
         }
@@ -220,9 +220,9 @@ namespace Indice.Psd2.Cryptography
         /// Creates a QWAC certificate on the fly
         /// </summary>
         /// <param name="request"></param>
-        /// <param name="diagnostics"></param>
+        /// <param name="privateKey"></param>
         /// <returns></returns>
-        public X509Certificate2 CreateQWACs(Psd2CertificateRequest request, DiagnosticInformation diagnostics = null) {
+        public X509Certificate2 CreateQWACs(Psd2CertificateRequest request, out RSA privateKey) {
             var notBefore = DateTimeOffset.UtcNow.AddDays(-1);
             var notAfter = DateTimeOffset.UtcNow.AddDays(request.ValidityInDays);
             var authorizationNumber = new NCAId(request.CountryCode, request.AuthorityId, request.AuthorizationNumber);
@@ -243,11 +243,11 @@ namespace Indice.Psd2.Cryptography
             };
             var psd2Extension = new QualifiedCertificateStatementsExtension(psd2Type, critical: false);
             extensions.Add(psd2Extension);
-            var certificate = CreateCertificate(CreateRootCACertificate(diagnostics), subject, extensions, notBefore, notAfter);
+            var certificate = CreateCertificate(CreateRootCACertificate(), subject, extensions, notBefore, notAfter, out privateKey);
             if (RuntimeInformation.IsOSPlatform(OSPlatform.Windows)) {
                 certificate.FriendlyName = "Qualified website authentication certificate QWAC";
             }
-            return certificate;
+            return certificate.CopyWithPrivateKey(privateKey);
         }
 
         internal X509Certificate2 CreateAspNetCoreHttpsDevelopmentCertificate(DateTimeOffset notBefore, DateTimeOffset notAfter, string subjectOverride, DiagnosticInformation diagnostics = null) {
@@ -296,8 +296,8 @@ namespace Indice.Psd2.Cryptography
             X500DistinguishedName subject,
             IEnumerable<X509Extension> extensions,
             DateTimeOffset notBefore,
-            DateTimeOffset notAfter) {
-            var key = CreateKeyMaterial(RSAMinimumKeySizeInBits);
+            DateTimeOffset notAfter, out RSA key) {
+            key = CreateKeyMaterial(RSAMinimumKeySizeInBits);
 
             var request = new CertificateRequest(subject, key, HashAlgorithmName.SHA256, RSASignaturePadding.Pkcs1);
             foreach (var extension in extensions) {

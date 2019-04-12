@@ -1,31 +1,40 @@
 using System;
+using System.IdentityModel.Tokens.Jwt;
+using System.IO;
+using System.Security.Cryptography;
 using System.Security.Cryptography.X509Certificates;
 using System.Text;
+using IdentityModel;
+using Microsoft.IdentityModel.Tokens;
+using Newtonsoft.Json;
 using Xunit;
 
 namespace Indice.Psd2.Cryptography.Tests
 {
     public class CertificateTests
     {
-        //[Fact]
-        //public void Generate_QWACs() {
-        //    var data = Psd2CertificateRequest.Example();
-        //    var manager = new CertificateManager();
-        //    var cert = manager.CreateQWACsCertificate(data);
-        //    //manager.ExportCertificate(cert, Path.Combine(Directory.GetCurrentDirectory(), $"{data.AuthorizationNumber}.cer"), false, "123abc!");
-        //    var pem = cert.ExportToPEM();
-        //    File.WriteAllText(Path.Combine(Directory.GetCurrentDirectory(), $"{data.AuthorizationNumber}.cer"), pem);
-        //    Assert.True(true);
-        //}
-
-        //[Fact]
-        //public void Generate_QsealCs() {
-
-        //    Assert.True(true);
-        //}
-
-
-
+        [Fact]
+        public void Generate_QWACs() {
+            var data = Psd2CertificateRequest.Example();
+            var manager = new CertificateManager();
+            var privateKey = default(RSA);
+            var cert = manager.CreateQWACs(data, out privateKey);
+            var certBase64 = cert.ExportToPEM();
+            var publicBase64 = privateKey.ToSubjectPublicKeyInfo();
+            var privateBase64 = privateKey.ToRSAPrivateKey();
+            var pfxBytes = cert.Export(X509ContentType.Pfx, "111"); 
+            File.WriteAllText(Path.Combine(Directory.GetCurrentDirectory(), $"{data.AuthorizationNumber}.cer"), certBase64);
+            File.WriteAllText(Path.Combine(Directory.GetCurrentDirectory(), $"{data.AuthorizationNumber}.public.key"), publicBase64);
+            File.WriteAllText(Path.Combine(Directory.GetCurrentDirectory(), $"{data.AuthorizationNumber}.private.key"), privateBase64);
+            File.WriteAllBytes(Path.Combine(Directory.GetCurrentDirectory(), $"{data.AuthorizationNumber}.pfx"), pfxBytes);
+            File.WriteAllText(Path.Combine(Directory.GetCurrentDirectory(), $"{data.AuthorizationNumber}.json"), JsonConvert.SerializeObject(new {
+                encodedCert = certBase64,
+                privateKey = privateBase64,
+                keyId = CryptoRandom.CreateUniqueId(16),
+                algorithm = "SHA256WITHRSA"
+            }));
+            Assert.True(true);
+        }
 
         [Fact]
         public void ImportBase64Certificate() {
@@ -44,6 +53,21 @@ namespace Indice.Psd2.Cryptography.Tests
             Assert.Equal("GR", type.AuthorizationNumber.CountryCode);
             Assert.Equal("BOG", type.AuthorizationNumber.SupervisionAuthority);
             Assert.Equal("800000005", type.AuthorizationNumber.AuthorizationNumber);
+        }
+
+        [Fact]
+        public void GenerateJWTTest() {
+            var expireMinutes = 5;
+            var signingCert = new X509Certificate2("PFXFilePath", "password");
+            var privateKey = new X509SecurityKey(signingCert);
+            var now = DateTime.UtcNow;
+            var tokenHandler = new JwtSecurityTokenHandler();
+            var tokenDescriptor = new SecurityTokenDescriptor {
+                Expires = now.AddMinutes(expireMinutes),
+                SigningCredentials = new SigningCredentials(privateKey, SecurityAlgorithms.RsaSha256Signature)
+            };
+            var stoken = (JwtSecurityToken)tokenHandler.CreateToken(tokenDescriptor);
+            var token = tokenHandler.WriteToken(stoken);
         }
     }
 }

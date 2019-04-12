@@ -3,6 +3,7 @@ using System.Linq;
 using System.Security.Cryptography;
 using System.Security.Cryptography.X509Certificates;
 using System.Text;
+using DerConverter;
 using DerConverter.Asn;
 using DerConverter.Asn.KnownTypes;
 
@@ -49,8 +50,7 @@ namespace Indice.Psd2.Cryptography
         public QualifiedCertificateStatementsExtension(Psd2CertificateAttributes psd2Type, bool critical) {
             Oid = new Oid(Oid_QC_Statements, "Qualified Certificate Statements");
             Critical = critical;
-            var encoder = new DefaultDerAsnEncoder();
-            RawData = encoder.Encode(new Psd2QcStatement(psd2Type)).ToArray();
+            RawData = DerConvert.Encode(new Psd2QcStatement(psd2Type)).ToArray();
             _Psd2Type = psd2Type;
             _decoded = true;
         }
@@ -72,7 +72,7 @@ namespace Indice.Psd2.Cryptography
         /// </summary>
         public Psd2CertificateAttributes Psd2Type {
             get {
-                if (!_decoded) { 
+                if (!_decoded) {
                     DecodeExtension();
                 }
                 return _Psd2Type;
@@ -89,8 +89,7 @@ namespace Indice.Psd2.Cryptography
         }
 
         private void DecodeExtension() {
-            var decoder = new DefaultDerAsnDecoder();
-            var sequence = decoder.Decode(RawData) as DerAsnSequence;
+            var sequence = DerConvert.Decode(RawData) as DerAsnSequence;
             _Psd2Type = new Psd2QcStatement(sequence.Value).ExtractAttributes();
             _decoded = true;
         }
@@ -103,8 +102,8 @@ namespace Indice.Psd2.Cryptography
     public class Psd2QcStatement : DerAsnSequence
     {
         /// <summary>
-         /// id-etsi-psd2-qcStatement OBJECT IDENTIFIER ::=  { itu-t(0) identified-organization(4) etsi(0) psd2(19495) qcstatement(2) } 
-         /// </summary>
+        /// id-etsi-psd2-qcStatement OBJECT IDENTIFIER ::=  { itu-t(0) identified-organization(4) etsi(0) psd2(19495) qcstatement(2) } 
+        /// </summary>
         public const string Oid_PSD2_QcStatement = "0.4.0.19495.2";
         private const string Oid_PSD2_Roles = "0.4.0.19495.1";
         private const string Oid_PSD2_Roles_PSP_AS = Oid_PSD2_Roles + ".1";
@@ -130,7 +129,7 @@ namespace Indice.Psd2.Cryptography
         /// Constructs the QcStatement from <see cref="Psd2CertificateAttributes "/>.
         /// </summary>
         /// <param name="type"></param>
-        public Psd2QcStatement(Psd2CertificateAttributes type) : base(new DerAsnType[0]) { 
+        public Psd2QcStatement(Psd2CertificateAttributes type) : base(new DerAsnType[0]) {
             var rolesList = new List<DerAsnSequence>();
             foreach (var roleName in type.Roles) {
                 var id = new DerAsnObjectIdentifier(DerAsnIdentifiers.Primitive.ObjectIdentifier, Oid2Array(GetPsd2Oid(roleName)));
@@ -183,7 +182,7 @@ namespace Indice.Psd2.Cryptography
                 }
             }
             return attributes;
-            }
         }
+    }
 }
 

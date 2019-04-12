@@ -76,7 +76,10 @@ namespace Indice.Psd2.Cryptography
             }
         }
 
-
+        /// <summary>
+        /// Convert back to string. Combining all parts.
+        /// </summary>
+        /// <returns></returns>
         public override string ToString() {
             if (IsValid)
                 return $"PSD{CountryCode}-{SupervisionAuthority}-{AuthorizationNumber}";
@@ -84,6 +87,14 @@ namespace Indice.Psd2.Cryptography
                 return AuthorizationNumber;
         }
 
+        /// <summary>
+        /// Parses a text representation of National Competent Authority Id
+        /// Examples: "PSDPL-PFSA-1234567890" "PSDFI-FINFSA-1234567-8"  "PSDMT-MFSA-A 12345"
+        /// </summary>
+        /// <param name="text">The input</param>
+        /// <param name="throwOnError">When true the method will throw a <see cref="FormatException"/> if the <paramref name="text"/> 
+        /// is not formated according to spec. Otherwize it will populate only the PSP identitfier part.</param>
+        /// <returns></returns>
         public static NCAId Parse(string text, bool throwOnError = true) {
             var regex = new Regex(REGEX_PATTERN);
             if (!regex.IsMatch(text)) {
