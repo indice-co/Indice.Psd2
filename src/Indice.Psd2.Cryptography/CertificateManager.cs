@@ -13,6 +13,7 @@ using System.Security.Cryptography;
 using System.Security.Cryptography.X509Certificates;
 using System.Text;
 using System.Text.RegularExpressions;
+using Indice.Psd2.Cryptography.X509Certificates;
 
 namespace Indice.Psd2.Cryptography
 {
@@ -191,14 +192,15 @@ namespace Indice.Psd2.Cryptography
         /// <summary>
         /// Creates a Certification Authority certificate on the fly with some madeup data in the subject. Use this as issuing cert for other self signed certificates
         /// </summary>
+        /// <param name="authorityDomainName">The common name for the issuing certification authority</param>
         /// <param name="diagnostics"></param>
         /// <returns></returns>
-        public X509Certificate2 CreateRootCACertificate(DiagnosticInformation diagnostics = null) {
+        public X509Certificate2 CreateRootCACertificate(string authorityDomainName, DiagnosticInformation diagnostics = null) {
             var notBefore = DateTimeOffset.UtcNow.AddDays(-2);
             var notAfter = DateTimeOffset.UtcNow.AddYears(5);
             var subject = new SubjectBuilder().AddLocation("GR", "Attiki", "Athens")
                                 .AddOrganization("Authority CA", "IT")
-                                .AddCommonName("Authority CA Domain Name")
+                                .AddCommonName(authorityDomainName ?? "Authority CA Domain Name")
                                 .AddEmail("ca@test.gr")
                                 .Build();
             var extensions = new List<X509Extension>();
@@ -220,30 +222,42 @@ namespace Indice.Psd2.Cryptography
         /// Creates a QWAC certificate on the fly
         /// </summary>
         /// <param name="request"></param>
+        /// <param name="issuerDomain"></param>
         /// <param name="privateKey"></param>
         /// <returns></returns>
-        public X509Certificate2 CreateQWACs(Psd2CertificateRequest request, out RSA privateKey) {
+        public X509Certificate2 CreateQWACs(Psd2CertificateRequest request, string issuerDomain, out RSA privateKey) {
             var notBefore = DateTimeOffset.UtcNow.AddDays(-1);
             var notAfter = DateTimeOffset.UtcNow.AddDays(request.ValidityInDays);
-            var authorizationNumber = new NCAId(request.CountryCode, request.AuthorityId, request.AuthorizationNumber);
+            var authorizationNumber = new NCAId(null, request.CountryCode, request.AuthorityId, request.AuthorizationNumber);
             var subject = new SubjectBuilder().AddCommonName(request.CommonName)
                                 .AddOrganization(request.Organization, request.OrganizationUnit)
                                 .AddLocation(request.CountryCode, request.State, request.City)
-                                .AddOrganizationIdentifier(authorizationNumber.ToString())
+                                .AddOrganizationIdentifier(authorizationNumber)
                                 .Build();
             var extensions = new List<X509Extension>();
             
-            var psd2Type = new Psd2CertificateAttributes() {
+            var psd2Type = new Psd2Attributes() {
                 AuthorityName = request.AuthorityName,
-                AuthorizationNumber = authorizationNumber,
+                AuthorizationId = authorizationNumber,
                 HasAccountInformation = request.Roles.Aisp,
                 HasPaymentInitiation = request.Roles.Pisp,
                 HasIssuingOfCardBasedPaymentInstruments = request.Roles.Piisp,
                 HasAccountServicing = request.Roles.Aspsp,
             };
             var psd2Extension = new QualifiedCertificateStatementsExtension(psd2Type, critical: false);
+            var authorityInformation = new AuthorityInformationAccessExtension(new[] {
+                new AccessDescription {
+                    AccessMethod = AccessDescription.AccessMethodType.CertificationAuthorityIssuer,
+                    AccessLocation = $"http://{issuerDomain}/certs/ca.cer"
+                }
+            }, critical: false);
+            var crlDistributionPoints = new CRLDistributionPointsExtension(new[] {
+                new CRLDistributionPoint {  FullName = new [] { "http://machinename-dc01.example.org/CertEnroll/MACHINENAME-DC01-CA.crl" } },
+            }, critical: false);
             extensions.Add(psd2Extension);
-            var certificate = CreateCertificate(CreateRootCACertificate(), subject, extensions, notBefore, notAfter, out privateKey);
+            extensions.Add(crlDistributionPoints);
+            extensions.Add(authorityInformation);
+            var certificate = CreateCertificate(CreateRootCACertificate(issuerDomain), subject, extensions, notBefore, notAfter, out privateKey);
             if (RuntimeInformation.IsOSPlatform(OSPlatform.Windows)) {
                 certificate.FriendlyName = "Qualified website authentication certificate QWAC";
             }
@@ -303,6 +317,11 @@ namespace Indice.Psd2.Cryptography
             foreach (var extension in extensions) {
                 request.CertificateExtensions.Add(extension);
             }
+            request.CertificateExtensions.Add(new X509SubjectKeyIdentifierExtension(request.PublicKey, false));
+            var issuerKey = issuer.Extensions.OfType<X509SubjectKeyIdentifierExtension>().SingleOrDefault()?.SubjectKeyIdentifier;
+            if (issuerKey != null) {
+                request.CertificateExtensions.Add(new AuthorityKeyIdentifierExtension(issuerKey, false));
+            }
 
             var serialNumber = new byte[20];
             var random = new RandomBigInteger();
@@ -330,6 +349,7 @@ namespace Indice.Psd2.Cryptography
             foreach (var extension in extensions) {
                 request.CertificateExtensions.Add(extension);
             }
+            request.CertificateExtensions.Add(new X509SubjectKeyIdentifierExtension(request.PublicKey, false));
             return request.CreateSelfSigned(notBefore, notAfter);
 
             RSA CreateKeyMaterial(int minimumKeySize) {

@@ -12,6 +12,7 @@ using IdentityServer4;
 using IdentityServer4.Extensions;
 using IdentityServer4.Models;
 using IdentityServer4.Validation;
+using Indice.Psd2.Cryptography.Validation;
 using Indice.Psd2.IdenityServer4.Extensions;
 using Microsoft.AspNetCore.Http;
 using Microsoft.Extensions.Logging;
@@ -24,14 +25,16 @@ namespace Indice.Psd2.IdenityServer4.Validation
     /// </summary>
     public class Psd2PrivateKeyJwtSecretValidator : ISecretValidator
     {
+        private readonly Psd2IssuerSigningKeyValidator _issuerSigningKeyValidator;
         private readonly ILogger _logger;
         private readonly string _audienceUri;
 
         /// <summary>
         /// Instantiates an instance of private_key_jwt secret validator
         /// </summary>
-        public Psd2PrivateKeyJwtSecretValidator(IHttpContextAccessor contextAccessor, ILogger<Psd2PrivateKeyJwtSecretValidator> logger) {
+        public Psd2PrivateKeyJwtSecretValidator(IHttpContextAccessor contextAccessor, Psd2IssuerSigningKeyValidator issuerSigningKeyValidator, ILogger<Psd2PrivateKeyJwtSecretValidator> logger) {
             _audienceUri = string.Concat(contextAccessor.HttpContext.GetIdentityServerIssuerUri().EnsureTrailingSlash(), Constants.ProtocolRoutePaths.Token);
+            _issuerSigningKeyValidator = issuerSigningKeyValidator;
             _logger = logger;
         }
 
@@ -77,6 +80,7 @@ namespace Indice.Psd2.IdenityServer4.Validation
             var tokenValidationParameters = new TokenValidationParameters {
                 IssuerSigningKeys = trustedKeys,
                 ValidateIssuerSigningKey = true,
+                IssuerSigningKeyValidator = _issuerSigningKeyValidator.Validate,
 
                 ValidIssuer = parsedSecret.Id,
                 ValidateIssuer = true,

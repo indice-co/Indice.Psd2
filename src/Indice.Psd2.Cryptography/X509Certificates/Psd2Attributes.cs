@@ -1,11 +1,11 @@
 ﻿using System.Linq;
 
-namespace Indice.Psd2.Cryptography
+namespace Indice.Psd2.Cryptography.X509Certificates
 {
     /// <summary>
     /// PSD2 Attributes (Psd2QcType)
     /// </summary>
-    public class Psd2CertificateAttributes
+    public class Psd2Attributes
     {
         private bool[] _roles = new bool[4];
         /// <summary>
@@ -70,7 +70,7 @@ namespace Indice.Psd2.Cryptography
         /// <summary>
         /// NCAId - PSD2 Authorization Number or other recognized identifier 
         /// </summary>
-        public NCAId AuthorizationNumber { get; set; }
+        public NCAId AuthorizationId { get; set; }
     }
 }
 

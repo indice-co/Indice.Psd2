@@ -1,4 +1,4 @@
-# Indice.Psd2 ![alt text](icon/icon-64.png "Indice logo")
+# Indice OBA for Psd2 ![alt text](icon/icon-64.png "Indice logo")
 Psd2 Starter kit &amp; utilities
 
 ## Installation
@@ -7,4 +7,5 @@ To install Indice.Psd2.Cryptography, run the following command in the Package Ma
 
 ```powershell
 PM> Install-Package "Indice.Psd2.Cryptography"
+PM> Install-Package "Indice.Psd2.IdentityServer4"
 ```

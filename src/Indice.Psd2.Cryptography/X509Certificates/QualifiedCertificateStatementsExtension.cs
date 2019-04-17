@@ -7,7 +7,7 @@ using DerConverter;
 using DerConverter.Asn;
 using DerConverter.Asn.KnownTypes;
 
-namespace Indice.Psd2.Cryptography
+namespace Indice.Psd2.Cryptography.X509Certificates
 {
     /// <summary>
     /// QCStatement (rfc3739)
@@ -47,7 +47,7 @@ namespace Indice.Psd2.Cryptography
         /// </summary>
         /// <param name="psd2Type"></param>
         /// <param name="critical"></param>
-        public QualifiedCertificateStatementsExtension(Psd2CertificateAttributes psd2Type, bool critical) {
+        public QualifiedCertificateStatementsExtension(Psd2Attributes psd2Type, bool critical) {
             Oid = new Oid(Oid_QC_Statements, "Qualified Certificate Statements");
             Critical = critical;
             RawData = DerConvert.Encode(new Psd2QcStatement(psd2Type)).ToArray();
@@ -65,12 +65,12 @@ namespace Indice.Psd2.Cryptography
         }
 
         private bool _decoded = false;
-        private Psd2CertificateAttributes _Psd2Type;
+        private Psd2Attributes _Psd2Type;
 
         /// <summary>
         /// The deserialized contents
         /// </summary>
-        public Psd2CertificateAttributes Psd2Type {
+        public Psd2Attributes Psd2Type {
             get {
                 if (!_decoded) {
                     DecodeExtension();
@@ -126,10 +126,10 @@ namespace Indice.Psd2.Cryptography
         }
 
         /// <summary>
-        /// Constructs the QcStatement from <see cref="Psd2CertificateAttributes "/>.
+        /// Constructs the QcStatement from <see cref="Psd2Attributes "/>.
         /// </summary>
         /// <param name="type"></param>
-        public Psd2QcStatement(Psd2CertificateAttributes type) : base(new DerAsnType[0]) {
+        public Psd2QcStatement(Psd2Attributes type) : base(new DerAsnType[0]) {
             var rolesList = new List<DerAsnSequence>();
             foreach (var roleName in type.Roles) {
                 var id = new DerAsnObjectIdentifier(DerAsnIdentifiers.Primitive.ObjectIdentifier, Oid2Array(GetPsd2Oid(roleName)));
@@ -139,7 +139,7 @@ namespace Indice.Psd2.Cryptography
             }
             var rolesOfPSP = new DerAsnSequence(rolesList.ToArray()); //RolesOfPSP ::= SEQUENCE OF RoleOfPSP 
             var ncaName = new DerAsnUtf8String(type.AuthorityName);
-            var ncaId = new DerAsnUtf8String(type.AuthorizationNumber.ToString());
+            var ncaId = new DerAsnUtf8String(type.AuthorizationId.ToString());
 
             var typeSequence = new DerAsnSequence(new DerAsnType[] { rolesOfPSP, ncaName, ncaId });
 
@@ -156,17 +156,17 @@ namespace Indice.Psd2.Cryptography
         }
 
         /// <summary>
-        /// Deserializes the raw data into the concrete class <see cref="Psd2CertificateAttributes"/>.
+        /// Deserializes the raw data into the concrete class <see cref="Psd2Attributes"/>.
         /// </summary>
         /// <returns>Deserilized contents</returns>
-        public Psd2CertificateAttributes ExtractAttributes() {
-            var attributes = new Psd2CertificateAttributes();
+        public Psd2Attributes ExtractAttributes() {
+            var attributes = new Psd2Attributes();
             var typeSequence = Value.Where(x => x is DerAsnSequence).FirstOrDefault() as DerAsnSequence;
             var roleSequence = typeSequence?.Value.Where(x => x is DerAsnSequence).FirstOrDefault() as DerAsnSequence;
             var ncaName = typeSequence?.Value[1] as DerAsnUtf8String;
             var ncaId = typeSequence?.Value[2] as DerAsnUtf8String;
             attributes.AuthorityName = ncaName.Value;
-            attributes.AuthorizationNumber = NCAId.Parse(ncaId.Value, false);
+            attributes.AuthorizationId = NCAId.Parse(ncaId.Value, false);
             foreach (var item in roleSequence.Value) {
                 if (!(item is DerAsnSequence)) {
                     continue;

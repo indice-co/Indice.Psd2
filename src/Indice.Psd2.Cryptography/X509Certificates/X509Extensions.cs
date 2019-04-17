@@ -3,9 +3,11 @@ using System.IO;
 using System.Security.Cryptography;
 using System.Security.Cryptography.X509Certificates;
 using System.Text;
+using Indice.Psd2.Cryptography;
+using Indice.Psd2.Cryptography.X509Certificates;
 using PemUtils;
 
-namespace Indice.Psd2.Cryptography
+namespace System.Security.Cryptography.X509Certificates
 {
     /// <summary>
     /// Extension methods and utilities related to certificate generation and validation
@@ -116,6 +118,55 @@ namespace Indice.Psd2.Cryptography
             }
             chain.Reset();
             return issuer;
+        }
+
+        /// <summary>
+        /// Find the Psd2 QualifiedExtensions extension and extract the psd2 attributes.
+        /// </summary>
+        /// <param name="cert"></param>
+        /// <returns></returns>
+        public static Psd2Attributes GetPsd2Attributes(this X509Certificate2 cert) {
+            var type = default(Psd2Attributes);
+            foreach (var extension in cert.Extensions) {
+                if (extension.Oid.Value == QualifiedCertificateStatementsExtension.Oid_QC_Statements) {
+                    var qcStatements = new QualifiedCertificateStatementsExtension(extension, extension.Critical);
+                    type = qcStatements.Psd2Type;
+                    break;
+                }
+            }
+            return type;
+        }
+
+        /// <summary>
+        /// Find the SubjectKeyIdentifier extension and extract the key id.
+        /// </summary>
+        /// <param name="cert"></param>
+        /// <returns></returns>
+        public static string GetSubjectKeyIdentifier(this X509Certificate2 cert) {
+            string keyid = null;
+            foreach (var extension in cert.Extensions) {
+                if (extension.Oid.Value == AuthorityKeyIdentifierExtension.Oid_SubjectKeyIdentifier) {
+                    keyid = ((X509SubjectKeyIdentifierExtension)extension).SubjectKeyIdentifier;
+                    break;
+                }
+            }
+            return keyid;
+        }
+        
+        /// <summary>
+        /// Find the KeyIdentifier of the issuer certificate.
+        /// </summary>
+        /// <param name="cert"></param>
+        /// <returns></returns>
+        public static string GetAuthorityKeyIdentifier(this X509Certificate2 cert) {
+            string keyid = null;
+            foreach (var extension in cert.Extensions) {
+                if (extension.Oid.Value == AuthorityKeyIdentifierExtension.Oid_AuthorityKeyIdentifier) {
+                    keyid = new AuthorityKeyIdentifierExtension(extension, extension.Critical).AuthorityKeyIdentifier;
+                    break;
+                }
+            }
+            return keyid;
         }
     }
 }

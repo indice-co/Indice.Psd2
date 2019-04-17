@@ -4,7 +4,7 @@ using System.Linq;
 using System.Security.Cryptography.X509Certificates;
 using System.Text;
 
-namespace Indice.Psd2.Cryptography
+namespace Indice.Psd2.Cryptography.X509Certificates
 {
     /// <summary>
     /// Helps build a the subject for the <see cref="X500DistinguishedName"/> extention.
