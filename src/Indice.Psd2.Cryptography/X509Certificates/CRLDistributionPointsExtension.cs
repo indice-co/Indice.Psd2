@@ -7,6 +7,7 @@ using System.Text;
 using DerConverter;
 using DerConverter.Asn;
 using DerConverter.Asn.KnownTypes;
+using Indice.Psd2.Cryptography.X509Certificates.DerAsnTypes;
 
 namespace Indice.Psd2.Cryptography.X509Certificates
 {
@@ -97,9 +98,13 @@ namespace Indice.Psd2.Cryptography.X509Certificates
         }
 
         private void DecodeExtension() {
-            var sequence = DerConvert.Decode(RawData) as DerAsnSequence;
-            _DistributionPoints = new CRLDistributionPoints(sequence.Value).Extract();
-            _decoded = true;
+            using (var decoder = new DefaultDerAsnDecoder()) {
+                decoder.RegisterType(ContextSpecificSequence.Id, (dcdr, identifier, data) => new ContextSpecificSequence(dcdr, identifier, data));
+                decoder.RegisterType(ContextSpecificString.Id, (dcdr, identifier, data) => new ContextSpecificString(dcdr, identifier, data));
+                var sequence = decoder.Decode(RawData) as DerAsnSequence;
+                _DistributionPoints = new CRLDistributionPoints(sequence.Value).Extract();
+                _decoded = true;
+            }
         }
     }
 
@@ -117,9 +122,9 @@ namespace Indice.Psd2.Cryptography.X509Certificates
             foreach (var point in distributionPoints) {
                 var definition = new List<DerAsnType>();
                 if (point.FullName != null) {
-                    var names = point.FullName.Select(x => new DerAsnIa5String(new DerAsnIdentifier(DerAsnTagClass.ContextSpecific, DerAsnEncodingType.Primitive, DerAsnKnownTypeTags.Primitive.ObjectIdentifier), x)).ToArray();
-                    var fullName = new DerAsnSequence(new DerAsnIdentifier(DerAsnTagClass.ContextSpecific, DerAsnEncodingType.Constructed, 0x0), names);
-                    var distributionPointName = new DerAsnSequence(new DerAsnIdentifier(DerAsnTagClass.ContextSpecific, DerAsnEncodingType.Constructed, 0x0), new[] { fullName });
+                    var names = point.FullName.Select(x => new ContextSpecificString(x)).ToArray();
+                    var fullName = new ContextSpecificSequence(names);
+                    var distributionPointName = new ContextSpecificSequence(new[] { fullName });
                     definition.Add(distributionPointName);
                 }
                 if (point.Reason != null) {
@@ -144,16 +149,23 @@ namespace Indice.Psd2.Cryptography.X509Certificates
         /// </summary>
         /// <returns>Deserilized contents</returns>
         public CRLDistributionPoint[] Extract() {
-            var locations = new List<CRLDistributionPoint>();
-            //var accessDescriptionSequence = Value.Where(x => x is DerAsnSequence).FirstOrDefault() as DerAsnSequence;
-
+            var points = new List<CRLDistributionPoint>();
+            
             foreach (var item in Value) {
                 if (!(item is DerAsnSequence)) {
                     continue;
                 }
-                
+                var crlDistributionPoint = item as DerAsnSequence;
+                var distributionPointName = crlDistributionPoint.Value[0] as ContextSpecificSequence;
+                var fullName = distributionPointName.Value[0] as ContextSpecificSequence;
+
+                var names = fullName.Value.Cast<ContextSpecificString>().Select(x => x.Value).ToArray();
+
+                points.Add(new CRLDistributionPoint {
+                    FullName = names
+                });
             }
-            return locations.ToArray();
+            return points.ToArray();
         }
     }
 

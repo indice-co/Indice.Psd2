@@ -7,6 +7,7 @@ using System.Text;
 using DerConverter;
 using DerConverter.Asn;
 using DerConverter.Asn.KnownTypes;
+using Indice.Psd2.Cryptography.X509Certificates.DerAsnTypes;
 
 namespace Indice.Psd2.Cryptography.X509Certificates
 {
@@ -81,9 +82,13 @@ namespace Indice.Psd2.Cryptography.X509Certificates
         }
 
         private void DecodeExtension() {
-            var sequence = DerConvert.Decode(RawData) as DerAsnSequence;
-            _AccessDescriptions = new AccessDescriptionList(sequence.Value).ExtractLocations();
-            _decoded = true;
+            using (var decoder = new DefaultDerAsnDecoder()) {
+                decoder.RegisterType(ContextSpecificString.Id, (dcdr, identifier, data) => new ContextSpecificString(dcdr, identifier, data));
+                var sequence = decoder.Decode(RawData) as DerAsnSequence;
+                _AccessDescriptions = new AccessDescriptionList(sequence.Value).ExtractLocations();
+                _decoded = true;
+            }
+            
         }
 
     }
@@ -128,7 +133,7 @@ namespace Indice.Psd2.Cryptography.X509Certificates
             var list = new List<DerAsnSequence>();
             foreach (var description in descriptions) {
                 var id = new DerAsnObjectIdentifier(DerAsnIdentifiers.Primitive.ObjectIdentifier, Oid2Array(Oid_AccessDescription + "." + (int)description.AccessMethod));
-                var alternativeName = new DerAsnIa5String(new DerAsnIdentifier(DerAsnTagClass.ContextSpecific, DerAsnEncodingType.Primitive, DerAsnKnownTypeTags.Primitive.ObjectIdentifier), description.AccessLocation);
+                var alternativeName = new ContextSpecificString(description.AccessLocation);
                 var accessDescription = new DerAsnSequence(new DerAsnType[] { id, alternativeName });
                 list.Add(accessDescription);
             }
@@ -149,7 +154,6 @@ namespace Indice.Psd2.Cryptography.X509Certificates
         /// <returns>Deserilized contents</returns>
         public AccessDescription[] ExtractLocations() {
             var descriptions = new List<AccessDescription>();
-            //var accessDescriptionSequence = Value.Where(x => x is DerAsnSequence).FirstOrDefault() as DerAsnSequence;
             
             foreach (var item in Value) {
                 if (!(item is DerAsnSequence)) {
@@ -157,11 +161,12 @@ namespace Indice.Psd2.Cryptography.X509Certificates
                 }
                 var accessDescription = item as DerAsnSequence;
                 var accessMethod = accessDescription.Value[0] as DerAsnObjectIdentifier;
-                var accessLocation = accessDescription.Value[1] as DerAsnObjectIdentifier;
-                var accessMethodOid = string.Join(".", accessMethod.Value);
-                if (accessMethodOid == Oid_CertificationAuthorityIssuer) {
-                    //locations.Add(new Uri(accessLocation.Value));
-                }
+                var accessLocation = accessDescription.Value[1] as ContextSpecificString;
+
+                descriptions.Add(new AccessDescription {
+                    AccessMethod = (AccessDescription.AccessMethodType)(int)accessMethod.Value[accessMethod.Value.Length - 1],
+                    AccessLocation = accessLocation.Value
+                });
             }
             return descriptions.ToArray();
         }

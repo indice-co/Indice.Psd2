@@ -75,20 +75,5 @@ namespace Indice.Psd2.Cryptography.Tests
             Assert.Equal("02D324A59192A2E6C6EED29E7AC69FB05073C745", keyId);
             //Assert.Equal("https://ec.europa.eu/information_society/policy/esignature/trusted-list/tl-mp.xml", accessDescriptions[0].ToString());
         }
-
-        [Fact]
-        public void GenerateJWTTest() {
-            var expireMinutes = 5;
-            var signingCert = new X509Certificate2("PFXFilePath", "password");
-            var privateKey = new X509SecurityKey(signingCert);
-            var now = DateTime.UtcNow;
-            var tokenHandler = new JwtSecurityTokenHandler();
-            var tokenDescriptor = new SecurityTokenDescriptor {
-                Expires = now.AddMinutes(expireMinutes),
-                SigningCredentials = new SigningCredentials(privateKey, SecurityAlgorithms.RsaSha256Signature)
-            };
-            var stoken = (JwtSecurityToken)tokenHandler.CreateToken(tokenDescriptor);
-            var token = tokenHandler.WriteToken(stoken);
-        }
     }
 }
