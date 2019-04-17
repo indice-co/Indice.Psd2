@@ -210,11 +210,12 @@ namespace Indice.Psd2.Cryptography
                 pathLengthConstraint: 0,
                 critical: true);
             extensions.Add(basicConstraints);
-            var certificate = CreateSelfSignedCertificate(subject, extensions, notBefore, notAfter);
+            var prinvateKey = default(RSA);
+            var certificate = CreateSelfSignedCertificate(subject, extensions, notBefore, notAfter, out prinvateKey);
             if (RuntimeInformation.IsOSPlatform(OSPlatform.Windows)) {
                 certificate.FriendlyName = "Root CA";
             }
-            return certificate;
+            return certificate.CopyWithPrivateKey(prinvateKey);
         }
 
 
@@ -223,9 +224,10 @@ namespace Indice.Psd2.Cryptography
         /// </summary>
         /// <param name="request"></param>
         /// <param name="issuerDomain"></param>
+        /// <param name="issuer">The issuer certificate if none one will be created on the fly. Used in case that there is a fix issuing CA cert used for all generated</param>
         /// <param name="privateKey"></param>
         /// <returns></returns>
-        public X509Certificate2 CreateQWACs(Psd2CertificateRequest request, string issuerDomain, out RSA privateKey) {
+        public X509Certificate2 CreateQWACs(Psd2CertificateRequest request, string issuerDomain, X509Certificate2 issuer, out RSA privateKey) {
             var notBefore = DateTimeOffset.UtcNow.AddDays(-1);
             var notAfter = DateTimeOffset.UtcNow.AddDays(request.ValidityInDays);
             var authorizationNumber = new NCAId(null, request.CountryCode, request.AuthorityId, request.AuthorizationNumber);
@@ -257,7 +259,7 @@ namespace Indice.Psd2.Cryptography
             extensions.Add(psd2Extension);
             extensions.Add(crlDistributionPoints);
             extensions.Add(authorityInformation);
-            var certificate = CreateCertificate(CreateRootCACertificate(issuerDomain), subject, extensions, notBefore, notAfter, out privateKey);
+            var certificate = CreateCertificate(issuer ?? CreateRootCACertificate(issuerDomain), subject, extensions, notBefore, notAfter, out privateKey);
             if (RuntimeInformation.IsOSPlatform(OSPlatform.Windows)) {
                 certificate.FriendlyName = "Qualified website authentication certificate QWAC";
             }
@@ -296,8 +298,8 @@ namespace Indice.Psd2.Cryptography
             extensions.Add(enhancedKeyUsage);
             extensions.Add(sanBuilder.Build(critical: true));
             extensions.Add(aspNetHttpsExtension);
-
-            var certificate = CreateSelfSignedCertificate(subject, extensions, notBefore, notAfter);
+            var prinvateKey = default(RSA);
+            var certificate = CreateSelfSignedCertificate(subject, extensions, notBefore, notAfter, out prinvateKey);
             if (RuntimeInformation.IsOSPlatform(OSPlatform.Windows)) {
                 certificate.FriendlyName = AspNetHttpsOidFriendlyName;
             }
@@ -342,8 +344,8 @@ namespace Indice.Psd2.Cryptography
             X500DistinguishedName subject,
             IEnumerable<X509Extension> extensions,
             DateTimeOffset notBefore,
-            DateTimeOffset notAfter) {
-            var key = CreateKeyMaterial(RSAMinimumKeySizeInBits);
+            DateTimeOffset notAfter, out RSA key) {
+            key = CreateKeyMaterial(RSAMinimumKeySizeInBits);
 
             var request = new CertificateRequest(subject, key, HashAlgorithmName.SHA256, RSASignaturePadding.Pkcs1);
             foreach (var extension in extensions) {

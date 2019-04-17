@@ -19,7 +19,7 @@ namespace Indice.Psd2.Cryptography.Tests
             var data = Psd2CertificateRequest.Example();
             var manager = new CertificateManager();
             var privateKey = default(RSA);
-            var cert = manager.CreateQWACs(data, "identityserver.gr", out privateKey);
+            var cert = manager.CreateQWACs(data, "identityserver.gr", issuer:null, out privateKey);
             var certBase64 = cert.ExportToPEM();
             var publicBase64 = privateKey.ToSubjectPublicKeyInfo();
             var privateBase64 = privateKey.ToRSAPrivateKey();
