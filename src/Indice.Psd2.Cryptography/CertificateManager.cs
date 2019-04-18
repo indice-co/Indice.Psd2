@@ -215,7 +215,7 @@ namespace Indice.Psd2.Cryptography
             if (RuntimeInformation.IsOSPlatform(OSPlatform.Windows)) {
                 certificate.FriendlyName = "Root CA";
             }
-            return certificate.CopyWithPrivateKey(prinvateKey);
+            return certificate;
         }
 
 

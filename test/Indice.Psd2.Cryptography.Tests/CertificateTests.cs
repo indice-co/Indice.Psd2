@@ -19,7 +19,8 @@ namespace Indice.Psd2.Cryptography.Tests
             var data = Psd2CertificateRequest.Example();
             var manager = new CertificateManager();
             var privateKey = default(RSA);
-            var cert = manager.CreateQWACs(data, "identityserver.gr", issuer:null, out privateKey);
+            var caCert = manager.CreateRootCACertificate("identityserver.gr");
+            var cert = manager.CreateQWACs(data, "identityserver.gr", issuer: caCert, out privateKey);
             var certBase64 = cert.ExportToPEM();
             var publicBase64 = privateKey.ToSubjectPublicKeyInfo();
             var privateBase64 = privateKey.ToRSAPrivateKey();
@@ -37,6 +38,13 @@ namespace Indice.Psd2.Cryptography.Tests
             }));
             Assert.True(true);
         }
+
+        //[Fact]
+        //public void Load_PFX() {
+        //    var data = Psd2CertificateRequest.Example();
+        //    var cacert = new X509Certificate2(Path.Combine(Directory.GetCurrentDirectory(), $"{data.AuthorizationNumber}.pfx"), "111");
+        //    Assert.True(true);
+        //}
 
         [Fact]
         public void ImportBase64Certificate() {

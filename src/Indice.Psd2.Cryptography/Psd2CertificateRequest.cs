@@ -44,7 +44,7 @@ namespace Indice.Psd2.Cryptography
         /// The domain name of the organizition where this certificate will be used.
         /// </summary>
         [Required]
-        public string CommonName { get; internal set; }
+        public string CommonName { get; set; }
 
         /// <summary>
         /// The National Competent Authority Code (ie BOG is the code for "Bank of Greece")
