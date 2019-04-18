@@ -7,6 +7,7 @@ using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Hosting;
 using Microsoft.AspNetCore.HttpsPolicy;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
@@ -26,7 +27,13 @@ namespace Indice.Oba.Host
         public void ConfigureServices(IServiceCollection services) {
             services.AddMvc()
                     .SetCompatibilityVersion(CompatibilityVersion.Version_2_2)
-                    .AddCertificateEndpoints();
+                    .AddCertificateEndpoints(x => {
+                        x.AddEntitiyFrameworkStore(options => {
+                            options.ConfigureDbContext = (a) => {
+                                a.UseSqlServer(Configuration.GetConnectionString("CertificatesDb"));
+                            };
+                        });
+                    });
 
             services.AddSwaggerGen(x => {
                 x.SchemaFilter<SchemaExamplesFilter>();

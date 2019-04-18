@@ -7,7 +7,7 @@ namespace Indice.Psd2.IdenityServer4.Features
     /// <summary>
     /// Certificate creation response.
     /// </summary>
-    public class CertificateCreatedResponse
+    public class CertificateDetails
     {
         /// <summary>
         /// Base 64 Pem encoded cer
@@ -22,6 +22,10 @@ namespace Indice.Psd2.IdenityServer4.Features
         /// Subject Key Identifier
         /// </summary>
         public string KeyId { get; set; }
+        /// <summary>
+        /// Authority Subject Key Identifier (issuing certificate Subject Key Identifier)
+        /// </summary>
+        public string AuthorityKeyId { get; set; }
         /// <summary>
         /// SHA256WITHRSA
         /// </summary>

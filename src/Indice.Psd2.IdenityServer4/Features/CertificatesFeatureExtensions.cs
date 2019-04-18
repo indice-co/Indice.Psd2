@@ -5,6 +5,7 @@ using System.Security.Cryptography.X509Certificates;
 using System.Text;
 using Indice.Psd2.Cryptography;
 using Indice.Psd2.IdenityServer4.Features;
+using Indice.Psd2.IdenityServer4.Features.EF;
 using Microsoft.AspNetCore.Hosting;
 
 namespace Microsoft.Extensions.DependencyInjection
@@ -28,7 +29,10 @@ namespace Microsoft.Extensions.DependencyInjection
                 IssuerDomain = "www.example.com",
                 PfxPassphrase = "???"
             };
+
+            options.Services = mvcBuilder.Services;
             configureAction?.Invoke(options);
+            options.Services = null;
             if (options.Path == null) {
                 var serviceProvider = mvcBuilder.Services.BuildServiceProvider();
                 var hostingEnvironment = serviceProvider.GetRequiredService<IHostingEnvironment>();
@@ -50,6 +54,25 @@ namespace Microsoft.Extensions.DependencyInjection
 #endif
             }
             return mvcBuilder;
+        }
+
+        /// <summary>
+        /// Backs up the Certificates into a database.
+        /// </summary>
+        /// <param name="options"></param>
+        /// <param name="configureAction"></param>
+        public static void AddEntitiyFrameworkStore(this CertificateEndpointsOptions options, Action<CertificatesStoreOptions> configureAction) {
+            var storeOptions = new CertificatesStoreOptions() {
+                DefaultSchema = "cert",
+            };
+            configureAction?.Invoke(storeOptions);
+            options.Services.AddSingleton(storeOptions);
+            if (storeOptions.ResolveDbContextOptions != null) {
+                options.Services.AddDbContext<CertificatesDbContext>(storeOptions.ResolveDbContextOptions);
+            } else {
+                options.Services.AddDbContext<CertificatesDbContext>(storeOptions.ConfigureDbContext);
+            }
+            options.Services.AddTransient<ICertificatesStore, DbCertificatesStore>();
         }
     }
 }

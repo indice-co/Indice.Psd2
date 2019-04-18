@@ -1,5 +1,6 @@
-﻿
-namespace Indice.Psd2.IdenityServer4.Features
+﻿using System;
+
+namespace Microsoft.Extensions.DependencyInjection
 {
     /// <summary>
     /// Configuration options for certificate endpoints feature
@@ -20,5 +21,7 @@ namespace Indice.Psd2.IdenityServer4.Features
         /// The PFX passphrase for the issuer certs
         /// </summary>
         public string PfxPassphrase { get; set; }
+
+        internal IServiceCollection Services;
     }
 }
