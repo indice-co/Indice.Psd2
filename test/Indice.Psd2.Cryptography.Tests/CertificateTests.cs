@@ -39,6 +39,39 @@ namespace Indice.Psd2.Cryptography.Tests
             Assert.True(true);
         }
 
+        [Fact]
+        public void Generate_CRL() {
+            //byte[] rawData = File.ReadAllBytes(Path.Combine(Directory.GetCurrentDirectory(), "GTSGIAG3.crl"));
+            //var decoder = CertificateRevocationListSequence.CreateDecoder();
+            //var type = decoder.Decode(rawData);
+
+            var crl = new CertificateRevocationList() {
+                AuthorizationKeyId = "77c2b8509a677676b12dc286d083a07ea67eba4b",
+                Country = "GR",
+                Organization = "INDICE OE",
+                IssuerCommonName = "Some Cerification Authority CA",
+                CrlNumber = 234,
+                EffectiveDate = DateTime.UtcNow.AddDays(-2),
+                NextUpdate = DateTime.UtcNow.AddDays(1),
+                Items = {
+                    new RevokedCertificate {
+                        ReasonCode = RevokedCertificate.CRLReasonCode.Superseded,
+                        RevocationDate = DateTime.UtcNow.AddHours(-10),
+                        SerialNumber = "05f4102a802b874c"
+                    },
+                    new RevokedCertificate {
+                        ReasonCode = RevokedCertificate.CRLReasonCode.Superseded,
+                        RevocationDate = DateTime.UtcNow.AddHours(-9),
+                        SerialNumber = "174401aea7b9a5de"
+                    }
+                }
+            };
+            var crlSeq = new CertificateRevocationListSequence(crl);
+            var data = DerConverter.DerConvert.Encode(crlSeq);
+            File.WriteAllBytes(Path.Combine(Directory.GetCurrentDirectory(), "my.crl"), data);
+            Assert.True(true);
+        }
+
         //[Fact]
         //public void Load_PFX() {
         //    var data = Psd2CertificateRequest.Example();

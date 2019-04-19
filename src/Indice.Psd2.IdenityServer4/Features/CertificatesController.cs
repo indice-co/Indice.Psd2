@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.ComponentModel.DataAnnotations;
 using System.IO;
 using System.Security.Cryptography.X509Certificates;
 using System.Text;
@@ -14,7 +15,7 @@ namespace Indice.Psd2.IdenityServer4.Features
     /// <summary>
     /// Creates an avatar based on a given name (first and last name) plus parameters
     /// </summary>
-    [Route("certificates")]
+    [Route(".certificates")]
     [ApiExplorerSettings(GroupName = "cert")]
     [ApiController]
     internal class CertificatesController : ControllerBase {
@@ -39,37 +40,29 @@ namespace Indice.Psd2.IdenityServer4.Features
         [ProducesResponseType(statusCode: 200, type: typeof(CertificateDetails))]
         [HttpPost]
         public async Task<IActionResult> CreateCertificate([FromBody] Psd2CertificateRequest request) {
-            var response = new CertificateDetails();
-#if NETCoreApp22
+            var cert = default(X509Certificate2);
             var issuer = new X509Certificate2(Path.Combine(Options.Path, "ca.pfx"), Options.PfxPassphrase);
+#if NETCoreApp22
             var manager = new CertificateManager();
-            var cert = manager.CreateQWACs(request, Options.IssuerDomain, issuer, out var privateKey);
-
-            var certBase64 = cert.ExportToPEM();
-            var publicBase64 = privateKey.ToSubjectPublicKeyInfo();
-            var privateBase64 = privateKey.ToRSAPrivateKey();
-            var keyId = cert.GetSubjectKeyIdentifier();
-            var authkeyId = cert.GetAuthorityKeyIdentifier();
-            response = new CertificateDetails {
-                EncodedCert = certBase64,
-                PrivateKey = privateBase64,
-                KeyId = keyId.ToLower(),
-                AuthorityKeyId = authkeyId.ToLower(),
-                Algorithm = "SHA256WITHRSA"
-            };
-            cert.Dispose();
+            cert = manager.CreateQWACs(request, Options.IssuerDomain, issuer, out var privateKey);
 #endif
-            await Store.Store(response);
+            var response = await Store.Add(cert, request);
+            cert.Dispose();
             return Ok(response);
         }
 
-        [Produces("application/json")]
+        [FormatFilter]
+        [Produces("application/json", "application/x-x509-user-cert", "application/pkix-cert", "application/pkcs8", "application/x-pkcs12")]
         [ProducesResponseType(statusCode: 200, type: typeof(CertificateDetails))]
-        [HttpGet("{keyId}")]
-        public async Task<IActionResult> GetById([FromRoute] string keyId) {
+        [HttpGet("{keyId}.{format?}")]
+        public async Task<IActionResult> Export([FromRoute] string keyId, [FromRoute] string format, [FromQuery] string password) {
             var response = await Store.GetById(keyId);
             if (response == null) {
                 return NotFound();
+            }
+            if (format.ToLower() == "pfx" && string.IsNullOrEmpty(password)) {
+                ModelState.AddModelError(nameof(password), "A password is required in order to export to pfx");
+                return BadRequest(ModelState);
             }
             return Ok(response);
         }
@@ -88,6 +81,15 @@ namespace Indice.Psd2.IdenityServer4.Features
         [HttpGet]
         public async Task<IActionResult> GetList([FromQuery]DateTime? notBefore = null, [FromQuery]bool? revoked = null, [FromQuery]string authorityKeyId = null) {
             var results = await Store.GetList(notBefore, revoked, authorityKeyId);
+            return Ok(results);
+        }
+
+        [Produces("application/x-pkcs7-crl")]
+        [ProducesResponseType(statusCode: 200, type: typeof(IFormFile))]
+        [HttpGet("revoked.crl")]
+        public async Task<IActionResult> RevokationList() {
+            var results = await Store.GetList(null, revoked:true, null);
+
             return Ok(results);
         }
     }

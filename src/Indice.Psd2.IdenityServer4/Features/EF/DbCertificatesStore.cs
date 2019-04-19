@@ -4,6 +4,7 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 using Microsoft.EntityFrameworkCore;
+using Newtonsoft.Json;
 
 namespace Indice.Psd2.IdenityServer4.Features.EF
 {
@@ -71,8 +72,12 @@ namespace Indice.Psd2.IdenityServer4.Features.EF
         /// Stores the certificate
         /// </summary>
         /// <param name="certificate"></param>
+        /// <param name="subject">The distinguished name of the issued certificate</param>
+        /// <param name="thumbprint"></param>
+        /// <param name="metadata">Any metadata</param>
+        /// <param name="isCA">Is certificate authority. marks an issuing certificate</param>
         /// <returns>the stored certificate</returns>
-        public async Task<CertificateDetails> Store(CertificateDetails certificate) {
+        public async Task<CertificateDetails> Add(CertificateDetails certificate, string subject, string thumbprint, object metadata, bool isCA) {
             var dbCert = await DbContext.Certificates.FindAsync(certificate.KeyId);
             if (dbCert != null) {
                 throw new Exception($"There is already a certificate with the same Subject Key Identifier \"{dbCert.KeyId}\"in the store");
@@ -83,6 +88,10 @@ namespace Indice.Psd2.IdenityServer4.Features.EF
                 AuthorityKeyId = certificate.AuthorityKeyId,
                 EncodedCert = certificate.EncodedCert,
                 PrivateKey = certificate.PrivateKey,
+                Subject = subject,
+                Thumbprint = thumbprint,
+                Data = metadata == null ? null : JsonConvert.SerializeObject(metadata),
+                IsCA = isCA,
                 Revoked = false,
                 RevokedDate = null,
                 CreatedDate = DateTime.UtcNow

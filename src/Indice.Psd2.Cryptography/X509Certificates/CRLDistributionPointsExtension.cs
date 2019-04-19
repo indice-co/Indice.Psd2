@@ -106,6 +106,7 @@ namespace Indice.Psd2.Cryptography.X509Certificates
                 _decoded = true;
             }
         }
+
     }
 
     /// <summary>
@@ -137,7 +138,7 @@ namespace Indice.Psd2.Cryptography.X509Certificates
         }
 
         /// <summary>
-        /// constructs the <see cref="AccessDescriptionList"/> from an array of ANS.1 Der encoded data.
+        /// constructs the <see cref="CRLDistributionPoints"/> from an array of ANS.1 Der encoded data.
         /// </summary>
         /// <param name="value"></param>
         public CRLDistributionPoints(DerAsnType[] value) : base(value) {

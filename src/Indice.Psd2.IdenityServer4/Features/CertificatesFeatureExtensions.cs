@@ -16,7 +16,7 @@ namespace Microsoft.Extensions.DependencyInjection
     public static class CertificatesFeatureExtensions
     {
         /// <summary>
-        /// Add the Avatar feature to MVC.
+        /// Add the Certificate endpoints feature to MVC.
         /// </summary>
         /// <param name="mvcBuilder"></param>
         /// <param name="configureAction">Configuration</param>
@@ -24,7 +24,15 @@ namespace Microsoft.Extensions.DependencyInjection
         public static IMvcBuilder AddCertificateEndpoints(this IMvcBuilder mvcBuilder, Action<CertificateEndpointsOptions> configureAction = null) {
             mvcBuilder.ConfigureApplicationPartManager(apm =>
                 apm.FeatureProviders.Add(new CertificatesFeatureProvider()));
-
+            mvcBuilder.AddFormatterMappings(mappings => {
+                mappings.SetMediaTypeMappingForFormat("crt", "application/x-x509-user-cert"); //The CRT extension is used for certificates.The certificates may be encoded as binary DER or as ASCII PEM
+                mappings.SetMediaTypeMappingForFormat("cer", "application/pkix-cert"); //alternate form of .crt (Microsoft Convention) You can use MS to convert .crt to .cer (.both DER encoded .cer, or base64[PEM] encoded .cer)
+                mappings.SetMediaTypeMappingForFormat("key", "application/pkcs8"); //The KEY extension is used both for public and private PKCS#8 keys. The keys may be encoded as binary DER or as ASCII PEM.
+                mappings.SetMediaTypeMappingForFormat("pfx", "application/x-pkcs12"); // pfx
+            });
+            mvcBuilder.AddMvcOptions(mvc => {
+                mvc.OutputFormatters.Add(new CertificateOutputFormatter());
+            });
             var options = new CertificateEndpointsOptions() {
                 IssuerDomain = "www.example.com",
                 PfxPassphrase = "???"
@@ -43,14 +51,17 @@ namespace Microsoft.Extensions.DependencyInjection
             if (!Directory.Exists(options.Path)) {
                 Directory.CreateDirectory(options.Path);
             }
-            if (!File.Exists(Path.Combine(options.Path, "ca.pfx"))) { 
+            if (!File.Exists(Path.Combine(options.Path, "ca.pfx"))) {
 #if NETCoreApp22
-            var manager = new CertificateManager();
-            var issuingCert = manager.CreateRootCACertificate(options.IssuerDomain);
-            var certBase64 = issuingCert.ExportToPEM();
-            var pfxBytes = issuingCert.Export(X509ContentType.Pfx, options.PfxPassphrase);
-            File.WriteAllBytes(Path.Combine(options.Path, "ca.pfx"), pfxBytes);
-            File.WriteAllText(Path.Combine(options.Path, "ca.cer"), certBase64);
+                var serviceProvider = mvcBuilder.Services.BuildServiceProvider();
+                var manager = new CertificateManager();
+                var issuingCert = manager.CreateRootCACertificate(options.IssuerDomain);
+                var certBase64 = issuingCert.ExportToPEM();
+                var pfxBytes = issuingCert.Export(X509ContentType.Pfx, options.PfxPassphrase);
+                File.WriteAllBytes(Path.Combine(options.Path, "ca.pfx"), pfxBytes);
+                File.WriteAllText(Path.Combine(options.Path, "ca.cer"), certBase64);
+                var store = serviceProvider.GetService<ICertificatesStore>();
+                store.Add(issuingCert, null);
 #endif
             }
             return mvcBuilder;

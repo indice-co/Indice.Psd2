@@ -6,15 +6,15 @@ using DerConverter.Asn;
 
 namespace Indice.Psd2.Cryptography.X509Certificates.DerAsnTypes
 {
-    internal class ContextSpecificSequence : DerAsnType<DerAsnType[]>
+    internal class OctetStringSequence : DerAsnType<DerAsnType[]>
     {
-        public static readonly DerAsnIdentifier Id = new DerAsnIdentifier(DerAsnTagClass.ContextSpecific, DerAsnEncodingType.Constructed, 0x0);
+        public static readonly DerAsnIdentifier Id = new DerAsnIdentifier(DerAsnTagClass.Universal, DerAsnEncodingType.Constructed, 0x4);
 
-        public ContextSpecificSequence(IDerAsnDecoder decoder, DerAsnIdentifier identifier, Queue<byte> rawData)
+        public OctetStringSequence(IDerAsnDecoder decoder, DerAsnIdentifier identifier, Queue<byte> rawData)
             : base(decoder, identifier, rawData) {
         }
 
-        public ContextSpecificSequence(DerAsnType[] value)
+        public OctetStringSequence(DerAsnType[] value)
             : base(Id, value) {
         }
 

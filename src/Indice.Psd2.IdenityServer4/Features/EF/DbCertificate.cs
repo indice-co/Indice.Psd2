@@ -30,6 +30,22 @@ namespace Indice.Psd2.IdenityServer4.Features.EF
         /// </summary>
         public string Algorithm { get; set; }
         /// <summary>
+        /// The certificate thumbprint
+        /// </summary>
+        public string Thumbprint { get; set; }
+        /// <summary>
+        /// The certificate Distinguished name
+        /// </summary>
+        public string Subject { get; set; }
+        /// <summary>
+        /// The data used to create this
+        /// </summary>
+        public string Data { get; set; }
+        /// <summary>
+        /// Is certificate authority. marks an issuing certificate
+        /// </summary>
+        public bool IsCA { get; set; }
+        /// <summary>
         /// Indicates a revoked certificate.
         /// </summary>
         public bool Revoked { get; set; }

@@ -127,12 +127,10 @@ namespace System.Security.Cryptography.X509Certificates
         /// <returns></returns>
         public static Psd2Attributes GetPsd2Attributes(this X509Certificate2 cert) {
             var type = default(Psd2Attributes);
-            foreach (var extension in cert.Extensions) {
-                if (extension.Oid.Value == QualifiedCertificateStatementsExtension.Oid_QC_Statements) {
-                    var qcStatements = new QualifiedCertificateStatementsExtension(extension, extension.Critical);
-                    type = qcStatements.Psd2Type;
-                    break;
-                }
+            var extension = cert.Extensions[QualifiedCertificateStatementsExtension.Oid_QC_Statements];
+            if (extension != null) {
+                var qcStatements = new QualifiedCertificateStatementsExtension(extension, extension.Critical);
+                type = qcStatements.Psd2Type;
             }
             return type;
         }
@@ -144,11 +142,9 @@ namespace System.Security.Cryptography.X509Certificates
         /// <returns></returns>
         public static string GetSubjectKeyIdentifier(this X509Certificate2 cert) {
             string keyid = null;
-            foreach (var extension in cert.Extensions) {
-                if (extension.Oid.Value == AuthorityKeyIdentifierExtension.Oid_SubjectKeyIdentifier) {
-                    keyid = ((X509SubjectKeyIdentifierExtension)extension).SubjectKeyIdentifier;
-                    break;
-                }
+            var extension = cert.Extensions[AuthorityKeyIdentifierExtension.Oid_SubjectKeyIdentifier] as X509SubjectKeyIdentifierExtension;
+            if (extension != null) {
+                keyid = extension.SubjectKeyIdentifier;
             }
             return keyid;
         }
@@ -160,13 +156,21 @@ namespace System.Security.Cryptography.X509Certificates
         /// <returns></returns>
         public static string GetAuthorityKeyIdentifier(this X509Certificate2 cert) {
             string keyid = null;
-            foreach (var extension in cert.Extensions) {
-                if (extension.Oid.Value == AuthorityKeyIdentifierExtension.Oid_AuthorityKeyIdentifier) {
-                    keyid = new AuthorityKeyIdentifierExtension(extension, extension.Critical).AuthorityKeyIdentifier;
-                    break;
-                }
+            var extension = cert.Extensions[AuthorityKeyIdentifierExtension.Oid_AuthorityKeyIdentifier];
+            if (extension != null) {
+                keyid = new AuthorityKeyIdentifierExtension(extension, extension.Critical).AuthorityKeyIdentifier;
             }
             return keyid;
+        }
+
+        /// <summary>
+        /// Find the KeyIdentifier of the issuer certificate.
+        /// </summary>
+        /// <param name="cert"></param>
+        /// <returns></returns>
+        public static bool IsCertificateAuthority(this X509Certificate2 cert) {
+            var extension = cert.Extensions["2.5.29.19"] as X509BasicConstraintsExtension;
+            return extension?.CertificateAuthority == true;
         }
     }
 }

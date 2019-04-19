@@ -250,11 +250,11 @@ namespace Indice.Psd2.Cryptography
             var authorityInformation = new AuthorityInformationAccessExtension(new[] {
                 new AccessDescription {
                     AccessMethod = AccessDescription.AccessMethodType.CertificationAuthorityIssuer,
-                    AccessLocation = $"http://{issuerDomain}/certs/ca.cer"
+                    AccessLocation = $"http://{issuerDomain}/.certificates/ca.cer"
                 }
             }, critical: false);
             var crlDistributionPoints = new CRLDistributionPointsExtension(new[] {
-                new CRLDistributionPoint {  FullName = new [] { "http://machinename-dc01.example.org/CertEnroll/MACHINENAME-DC01-CA.crl" } },
+                new CRLDistributionPoint {  FullName = new [] { "http://{issuerDomain}/.certificates/revoked.crl" } },
             }, critical: false);
             extensions.Add(psd2Extension);
             extensions.Add(crlDistributionPoints);
