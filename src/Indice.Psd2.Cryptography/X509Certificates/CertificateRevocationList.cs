@@ -1,7 +1,10 @@
 ﻿using System;
+using System.Collections;
 using System.Collections.Generic;
 using System.Globalization;
+using System.Linq;
 using System.Numerics;
+using System.Security.Cryptography;
 using System.Security.Cryptography.X509Certificates;
 using System.Text;
 using DerConverter.Asn;
@@ -48,7 +51,7 @@ namespace Indice.Psd2.Cryptography.X509Certificates
         /// </summary>
         /// <param name="crl">The data use in order to load the sequence</param>
         public CertificateRevocationListSequence(CertificateRevocationList crl) : base(new DerAsnType[0]) {
-            var container = new List<DerAsnType>();
+            //var container = new List<DerAsnType>();
             var details = new List<DerAsnType>();
             var list = new List<DerAsnSequence>();
             foreach (var cert in crl.Items) {
@@ -103,7 +106,7 @@ namespace Indice.Psd2.Cryptography.X509Certificates
                                 new DerAsnOctetString(new DerAsnIdentifier(DerAsnTagClass.ContextSpecific, DerAsnEncodingType.Primitive, 0x0), crl.AuthorizationKeyId.HexToBytes())
                             })
                         })
-                    }) 
+                    })
                 }),
                 new DerAsnSequence(new DerAsnType[] {
                     new DerAsnSequence(new DerAsnType[] {
@@ -114,12 +117,29 @@ namespace Indice.Psd2.Cryptography.X509Certificates
                     })
                 })
             }));
-            details.Add(new DerAsnSequence(new DerAsnType[] {
-                new DerAsnObjectIdentifier(DerAsnIdentifiers.Primitive.ObjectIdentifier, Oid_sha256RSA.OidToArray()),
-                new DerAsnNull()
-            }));
-            container.Add(new DerAsnSequence(details.ToArray()));
-            Value = container.ToArray();
+            Value = details.ToArray();
+            //container.Add(new DerAsnSequence(details.ToArray()));
+            //Value = container.ToArray();
+        }
+
+        /// <summary>
+        /// Creates the CRL envelope and includes the RSA signature with it.
+        /// </summary>
+        /// <param name="signingKey"></param>
+        /// <param name="encoder"></param>
+        /// <returns></returns>
+        public byte[] SignAndSerialize(RSA signingKey, IDerAsnEncoder encoder = null) {
+            var data = DerConverter.DerConvert.Encode(this);
+            var signature = signingKey.SignData(data, HashAlgorithmName.SHA256, RSASignaturePadding.Pkcs1);
+            var container = new DerAsnSequence(new DerAsnType[] {
+                this,
+                new DerAsnSequence(new DerAsnType[] {
+                    new DerAsnObjectIdentifier(DerAsnIdentifiers.Primitive.ObjectIdentifier, Oid_sha256RSA.OidToArray()),
+                    new DerAsnNull()
+                }),
+                new DerAsnBitString(new BitArray(signature))
+            });
+            return DerConverter.DerConvert.Encode(container);
         }
 
         /// <summary>
@@ -136,26 +156,73 @@ namespace Indice.Psd2.Cryptography.X509Certificates
         /// <returns>Deserilized contents</returns>
         public CertificateRevocationList Extract() {
             var crl = new CertificateRevocationList();
-
-            foreach (var item in Value) {
-                if (!(item is DerAsnSequence)) {
-                    continue;
+            var details = Value[0] as DerAsnSequence;
+            var version = details.Value[0] as DerAsnInteger;
+            var algorithm = ((DerAsnSequence)details.Value[1]).Value[0] as DerAsnObjectIdentifier;
+            var subject = ((DerAsnSequence)details.Value[2]).Value.Cast<DerAsnSet>();
+            crl.EffectiveDate = ((DerAsnUtcTime)details.Value[3]).Value.DateTime;
+            crl.NextUpdate = ((DerAsnUtcTime)details.Value[4]).Value.DateTime;
+            var list = ((DerAsnSequence)details.Value[5]).Value.Cast<DerAsnSequence>();
+            var info = ((DerAsnSequence)((ContextSpecificSequence)details.Value[6]).Value[0]).Value;
+            foreach (var part in subject) {
+                var seq = ((DerAsnSequence)part.Value[0]);
+                var oid = seq.Value[0] as DerAsnObjectIdentifier;
+                var text = seq.Value[1] as DerAsnPrintableString;
+                var oidString = string.Join(".", oid.Value);
+                switch (oidString) {
+                    case Oid_Issuer_C: crl.Country = text.Value; break;
+                    case Oid_Issuer_O: crl.Organization = text.Value; break;
+                    case Oid_Issuer_CN: crl.IssuerCommonName = text.Value; break;
+                }
+            }
+            foreach (var item in list) {
+                var serialNumber = item.Value[0] as DerAsnInteger;
+                var revocationDate = item.Value[1] as DerAsnUtcTime;
+                var reasonData = ((DerAsnSequence)((DerAsnSequence)item.Value[2]).Value[0]).Value[1];
+                var reason = default(RevokedCertificate.CRLReasonCode);
+                if (reasonData is OctetStringSequence) {
+                    var reasonSeq = reasonData as OctetStringSequence;
+                    reason = (RevokedCertificate.CRLReasonCode)((DerAsnEnumerated)reasonSeq.Value[0]).Value;
+                } else if (reasonData is DerAsnOctetString) {
+                    reason = (RevokedCertificate.CRLReasonCode)((DerAsnOctetString)reasonData).Value[2];
+                }
+                crl.Items.Add(new RevokedCertificate {
+                    RevocationDate = revocationDate.Value.DateTime,
+                    SerialNumber = serialNumber.Value.ToString("x16"),
+                    ReasonCode = reason
+                });
+            }
+            foreach (DerAsnSequence item in info) {
+                var oid = item.Value[0] as DerAsnObjectIdentifier;
+                var oidString = string.Join(".", oid.Value);
+                var data = item.Value[1] as DerAsnOctetString;
+                switch (oidString) {
+                    case Oid_AuthorityKey: crl.AuthorizationKeyId = string.Join("", data.Value.Skip(4).Select(x => x.ToString("X2"))); break;
+                    case Oid_CRLNumber: crl.CrlNumber = (int)new BigInteger(data.Value.Skip(3).ToArray()); break;
                 }
             }
             return crl;
         }
 
         /// <summary>
-        /// Create a DER ASN.1 decoder
+        /// Create a CRL from raw DER ASN.1 data
         /// </summary>
         /// <returns></returns>
-        public static DefaultDerAsnDecoder CreateDecoder() {
-            var decoder = new DefaultDerAsnDecoder();
-            decoder.RegisterType(ContextSpecificSequence.Id, (dcdr, identifier, data) => new ContextSpecificSequence(dcdr, identifier, data));
-            decoder.RegisterType(DerAsnEnumerated.Id, (dcdr, identifier, data) => new DerAsnEnumerated(dcdr, identifier, data));
-            return decoder;
+        public static CertificateRevocationListSequence Load(byte[] rawData) {
+            if (rawData == null) {
+                throw new ArgumentNullException(nameof(rawData));
+            }
+
+            CertificateRevocationListSequence sequence;
+            using (var decoder = new DefaultDerAsnDecoder()) {
+                decoder.RegisterType(ContextSpecificSequence.Id, (dcdr, identifier, data) => new ContextSpecificSequence(dcdr, identifier, data));
+                decoder.RegisterType(OctetStringSequence.Id, (dcdr, identifier, data) => new OctetStringSequence(dcdr, identifier, data));
+                decoder.RegisterType(DerAsnEnumerated.Id, (dcdr, identifier, data) => new DerAsnEnumerated(dcdr, identifier, data));
+                sequence = new CertificateRevocationListSequence(((DerAsnSequence)decoder.Decode(rawData)).Value);
+            }
+            return sequence;
         }
-        
+
     }
 
     /// <summary>
@@ -225,5 +292,11 @@ namespace Indice.Psd2.Cryptography.X509Certificates
             /// </summary>
             Superseded = 4
         }
+
+        /// <summary>
+        /// String representation
+        /// </summary>
+        /// <returns></returns>
+        public override string ToString() => $"{SerialNumber} {RevocationDate}";
     }
 }

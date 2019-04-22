@@ -1,9 +1,14 @@
 using System;
+using System.Collections.Generic;
 using System.IdentityModel.Tokens.Jwt;
 using System.IO;
+using System.Net.Http;
 using System.Security.Cryptography;
 using System.Security.Cryptography.X509Certificates;
 using System.Text;
+using System.Threading.Tasks;
+using DerConverter.Asn;
+using DerConverter.Asn.KnownTypes;
 using IdentityModel;
 using Indice.Psd2.Cryptography.X509Certificates;
 using Microsoft.IdentityModel.Tokens;
@@ -44,7 +49,6 @@ namespace Indice.Psd2.Cryptography.Tests
             //byte[] rawData = File.ReadAllBytes(Path.Combine(Directory.GetCurrentDirectory(), "GTSGIAG3.crl"));
             //var decoder = CertificateRevocationListSequence.CreateDecoder();
             //var type = decoder.Decode(rawData);
-
             var crl = new CertificateRevocationList() {
                 AuthorizationKeyId = "77c2b8509a677676b12dc286d083a07ea67eba4b",
                 Country = "GR",
@@ -67,8 +71,21 @@ namespace Indice.Psd2.Cryptography.Tests
                 }
             };
             var crlSeq = new CertificateRevocationListSequence(crl);
-            var data = DerConverter.DerConvert.Encode(crlSeq);
+
+
+            var manager = new CertificateManager();
+            var caCert = manager.CreateRootCACertificate("identityserver.gr");
+            var data = crlSeq.SignAndSerialize(caCert.PrivateKey as RSA);
             File.WriteAllBytes(Path.Combine(Directory.GetCurrentDirectory(), "my.crl"), data);
+            Assert.True(true);
+        }
+
+        [Fact]
+        public async Task Import_CRL() {
+            var http = new HttpClient();
+            var rawData = await http.GetByteArrayAsync("http://crl.pki.goog/GTSGIAG3.crl");
+            var crlSeq = CertificateRevocationListSequence.Load(rawData);
+            var crl = crlSeq.Extract();
             Assert.True(true);
         }
 
