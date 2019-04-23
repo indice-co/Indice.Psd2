@@ -1,4 +1,4 @@
-<Project Sdk="Microsoft.NET.Sdk">
+﻿<Project Sdk="Microsoft.NET.Sdk">
 
   <PropertyGroup>
     <TargetFramework>netcoreapp2.2</TargetFramework>
@@ -16,6 +16,7 @@
 
   <ItemGroup>
     <ProjectReference Include="..\..\src\Indice.Psd2.Cryptography\Indice.Psd2.Cryptography.csproj" />
+    <ProjectReference Include="..\..\src\Indice.Psd2.IdentityServer4\Indice.Psd2.IdentityServer4.csproj" />
   </ItemGroup>
 
 </Project>

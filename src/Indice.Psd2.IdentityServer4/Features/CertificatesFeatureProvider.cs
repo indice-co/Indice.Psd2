@@ -6,7 +6,7 @@ using System.Text;
 using Microsoft.AspNetCore.Mvc.ApplicationParts;
 using Microsoft.AspNetCore.Mvc.Controllers;
 
-namespace Indice.Psd2.IdenityServer4.Features
+namespace Indice.Psd2.IdentityServer4.Features
 {
     /// <summary>
     /// Certificates feature implementation for <see cref="IApplicationFeatureProvider{ControllerFeature}"/>

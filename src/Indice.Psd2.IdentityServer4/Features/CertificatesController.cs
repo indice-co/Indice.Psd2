@@ -2,15 +2,18 @@
 using System.Collections.Generic;
 using System.ComponentModel.DataAnnotations;
 using System.IO;
+using System.Linq;
+using System.Security.Cryptography;
 using System.Security.Cryptography.X509Certificates;
 using System.Text;
 using System.Threading.Tasks;
 using Indice.Psd2.Cryptography;
+using Indice.Psd2.Cryptography.X509Certificates;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.Extensions.DependencyInjection;
 
-namespace Indice.Psd2.IdenityServer4.Features
+namespace Indice.Psd2.IdentityServer4.Features
 {
     /// <summary>
     /// Creates an avatar based on a given name (first and last name) plus parameters
@@ -88,9 +91,25 @@ namespace Indice.Psd2.IdenityServer4.Features
         [ProducesResponseType(statusCode: 200, type: typeof(IFormFile))]
         [HttpGet("revoked.crl")]
         public async Task<IActionResult> RevokationList() {
-            var results = await Store.GetList(null, revoked:true, null);
-
-            return Ok(results);
+            var issuer = new X509Certificate2(Path.Combine(Options.Path, "ca.pfx"), Options.PfxPassphrase);
+            var results = await Store.GetRevocationList();
+            var crl = new CertificateRevocationList() {
+                AuthorizationKeyId = issuer.GetSubjectKeyIdentifier().ToLower(),
+                Country = "GR",
+                Organization = "Sample Authority",
+                IssuerCommonName = "Some Cerification Authority CA",
+                CrlNumber = 234,
+                EffectiveDate = DateTime.UtcNow.AddDays(-2),
+                NextUpdate = DateTime.UtcNow.AddDays(1),
+                Items = results.Select(x => new RevokedCertificate {
+                    ReasonCode = RevokedCertificate.CRLReasonCode.Superseded,
+                    RevocationDate = x.RevocationDate,
+                    SerialNumber = x.SerialNumber
+                }).ToList()
+            };
+            var crlSeq = new CertificateRevocationListSequence(crl);
+            var data = crlSeq.SignAndSerialize(issuer.PrivateKey as RSA);
+            return File(data, "application/x-pkcs7-crl", "revoked.crl");
         }
     }
 }

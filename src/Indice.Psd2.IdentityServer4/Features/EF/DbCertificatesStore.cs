@@ -6,7 +6,7 @@ using System.Threading.Tasks;
 using Microsoft.EntityFrameworkCore;
 using Newtonsoft.Json;
 
-namespace Indice.Psd2.IdenityServer4.Features.EF
+namespace Indice.Psd2.IdentityServer4.Features.EF
 {
     /// <summary>
     /// Entity framework implementation of <see cref="ICertificatesStore"/>
@@ -54,6 +54,20 @@ namespace Indice.Psd2.IdenityServer4.Features.EF
 
             return results.Select(x => MapToDetails(x)).ToList();
         }
+        /// <summary>
+        /// Gets list of certificates by parameters
+        /// </summary>
+        /// <param name="notBefore"></param>
+        /// <returns></returns>
+        public async Task<List<RevokedCertificateDetails>> GetRevocationList(DateTime? notBefore = null) {
+            var results = await DbContext.Certificates.Where(x => (notBefore == null || x.CreatedDate >= notBefore) &&
+                                                                   x.Revoked == true)
+                                                          .ToListAsync();
+            return results.Select(x => new RevokedCertificateDetails {
+                RevocationDate = x.RevocationDate.Value,
+                SerialNumber = x.SerialNumber
+            }).ToList();
+        }
 
         /// <summary>
         /// Revokes a certificate by key Id
@@ -64,7 +78,7 @@ namespace Indice.Psd2.IdenityServer4.Features.EF
             var dbCert = await DbContext.Certificates.FindAsync(keyId);
             if (dbCert != null && !dbCert.Revoked) {
                 dbCert.Revoked = true;
-                dbCert.RevokedDate = DateTime.UtcNow;
+                dbCert.RevocationDate = DateTime.UtcNow;
                 await DbContext.SaveChangesAsync();
             }
         }
@@ -90,10 +104,11 @@ namespace Indice.Psd2.IdenityServer4.Features.EF
                 PrivateKey = certificate.PrivateKey,
                 Subject = subject,
                 Thumbprint = thumbprint,
+                SerialNumber = certificate.SerialNumber,
                 Data = metadata == null ? null : JsonConvert.SerializeObject(metadata),
                 IsCA = isCA,
                 Revoked = false,
-                RevokedDate = null,
+                RevocationDate = null,
                 CreatedDate = DateTime.UtcNow
             });
             await DbContext.SaveChangesAsync();

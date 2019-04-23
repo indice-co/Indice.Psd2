@@ -254,7 +254,7 @@ namespace Indice.Psd2.Cryptography
                 }
             }, critical: false);
             var crlDistributionPoints = new CRLDistributionPointsExtension(new[] {
-                new CRLDistributionPoint {  FullName = new [] { "http://{issuerDomain}/.certificates/revoked.crl" } },
+                new CRLDistributionPoint {  FullName = new [] { $"http://{issuerDomain}/.certificates/revoked.crl" } },
             }, critical: false);
             extensions.Add(psd2Extension);
             extensions.Add(crlDistributionPoints);

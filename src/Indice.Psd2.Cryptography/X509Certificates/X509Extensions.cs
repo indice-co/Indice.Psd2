@@ -164,6 +164,34 @@ namespace System.Security.Cryptography.X509Certificates
         }
 
         /// <summary>
+        /// Find the AIA descriptions.
+        /// </summary>
+        /// <param name="cert"></param>
+        /// <returns></returns>
+        public static AccessDescription[] GetAuthorityInformationAccess(this X509Certificate2 cert) {
+            var accessDescriptions = default(AccessDescription[]);
+            var extension = cert.Extensions[AuthorityInformationAccessExtension.Oid_AuthorityInformationAccess];
+            if (extension != null) {
+                accessDescriptions = new AuthorityInformationAccessExtension(extension, extension.Critical).AccessDescriptions;
+            }
+            return accessDescriptions;
+        }
+
+        /// <summary>
+        /// Find the CRL distribution points.
+        /// </summary>
+        /// <param name="cert"></param>
+        /// <returns></returns>
+        public static CRLDistributionPoint[] GetCRLDistributionPoints(this X509Certificate2 cert) {
+            var points = default(CRLDistributionPoint[]);
+            var extension = cert.Extensions[CRLDistributionPointsExtension.Oid_CRLDistributionPoints];
+            if (extension != null) {
+                points = new CRLDistributionPointsExtension(extension, extension.Critical).DistributionPoints;
+            }
+            return points;
+        }
+
+        /// <summary>
         /// Find the KeyIdentifier of the issuer certificate.
         /// </summary>
         /// <param name="cert"></param>

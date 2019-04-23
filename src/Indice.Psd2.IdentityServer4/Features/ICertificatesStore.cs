@@ -5,7 +5,7 @@ using System.Security.Cryptography.X509Certificates;
 using System.Text;
 using System.Threading.Tasks;
 
-namespace Indice.Psd2.IdenityServer4.Features
+namespace Indice.Psd2.IdentityServer4.Features
 {
     /// <summary>
     /// Certificate store used to persist the issued certificates.
@@ -41,6 +41,12 @@ namespace Indice.Psd2.IdenityServer4.Features
         /// <param name="authorityKeyId"></param>
         /// <returns></returns>
         Task<List<CertificateDetails>> GetList(DateTime? notBefore = null, bool? revoked = null, string authorityKeyId = null);
+        /// <summary>
+        /// Gets list of certificates by parameters
+        /// </summary>
+        /// <param name="notBefore"></param>
+        /// <returns></returns>
+        Task<List<RevokedCertificateDetails>> GetRevocationList(DateTime? notBefore = null);
     }
 
     /// <summary>
@@ -67,6 +73,7 @@ namespace Indice.Psd2.IdenityServer4.Features
                 EncodedCert = certBase64,
                 PrivateKey = privateBase64,
                 KeyId = keyId.ToLower(),
+                SerialNumber = certificate.SerialNumber?.ToLower(),
                 AuthorityKeyId = authkeyId?.ToLower(),
                 Algorithm = "sha256RSA"
             }, certificate.Subject, certificate.Thumbprint, metadata, isCA);

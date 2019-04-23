@@ -12,7 +12,7 @@
   </ItemGroup>
 
   <ItemGroup>
-    <ProjectReference Include="..\..\src\Indice.Psd2.IdenityServer4\Indice.Psd2.IdenityServer4.csproj" />
+    <ProjectReference Include="..\..\src\Indice.Psd2.IdentityServer4\Indice.Psd2.IdentityServer4.csproj" />
   </ItemGroup>
 
 </Project>

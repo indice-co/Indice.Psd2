@@ -2,7 +2,7 @@
 using System.Collections.Generic;
 using System.Text;
 
-namespace Indice.Psd2.IdenityServer4.Features
+namespace Indice.Psd2.IdentityServer4.Features
 {
     /// <summary>
     /// Certificate creation response.
@@ -23,6 +23,10 @@ namespace Indice.Psd2.IdenityServer4.Features
         /// </summary>
         public string KeyId { get; set; }
         /// <summary>
+        /// Serial number
+        /// </summary>
+        public string SerialNumber { get; set; }
+        /// <summary>
         /// Authority Subject Key Identifier (issuing certificate Subject Key Identifier)
         /// </summary>
         public string AuthorityKeyId { get; set; }
@@ -30,5 +34,20 @@ namespace Indice.Psd2.IdenityServer4.Features
         /// SHA256WITHRSA
         /// </summary>
         public string Algorithm { get; set; }
+    }
+
+    /// <summary>
+    /// Used to select revoked certificates
+    /// </summary>
+    public class RevokedCertificateDetails
+    {
+        /// <summary>
+        /// Serial number
+        /// </summary>
+        public string SerialNumber { get; set; }
+        /// <summary>
+        /// Indicates the revoked date.
+        /// </summary>
+        public DateTime RevocationDate { get; set; }
     }
 }

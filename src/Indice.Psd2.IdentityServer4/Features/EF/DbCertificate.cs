@@ -2,7 +2,7 @@
 using System.Collections.Generic;
 using System.Text;
 
-namespace Indice.Psd2.IdenityServer4.Features.EF
+namespace Indice.Psd2.IdentityServer4.Features.EF
 {
     /// <summary>
     /// Database spesific entity that stores an issued certificate.
@@ -21,6 +21,10 @@ namespace Indice.Psd2.IdenityServer4.Features.EF
         /// Subject Key Identifier
         /// </summary>
         public string KeyId { get; set; }
+        /// <summary>
+        /// Serial number
+        /// </summary>
+        public string SerialNumber { get; set; }
         /// <summary>
         /// Authority Subject Key Identifier (issuing certificate Subject Key Identifier)
         /// </summary>
@@ -52,10 +56,10 @@ namespace Indice.Psd2.IdenityServer4.Features.EF
         /// <summary>
         /// Indicates the creation date.
         /// </summary>
-        public DateTimeOffset CreatedDate { get; set; }
+        public DateTime CreatedDate { get; set; }
         /// <summary>
         /// Indicates the revoked date.
         /// </summary>
-        public DateTimeOffset? RevokedDate { get; set; }
+        public DateTime? RevocationDate { get; set; }
     }
 }

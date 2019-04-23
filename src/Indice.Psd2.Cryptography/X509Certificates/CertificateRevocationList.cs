@@ -288,9 +288,41 @@ namespace Indice.Psd2.Cryptography.X509Certificates
         public enum CRLReasonCode : byte
         {
             /// <summary>
+            /// Unused
+            /// </summary>
+            Unused = 0,
+            /// <summary>
+            /// Key Compromise
+            /// </summary>
+            KeyCompromise = 1,
+            /// <summary>
+            /// CACompromise
+            /// </summary>
+            CACompromise = 2,
+            /// <summary>
+            /// AffiliationChanged
+            /// </summary>
+            AffiliationChanged = 3,
+            /// <summary>
             /// Replaced by a new certificate
             /// </summary>
-            Superseded = 4
+            Superseded = 4,
+            /// <summary>
+            /// CessationOfOperation
+            /// </summary>
+            CessationOfOperation = 5,
+            /// <summary>
+            /// CertificateHold
+            /// </summary>
+            CertificateHold = 6,
+            /// <summary>
+            /// PrivilegeWithdrawn
+            /// </summary>
+            PrivilegeWithdrawn = 7,
+            /// <summary>
+            /// AACompromise
+            /// </summary>
+            AACompromise = 8
         }
 
         /// <summary>

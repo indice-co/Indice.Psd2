@@ -3,7 +3,7 @@ using System.Collections.Generic;
 using System.Text;
 using Microsoft.EntityFrameworkCore;
 
-namespace Indice.Psd2.IdenityServer4.Features.EF
+namespace Indice.Psd2.IdentityServer4.Features.EF
 {
     /// <summary>
     /// DbContext for the IdentityServer operational data.
@@ -52,6 +52,7 @@ namespace Indice.Psd2.IdenityServer4.Features.EF
             modelBuilder.HasDefaultSchema(StoreOptions.DefaultSchema ?? "certs");
             
             modelBuilder.Entity<DbCertificate>(t => {
+                t.ToTable("Cert");
                 t.HasKey(x => x.KeyId);
             });
             base.OnModelCreating(modelBuilder);

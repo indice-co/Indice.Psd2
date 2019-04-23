@@ -2,7 +2,7 @@
 using System.Collections.Generic;
 using System.Text;
 
-namespace Indice.Psd2.IdenityServer4
+namespace Indice.Psd2.IdentityServer4
 {
     internal static class Constants
     {

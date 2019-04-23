@@ -13,12 +13,12 @@ using IdentityServer4.Extensions;
 using IdentityServer4.Models;
 using IdentityServer4.Validation;
 using Indice.Psd2.Cryptography.Validation;
-using Indice.Psd2.IdenityServer4.Extensions;
+using Indice.Psd2.IdentityServer4.Extensions;
 using Microsoft.AspNetCore.Http;
 using Microsoft.Extensions.Logging;
 using Microsoft.IdentityModel.Tokens;
 
-namespace Indice.Psd2.IdenityServer4.Validation
+namespace Indice.Psd2.IdentityServer4.Validation
 {
     /// <summary>
     /// Validates a secret based on RS256 signed JWT token

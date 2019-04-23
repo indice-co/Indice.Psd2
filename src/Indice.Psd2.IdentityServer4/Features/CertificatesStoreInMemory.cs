@@ -3,7 +3,7 @@ using System.Collections.Generic;
 using System.Text;
 using System.Threading.Tasks;
 
-namespace Indice.Psd2.IdenityServer4.Features
+namespace Indice.Psd2.IdentityServer4.Features
 {
     internal class CertificatesStoreInMemory : ICertificatesStore
     {
@@ -16,6 +16,10 @@ namespace Indice.Psd2.IdenityServer4.Features
         }
 
         public Task<List<CertificateDetails>> GetList(DateTime? notBefore = null, bool? revoked = null, string authorityKeyId = null) {
+            throw new NotImplementedException();
+        }
+
+        public Task<List<RevokedCertificateDetails>> GetRevocationList(DateTime? notBefore = null) {
             throw new NotImplementedException();
         }
 

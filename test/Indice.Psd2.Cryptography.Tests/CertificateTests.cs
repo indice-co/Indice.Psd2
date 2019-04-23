@@ -10,7 +10,9 @@ using System.Threading.Tasks;
 using DerConverter.Asn;
 using DerConverter.Asn.KnownTypes;
 using IdentityModel;
+using Indice.Psd2.Cryptography.Validation;
 using Indice.Psd2.Cryptography.X509Certificates;
+using Indice.Psd2.IdentityServer4.Features;
 using Microsoft.IdentityModel.Tokens;
 using Newtonsoft.Json;
 using Xunit;
@@ -86,6 +88,31 @@ namespace Indice.Psd2.Cryptography.Tests
             var rawData = await http.GetByteArrayAsync("http://crl.pki.goog/GTSGIAG3.crl");
             var crlSeq = CertificateRevocationListSequence.Load(rawData);
             var crl = crlSeq.Extract();
+            Assert.True(true);
+        }
+
+        [Fact]
+        public async Task IssueOnlineAndValidate() {
+            var http = new HttpClient();
+            var response = await http.PostAsync("https://localhost:5001/.certificates", new StringContent(JsonConvert.SerializeObject(new Psd2CertificateRequest {
+                AuthorityId = "BOG",
+                AuthorityName = "Bank of Greece",
+                AuthorizationNumber = "X0000001",
+                City = "Athens",
+                State = "Attiki",
+                CountryCode = "GR",
+                CommonName = "www.indice.gr",
+                Organization = "Indice",
+                OrganizationUnit = "WEB",
+                Roles = new Psd2CertificateRequest.Psd2RoleFlags {
+                    Aisp = true,
+                    Pisp = true
+                }
+            }), Encoding.UTF8, "application/json"));
+            var details = JsonConvert.DeserializeObject<CertificateDetails>(await response.Content.ReadAsStringAsync());
+            var certificate = new X509Certificate2(Encoding.UTF8.GetBytes(details.EncodedCert));
+            var validator = new Psd2ClientCertificateValidator();
+            validator.Validate(certificate);
             Assert.True(true);
         }
 

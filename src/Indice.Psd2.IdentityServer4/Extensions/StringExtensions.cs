@@ -3,7 +3,7 @@ using System.Collections.Generic;
 using System.Diagnostics;
 using System.Text;
 
-namespace Indice.Psd2.IdenityServer4.Extensions
+namespace Indice.Psd2.IdentityServer4.Extensions
 {
     internal static class StringExtensions
     {
