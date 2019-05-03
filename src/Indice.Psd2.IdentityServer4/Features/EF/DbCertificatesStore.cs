@@ -122,6 +122,7 @@ namespace Indice.Psd2.IdentityServer4.Features.EF
                 EncodedCert = dbCert.EncodedCert,
                 KeyId = dbCert.KeyId,
                 PrivateKey = dbCert.PrivateKey,
+                SerialNumber = dbCert.SerialNumber
             };
         }
     }

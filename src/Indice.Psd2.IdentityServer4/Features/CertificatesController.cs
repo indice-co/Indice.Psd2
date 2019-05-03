@@ -52,7 +52,7 @@ namespace Indice.Psd2.IdentityServer4.Features
         [HttpPost]
         public async Task<IActionResult> CreateCertificate([FromBody] Psd2CertificateRequest request) {
             var cert = default(X509Certificate2);
-            var issuer = new X509Certificate2(Path.Combine(Options.Path, "ca.pfx"), Options.PfxPassphrase);
+            var issuer = new X509Certificate2(Path.Combine(Options.Path, "ca.pfx"), Options.PfxPassphrase, X509KeyStorageFlags.MachineKeySet);
 #if NETCoreApp22
             var manager = new CertificateManager();
             cert = manager.CreateQWACs(request, Options.IssuerDomain, issuer, out var privateKey);

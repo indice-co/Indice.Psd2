@@ -30,7 +30,7 @@ namespace Indice.Oba.Host
             services.AddMvc()
                     .SetCompatibilityVersion(CompatibilityVersion.Version_2_2)
                     .AddCertificateEndpoints(x => {
-                        x.IssuerDomain = "localhost:5000";
+                        x.IssuerDomain = Configuration["Certificates:Issuer"];
                         x.AddEntitiyFrameworkStore(options => {
                             options.ConfigureDbContext = (a) => {
                                 a.UseSqlServer(Configuration.GetConnectionString("CertificatesDb"));

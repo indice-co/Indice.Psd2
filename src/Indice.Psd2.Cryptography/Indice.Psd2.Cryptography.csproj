@@ -3,7 +3,7 @@
     <Description>Indice.Psd2.Cryptography Class Library</Description>
     <Copyright>Copyright (c) 2019 Indice</Copyright>
     <AssemblyTitle>Indice.Psd2.Cryptography</AssemblyTitle>
-    <VersionPrefix>1.0.2</VersionPrefix>
+    <VersionPrefix>1.0.3</VersionPrefix>
     <!--<VersionSuffix>beta1</VersionSuffix>-->
     <Authors>c.leftheris, itsenes</Authors>
     <TargetFrameworks>netcoreapp2.2;netstandard2.0</TargetFrameworks>
