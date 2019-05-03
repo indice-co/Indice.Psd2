@@ -37,7 +37,7 @@ namespace Indice.Psd2.IdentityServer4.Features
         /// <returns></returns>
         [Produces("application/x-x509-ca-cert")]
         [ProducesResponseType(statusCode: 200, type: typeof(IFormFile))]
-        [HttpGet("ca.crt")]
+        [HttpGet("ca.cer")]
         public IActionResult GetIssuerCertificate() {
             var stream = System.IO.File.OpenRead(Path.Combine(Options.Path, "ca.cer"));
             return File(stream, "application/x-x509-ca-cert", "ca.cer");
