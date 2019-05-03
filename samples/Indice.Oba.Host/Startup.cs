@@ -1,6 +1,8 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.IO;
 using System.Linq;
+using System.Reflection;
 using System.Threading.Tasks;
 using Indice.Oba.Host.Swagger;
 using Microsoft.AspNetCore.Builder;
@@ -43,6 +45,18 @@ namespace Indice.Oba.Host
                     Title = "Certificate",
                     Version = "v1"
                 });
+
+                var xmlFiles = new[] {
+                    $"{Assembly.GetEntryAssembly().GetName().Name}.xml",
+                    "Indice.Psd2.IdentityServer4.xml",
+                    "Indice.Psd2.Cryptography.xml"
+                };
+                foreach (var xmlFile in xmlFiles) {
+                    var xmlPath = Path.Combine(AppContext.BaseDirectory, xmlFile);
+                    if (File.Exists(xmlPath))
+                        x.IncludeXmlComments(xmlPath);
+                } 
+
             });
         }
 

@@ -31,6 +31,10 @@ namespace Indice.Psd2.IdentityServer4.Features
         public CertificateEndpointsOptions Options { get; }
         public ICertificatesStore Store { get; }
 
+        /// <summary>
+        /// Get issuer certificate.
+        /// </summary>
+        /// <returns></returns>
         [Produces("application/x-x509-ca-cert")]
         [ProducesResponseType(statusCode: 200, type: typeof(IFormFile))]
         [HttpGet("ca.crt")]
@@ -39,6 +43,10 @@ namespace Indice.Psd2.IdentityServer4.Features
             return File(stream, "application/x-x509-ca-cert", "ca.cer");
         }
 
+        /// <summary>
+        /// Generates an X509Certificate.
+        /// </summary>
+        /// <returns></returns>
         [Produces("application/json")]
         [ProducesResponseType(statusCode: 200, type: typeof(CertificateDetails))]
         [HttpPost]
@@ -54,6 +62,13 @@ namespace Indice.Psd2.IdentityServer4.Features
             return Ok(response);
         }
 
+        /// <summary>
+        /// Exports a certificates. 
+        /// </summary>
+        /// <param name="keyId">The subject key identifier</param>
+        /// <param name="format">The format can be any of the following file extensions *json*, *pfx*, *cer*, *crt*</param>
+        /// <param name="password">In case of selected format is that of a container chain we will also need a password (pfx). Otherwize this part is ignored</param>
+        /// <returns></returns>
         [FormatFilter]
         [Produces("application/json", "application/x-x509-user-cert", "application/pkix-cert", "application/pkcs8", "application/x-pkcs12")]
         [ProducesResponseType(statusCode: 200, type: typeof(CertificateDetails))]
@@ -70,6 +85,12 @@ namespace Indice.Psd2.IdentityServer4.Features
             return Ok(response);
         }
 
+        /// <summary>
+        /// Revoke a certificate
+        /// </summary>
+        /// <param name="keyId"></param>
+        /// <returns></returns>
+        [ApiExplorerSettings(GroupName = "cert", IgnoreApi = true )]
         [Produces("application/json")]
         [ProducesResponseType(statusCode: 204, type: typeof(void))]
         [HttpPut("{keyId}/revoke")]
@@ -79,6 +100,13 @@ namespace Indice.Psd2.IdentityServer4.Features
         }
 
 
+        /// <summary>
+        /// List all available certifcates.
+        /// </summary>
+        /// <param name="notBefore">The issued date from which to search.</param>
+        /// <param name="revoked">If true searches only for revoked</param>
+        /// <param name="authorityKeyId">The issuing certificate subject key id</param>
+        /// <returns></returns>
         [Produces("application/json")]
         [ProducesResponseType(statusCode: 200, type: typeof(List<CertificateDetails>))]
         [HttpGet]
@@ -87,6 +115,10 @@ namespace Indice.Psd2.IdentityServer4.Features
             return Ok(results);
         }
 
+        /// <summary>
+        /// Certificate revocation list. CRL
+        /// </summary>
+        /// <returns></returns>
         [Produces("application/x-pkcs7-crl")]
         [ProducesResponseType(statusCode: 200, type: typeof(IFormFile))]
         [HttpGet("revoked.crl")]

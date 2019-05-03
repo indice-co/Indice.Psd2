@@ -49,10 +49,10 @@ namespace Indice.Psd2.IdentityServer4.Features.EF
         /// then this method will not be run.
         /// </remarks>
         protected override void OnModelCreating(ModelBuilder modelBuilder) {
-            modelBuilder.HasDefaultSchema(StoreOptions.DefaultSchema ?? "certs");
+            modelBuilder.HasDefaultSchema(StoreOptions.DefaultSchema ?? "cert");
             
             modelBuilder.Entity<DbCertificate>(t => {
-                t.ToTable("Cert");
+                t.ToTable("CertificateData");
                 t.HasKey(x => x.KeyId);
             });
             base.OnModelCreating(modelBuilder);
