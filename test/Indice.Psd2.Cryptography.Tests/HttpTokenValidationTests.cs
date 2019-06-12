@@ -1,22 +1,14 @@
 ﻿using System;
 using System.Collections.Generic;
-using System.IdentityModel.Tokens.Jwt;
-using System.Linq;
-using System.Net.Http;
-using System.Security.Claims;
-using System.Security.Cryptography;
 using System.Security.Cryptography.X509Certificates;
 using System.Text;
-using System.Threading.Tasks;
-using IdentityModel;
-using Indice.Psd2.Cryptography.Validation;
+using Indice.Psd2.Cryptography.Tokens.HttpMessageSigning;
 using Microsoft.IdentityModel.Tokens;
-using Newtonsoft.Json;
 using Xunit;
 
 namespace Indice.Psd2.Cryptography.Tests
 {
-    public class JwtTokenValidationTests
+    public class HttpTokenValidationTests
     {
         private const string ValidAudience = "identity.indice.gr";
         private const string ValidIssuer = "www.indice.gr";
@@ -52,85 +44,28 @@ cIrtF3LFmXhdwJUAkgTLTZt7RYi/KKRCL0om7SEsM/QOjbWkrRl+
 ";
 
         [Fact]
-        public void JwtTokenValidationTest() {
-            Microsoft.IdentityModel.Logging.IdentityModelEventSource.ShowPII = true;
-            JwtSecurityTokenHandler.DefaultInboundClaimTypeMap.Clear();
-            // create jwt client authentication payload.
-            var claims = new[] {
-                new  Claim(JwtClaimTypes.Subject, ValidSubject),
-            };
+        public void HttpTokenValidationTest() {
             var privateKey = TEST_RSA_PrivateKey_256.ReadAsRSAKey();
             var cert = new X509Certificate2(Convert.FromBase64String(TEST_X509_PublicKey_2048));
             var securityKey = new RsaSecurityKey(privateKey);
             securityKey.KeyId = cert.GetSubjectKeyIdentifier();
-            var signInCred = new SigningCredentials(new RsaSecurityKey(privateKey), SecurityAlgorithms.RsaSha256Signature);
-            
-            var token = new JwtSecurityToken(
-                issuer: ValidIssuer,
-                audience: ValidAudience,
-                expires: DateTime.Now.AddMinutes(3),
-                claims: claims,                      
-                signingCredentials: signInCred
-            );
-            //End of custom claims
-            var jwt = new JwtSecurityTokenHandler().WriteToken(token);
-            // validate
-            SecurityToken validatedToken;
-            var validationParameters = new TokenValidationParameters();
-            validationParameters.IssuerSigningKey = new X509SecurityKey(new X509Certificate2(Convert.FromBase64String(TEST_X509_PublicKey_2048)));
-            validationParameters.ValidAudience = ValidAudience;
-            validationParameters.ValidIssuer = ValidIssuer;
-            validationParameters.ValidateIssuerSigningKey = true;
-            validationParameters.IssuerSigningKeyValidator = new Psd2IssuerSigningKeyValidator().Validate;
+            var signInCred = new SigningCredentials(securityKey, SecurityAlgorithms.RsaSha256Signature);
 
-            var principal = new JwtSecurityTokenHandler().ValidateToken(jwt, validationParameters, out validatedToken);
+            var payload = "{ \"value\": \"some payload\" }";
+            var requsetId = Guid.NewGuid().ToString();
+            var requsetDate = DateTime.Now;
 
-            Assert.Equal(ValidSubject, principal.FindFirst("sub").Value);
-        }
-    }
+            var token = new HttpSignatureSecurityToken(signInCred, requsetId, Encoding.UTF8.GetBytes(payload), requsetDate);
 
-    public class JwtTokenValidation
-    {
-        public async Task<Dictionary<string, X509Certificate2>> FetchGoogleCertificates() {
-            using (var http = new HttpClient()) {
-                var response = await http.GetAsync("https://www.googleapis.com/oauth2/v1/certs");
-                var json = await response.Content.ReadAsStringAsync();
-                var dictionary = JsonConvert.DeserializeObject<Dictionary<string, string>>(json);
-                return dictionary.ToDictionary(x => x.Key, x => new X509Certificate2(Encoding.UTF8.GetBytes(x.Value)));
-            }
-        }
+            var digestHeader = token.Digest.ToString();
+            var signatureHeader = token.Signature.ToString();
 
-        private string CLIENT_ID = "xxxx.apps.googleusercontent.com";
-
-        public async Task<ClaimsPrincipal> ValidateToken(string idToken) {
-            var certificates = await FetchGoogleCertificates();
-
-            var validationParameters = new TokenValidationParameters() {
-                ValidateActor = false, // check the profile ID
-
-                ValidateAudience = true, // check the client ID
-                ValidAudience = CLIENT_ID,
-
-                ValidateIssuer = true, // check token came from Google
-                ValidIssuers = new List<string> { "accounts.google.com", "https://accounts.google.com" },
-
-                ValidateIssuerSigningKey = true,
-                RequireSignedTokens = true,
-                IssuerSigningKeys = certificates.Values.Select(x => new X509SecurityKey(x)),
-                IssuerSigningKeyResolver = (token, securityToken, kid, parameters) => {
-                    return certificates
-                    .Where(x => x.Key.ToUpper() == kid.ToUpper())
-                    .Select(x => new X509SecurityKey(x.Value));
-                },
-                ValidateLifetime = true,
-                RequireExpirationTime = true,
-                ClockSkew = TimeSpan.FromHours(13)
-            };
-
-            var handler = new JwtSecurityTokenHandler();
-            SecurityToken validatedToken;
-            var principal = handler.ValidateToken(idToken, validationParameters, out validatedToken);
-            return principal;
+            var validationKey = new X509SecurityKey(cert);
+            var validatedToken = new HttpSignatureSecurityToken(digestHeader, signatureHeader);
+            var disgestIsValid = validatedToken.Digest.Validate(Encoding.UTF8.GetBytes(payload));
+            var signatureIsValid = validatedToken.Signature.Validate(validationKey, digestHeader, requsetId, requsetDate);
+            Assert.True(disgestIsValid);
+            Assert.True(signatureIsValid);
         }
     }
 }

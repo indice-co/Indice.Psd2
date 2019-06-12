@@ -6,6 +6,11 @@ namespace Indice.Psd2.IdentityServer4
 {
     internal static class Constants
     {
+        public static class ExtendedRoutePaths
+        {
+            public const string Totp = "totp";
+        }
+
         public static class ProtocolRoutePaths
         {
             public const string ConnectPathPrefix = "connect";
