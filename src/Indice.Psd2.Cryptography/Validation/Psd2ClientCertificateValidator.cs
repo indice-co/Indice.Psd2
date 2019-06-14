@@ -33,7 +33,7 @@ namespace Indice.Psd2.Cryptography.Validation
             }
             var psd2Attributes = certificate.GetPsd2Attributes();
             if (psd2Attributes == null) {
-                throw new Exception("This is not a valida QWAC of QCseal");
+                throw new Exception("This is not a valid QWAC or QCseal");
             }
             if (!psd2Attributes.Roles.Any()) {
                 throw new Exception("There are no roles defined in this certificate");

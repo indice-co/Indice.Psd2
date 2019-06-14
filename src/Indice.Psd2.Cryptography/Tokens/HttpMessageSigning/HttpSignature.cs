@@ -91,17 +91,21 @@ namespace Indice.Psd2.Cryptography.Tokens.HttpMessageSigning
         }
 
         private static byte[] HashAndSignBytes(byte[] DataToSign, RSAParameters Key, HashAlgorithmName hashAlgorithm) {
-            try {
-                // Create a new instance of RSACryptoServiceProvider using the 
-                // key from RSAParameters.  
-                var RSAalg = new RSACryptoServiceProvider();
-                RSAalg.ImportParameters(Key);
-                // Hash and sign the data. Pass a new instance of SHA1CryptoServiceProvider
-                // to specify the use of SHA1 for hashing.
-                return RSAalg.SignData(DataToSign, hashAlgorithm, RSASignaturePadding.Pkcs1);
-            } catch (CryptographicException e) {
-                Console.WriteLine(e.Message);
-                return null;
+            // Create a new instance of RSACryptoServiceProvider using the 
+            // key from RSAParameters.  
+            using (var RSAalg = new RSACryptoServiceProvider()) {
+                try {
+                    RSAalg.ImportParameters(Key);
+                    // Hash and sign the data. Pass a new instance of SHA1CryptoServiceProvider
+                    // to specify the use of SHA1 for hashing.
+                    return RSAalg.SignData(DataToSign, hashAlgorithm, RSASignaturePadding.Pkcs1);
+                } catch (CryptographicException e) {
+                    Console.WriteLine(e.Message);
+                    return null;
+                } finally {
+                    // Set the keycontainer to be cleared when rsa is garbage collected.
+                    RSAalg.PersistKeyInCsp = false;
+                }
             }
         }
 
