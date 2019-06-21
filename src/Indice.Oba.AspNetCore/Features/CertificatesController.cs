@@ -13,7 +13,7 @@ using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.Extensions.DependencyInjection;
 
-namespace Indice.Psd2.IdentityServer4.Features
+namespace Indice.Oba.AspNetCore.Features
 {
     /// <summary>
     /// Creates an avatar based on a given name (first and last name) plus parameters

@@ -2,7 +2,7 @@
 using System.Collections.Generic;
 using System.Text;
 
-namespace Indice.Psd2.IdentityServer4.Features.EF
+namespace Indice.Oba.AspNetCore.Features.EF
 {
     /// <summary>
     /// Database spesific entity that stores an issued certificate.

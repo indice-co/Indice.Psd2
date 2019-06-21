@@ -5,7 +5,7 @@ using System.Security.Cryptography.X509Certificates;
 using System.Text;
 using System.Threading.Tasks;
 
-namespace Indice.Psd2.IdentityServer4.Features
+namespace Indice.Oba.AspNetCore.Features
 {
     /// <summary>
     /// Certificate store used to persist the issued certificates.

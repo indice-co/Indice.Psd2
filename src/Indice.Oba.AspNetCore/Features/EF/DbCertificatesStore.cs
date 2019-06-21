@@ -6,7 +6,7 @@ using System.Threading.Tasks;
 using Microsoft.EntityFrameworkCore;
 using Newtonsoft.Json;
 
-namespace Indice.Psd2.IdentityServer4.Features.EF
+namespace Indice.Oba.AspNetCore.Features.EF
 {
     /// <summary>
     /// Entity framework implementation of <see cref="ICertificatesStore"/>

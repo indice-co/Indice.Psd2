@@ -4,8 +4,8 @@ using System.IO;
 using System.Security.Cryptography.X509Certificates;
 using System.Text;
 using Indice.Psd2.Cryptography;
-using Indice.Psd2.IdentityServer4.Features;
-using Indice.Psd2.IdentityServer4.Features.EF;
+using Indice.Oba.AspNetCore.Features;
+using Indice.Oba.AspNetCore.Features.EF;
 using Microsoft.AspNetCore.Hosting;
 
 namespace Microsoft.Extensions.DependencyInjection

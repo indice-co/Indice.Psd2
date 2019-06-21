@@ -3,7 +3,7 @@ using System.Collections.Generic;
 using System.Text;
 using Microsoft.EntityFrameworkCore;
 
-namespace Indice.Psd2.IdentityServer4.Features.EF
+namespace Indice.Oba.AspNetCore.Features.EF
 {
     /// <summary>
     /// DbContext for the IdentityServer operational data.

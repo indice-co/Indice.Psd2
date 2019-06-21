@@ -8,7 +8,7 @@ using System.Threading.Tasks;
 using Microsoft.AspNetCore.Mvc.Formatters;
 using Microsoft.Extensions.Logging;
 
-namespace Indice.Psd2.IdentityServer4.Features
+namespace Indice.Oba.AspNetCore.Features
 {
     /// <summary>
     /// <see cref="OutputFormatter"/> for convertiong <seealso cref="CertificateDetails"/> to pem format.

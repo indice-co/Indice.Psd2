@@ -34,14 +34,29 @@ namespace Indice.Psd2.Cryptography.Tokens.HttpMessageSigning
         /// <param name="createdDate"></param>
         /// <param name="expirationDate"></param>
         /// <param name="requestId"></param>
-        public HttpSignatureSecurityToken(SigningCredentials signingCredentials, string requestId, byte[] requestBody, DateTime? requestDate = null, DateTime? createdDate = null, DateTime? expirationDate = null) {
+        public HttpSignatureSecurityToken(SigningCredentials signingCredentials, byte[] requestBody, string requestId, DateTime? requestDate = null, DateTime? createdDate = null, DateTime? expirationDate = null) 
+            : this(
+                  signingCredentials, 
+                  requestBody, 
+                  new Dictionary<string, string> { ["X-Request-Id"] = requestId, ["Date"] = requestDate?.ToString("r") }, 
+                  createdDate, 
+                  expirationDate)
+            {
+        }
+
+        /// <summary>
+        /// constructs the token for sending a request with http signature.
+        /// </summary>
+        /// <param name="signingCredentials"></param>
+        /// <param name="requestBody"></param>
+        /// <param name="includedHeaders"></param>
+        /// <param name="createdDate"></param>
+        /// <param name="expirationDate"></param>
+        public HttpSignatureSecurityToken(SigningCredentials signingCredentials, byte[] requestBody, IDictionary<string, string> includedHeaders, DateTime? createdDate = null, DateTime? expirationDate = null) {
             Digest = new HttpDigest(signingCredentials.Algorithm, requestBody);
-            Signature = new HttpSignature(signingCredentials, new Dictionary<string, object> {
-                ["X-Request-Id"] = requestId,
-                ["Date"] = requestDate,
-                [HttpDigest.HTTPHeaderName] = Digest.ToString()
-            }, createdDate, expirationDate);
-            RequestId = requestId;
+            includedHeaders.Add(HttpDigest.HTTPHeaderName, Digest.ToString());
+            Signature = new HttpSignature(signingCredentials, includedHeaders, createdDate, expirationDate);
+            RequestId = includedHeaders["X-Request-Id"];
         }
 
         /// <summary>

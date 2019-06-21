@@ -48,7 +48,7 @@ namespace Indice.Oba.Host
 
                 var xmlFiles = new[] {
                     $"{Assembly.GetEntryAssembly().GetName().Name}.xml",
-                    "Indice.Psd2.IdentityServer4.xml",
+                    "Indice.Oba.AspNetCore.xml",
                     "Indice.Psd2.Cryptography.xml"
                 };
                 foreach (var xmlFile in xmlFiles) {
@@ -57,6 +57,10 @@ namespace Indice.Oba.Host
                         x.IncludeXmlComments(xmlPath);
                 } 
 
+            });
+            services.AddHttpSignatures(options => {
+                options.MapPath("/payments", "date", "digest", "x-request-id");
+                options.MapPath("/payments/execute", "date", "digest", "x-request-id");
             });
         }
 
@@ -68,15 +72,14 @@ namespace Indice.Oba.Host
                 // The default HSTS value is 30 days. You may want to change this for production scenarios, see https://aka.ms/aspnetcore-hsts.
                 app.UseHsts();
             }
-
             app.UseHttpsRedirection();
+            app.UseHttpSignatures();
             app.UseSwagger();
             app.UseSwaggerUI(x => {
                 x.RoutePrefix = "swagger/ui";
                 x.SwaggerEndpoint($"/swagger/cert/swagger.json", "cert");
             });
             app.UseMvc();
-
         }
     }
 }

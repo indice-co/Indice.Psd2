@@ -51,11 +51,12 @@ cIrtF3LFmXhdwJUAkgTLTZt7RYi/KKRCL0om7SEsM/QOjbWkrRl+
             securityKey.KeyId = cert.GetSubjectKeyIdentifier();
             var signInCred = new SigningCredentials(securityKey, SecurityAlgorithms.RsaSha256Signature);
 
-            var payload = "{ \"value\": \"some payload\" }";
-            var requsetId = Guid.NewGuid().ToString();
-            var requsetDate = DateTime.Now;
+            var payload = @"{""amount"":123.9,""date"":""2019-06-21T12:05:40.111Z""}";
+            //"{ \"value\": \"some payload\" }";
+            var requsetId = "ed67e7c4-9985-45a9-8f1c-7ce7d9c007fe";//Guid.NewGuid().ToString();
+            var requsetDate = new DateTime?(); //DateTime.Now;
 
-            var token = new HttpSignatureSecurityToken(signInCred, requsetId, Encoding.UTF8.GetBytes(payload), requsetDate);
+            var token = new HttpSignatureSecurityToken(signInCred, Encoding.UTF8.GetBytes(payload), requsetId, requsetDate);
 
             var digestHeader = token.Digest.ToString();
             var signatureHeader = token.Signature.ToString();

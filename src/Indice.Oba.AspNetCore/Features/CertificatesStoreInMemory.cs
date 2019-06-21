@@ -3,7 +3,7 @@ using System.Collections.Generic;
 using System.Text;
 using System.Threading.Tasks;
 
-namespace Indice.Psd2.IdentityServer4.Features
+namespace Indice.Oba.AspNetCore.Features
 {
     internal class CertificatesStoreInMemory : ICertificatesStore
     {

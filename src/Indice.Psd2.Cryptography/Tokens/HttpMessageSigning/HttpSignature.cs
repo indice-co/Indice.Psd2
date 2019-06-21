@@ -52,7 +52,7 @@ namespace Indice.Psd2.Cryptography.Tokens.HttpMessageSigning
         /// <param name="headerKeyValuesToSign">The signing string contains several headers depending on which API you are using. The order is not important as long as you define them in the same order in the signature header.</param>
         /// <param name="createdDate">Date to use on the created component. Usefull if the requestDate is missing from the http headers</param>
         /// <param name="expirationDate">Expiration date</param>
-        public HttpSignature(SigningCredentials signingCredentials, IDictionary<string, object> headerKeyValuesToSign, DateTime? createdDate = null, DateTime? expirationDate = null)
+        public HttpSignature(SigningCredentials signingCredentials, IDictionary<string, string> headerKeyValuesToSign, DateTime? createdDate = null, DateTime? expirationDate = null)
             : base(StringComparer.OrdinalIgnoreCase) {
             if (signingCredentials == null) {
                 this[HttpSignatureParameterNames.Algorithm] = SecurityAlgorithms.None;
@@ -76,7 +76,7 @@ namespace Indice.Psd2.Cryptography.Tokens.HttpMessageSigning
                 } else if (signingCredentials.Key is RsaSecurityKey rsaKey) {
                     this[HttpSignatureParameterNames.Signature] = Convert.ToBase64String(HashAndSignBytes(Encoding.UTF8.GetBytes(message), rsaKey.Parameters, hashingAlgorithm));
                 }
-                Headers = headerKeyValuesToSign.Where(x => x.Value != null).Select(x => x.Key.ToLowerInvariant()).ToArray();
+                Headers = new HashSet<string>(headerKeyValuesToSign.Where(x => x.Value != null).Select(x => x.Key.ToLowerInvariant()));
                 if (headerKeyValuesToSign.TryGetValue("Date", out var value)) {
                     Created = GetDate(value);
                 }
@@ -144,9 +144,9 @@ namespace Indice.Psd2.Cryptography.Tokens.HttpMessageSigning
         /// the HTTP header field-value pairs are concatenated together during
         /// signing.
         /// </summary>
-        public string[] Headers {
-            get => GetSafeComponent(HttpSignatureParameterNames.Headers).Split(' ');
-            set => this[HttpSignatureParameterNames.Headers] = string.Join(" ", (value ?? new string[0]));
+        public HashSet<string> Headers {
+            get => new HashSet<string>(GetSafeComponent(HttpSignatureParameterNames.Headers).Split(' '), StringComparer.OrdinalIgnoreCase);
+            set => this[HttpSignatureParameterNames.Headers] = string.Join(" ", (value ?? new HashSet<string>()));
         }
 
         /// <summary>
@@ -290,25 +290,37 @@ namespace Indice.Psd2.Cryptography.Tokens.HttpMessageSigning
         /// <param name="digest"></param>
         /// <param name="requestId"></param>
         /// <param name="requestDate"></param>
+        /// <param name="extraHeaderKeyValues">extra parameters to include</param>
         /// <returns></returns>
-        public bool Validate(SecurityKey key, string digest, string requestId, DateTime? requestDate = null) {
-            return Validate(key, new Dictionary<string, object> {
+        public bool Validate(SecurityKey key, string digest, string requestId, DateTime? requestDate = null, IDictionary<string, string> extraHeaderKeyValues = null) {
+            var headers = new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase) {
                 ["X-Request-Id"] = requestId,
-                ["Date"] = requestDate,
+                ["Date"] = requestDate?.ToString("r"),
                 [HttpDigest.HTTPHeaderName] = digest
-            });
+            };
+            if (extraHeaderKeyValues != null) {
+                foreach (var item  in extraHeaderKeyValues) {
+                    if (headers.ContainsKey(item.Key)) {
+                        headers[item.Key] = item.Value;
+                    } else {
+                        headers.Add(item.Key, item.Value);
+                    }
+                }
+            }
+            return Validate(key, headers);
         }
 
         /// <summary>
         /// Validate the signature against the requested payload.
         /// </summary>
         /// <param name="key">The public key</param>
-        /// <param name="headerKeyValuesToValidate"></param>
+        /// <param name="headers"></param>
         /// <returns></returns>
-        public bool Validate(SecurityKey key, IDictionary<string, object> headerKeyValuesToValidate) {
+        public bool Validate(SecurityKey key, IDictionary<string, string> headers) {
             var cryptoProviderFactory = key.CryptoProviderFactory;
             var signatureProvider = cryptoProviderFactory.CreateForVerifying(key, InboundAlgorithmMap[Algorithm]);
-            var message = GenerateMessage(headerKeyValuesToValidate);
+            var headersToValidate = Headers.Select(x => new KeyValuePair<string, string>(x, headers[x]));
+            var message = GenerateMessage(headersToValidate);
             try {
                 return signatureProvider.Verify(Encoding.UTF8.GetBytes(message), Convert.FromBase64String(Signature));
             } finally {
@@ -316,7 +328,7 @@ namespace Indice.Psd2.Cryptography.Tokens.HttpMessageSigning
             }
         }
 
-        private static string GenerateMessage(IDictionary<string, object> headerKeyValues) {
+        private static string GenerateMessage(IEnumerable<KeyValuePair<string, string>> headerKeyValues) {
             var message = string.Join("\n", headerKeyValues.Where(x => x.Value != null).Select(x => $"{x.Key.ToLowerInvariant()}: {SerializeComponent(x.Value)}"));
             return message;
         }

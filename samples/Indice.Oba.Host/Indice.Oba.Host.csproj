@@ -15,6 +15,7 @@
   </ItemGroup>
 
   <ItemGroup>
+    <ProjectReference Include="..\..\src\Indice.Oba.AspNetCore\Indice.Oba.AspNetCore.csproj" />
     <ProjectReference Include="..\..\src\Indice.Psd2.IdentityServer4\Indice.Psd2.IdentityServer4.csproj" />
   </ItemGroup>
 
