@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.IO;
 using System.Linq;
 using System.Reflection;
+using System.Security.Cryptography.X509Certificates;
 using System.Threading.Tasks;
 using Indice.Oba.Host.Swagger;
 using Microsoft.AspNetCore.Builder;
@@ -19,11 +20,13 @@ namespace Indice.Oba.Host
 {
     public class Startup
     {
-        public Startup(IConfiguration configuration) {
+        public Startup(IConfiguration configuration, IHostingEnvironment env) {
             Configuration = configuration;
+            Environment = env;
         }
 
         public IConfiguration Configuration { get; }
+        public IHostingEnvironment Environment { get; }
 
         // This method gets called by the runtime. Use this method to add services to the container.
         public void ConfigureServices(IServiceCollection services) {
@@ -58,10 +61,13 @@ namespace Indice.Oba.Host
                 } 
 
             });
+
+            var httpSignatureCertificate = new X509Certificate2(Path.Combine(Environment.ContentRootPath, "test.pfx"), Configuration["HttpSignatures:PfxPass"], X509KeyStorageFlags.MachineKeySet);
             services.AddHttpSignatures(options => {
-                options.MapPath("/payments", "date", "digest", "x-request-id");
-                options.MapPath("/payments/execute", "date", "digest", "x-request-id");
-            });
+                options.MapPath("/payments", "(request target)", "date", "digest", "x-response-id");
+                options.MapPath("/payments/execute", "(request target)", "date", "digest", "x-response-id");
+                //options.ResponseSigning = false;
+            }).AddSigningCredential(httpSignatureCertificate);
         }
 
         // This method gets called by the runtime. Use this method to configure the HTTP request pipeline.

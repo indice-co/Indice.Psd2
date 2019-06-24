@@ -13,6 +13,7 @@ using Microsoft.AspNetCore.Mvc;
 using Microsoft.Extensions.Logging;
 using Microsoft.IdentityModel.Tokens;
 using Newtonsoft.Json;
+using Microsoft.Extensions.DependencyInjection;
 
 namespace Indice.Oba.AspNetCore.Middleware
 {
@@ -43,19 +44,20 @@ namespace Indice.Oba.AspNetCore.Middleware
         /// <param name="logger"></param>
         /// <returns></returns>
         public async Task Invoke(HttpContext httpContext, ILogger<HttpSignatureMiddleware> logger) {
-            var check = _options.TryMatch(httpContext.Request.Path, out var headerNames);
-            if (check && httpContext.Request.Headers.ContainsKey(_options.SignatureHeaderName)) {
-                var rawSignature = httpContext.Request.Headers[_options.SignatureHeaderName];
-                var rawDigest = httpContext.Request.Headers[_options.DigestHeaderName];
-                var rawCertificate = httpContext.Request.Headers[_options.SignatureCertificateHeaderName];
+            var headerNames = new List<string>();
+            var check =  _options.RequestValidation && _options.TryMatch(httpContext.Request.Path, out headerNames);
+            if (check && httpContext.Request.Headers.ContainsKey(HttpSignature.HTTPHeaderName)) {
+                var rawSignature = httpContext.Request.Headers[HttpSignature.HTTPHeaderName];
+                var rawDigest = httpContext.Request.Headers[HttpDigest.HTTPHeaderName];
+                var rawCertificate = httpContext.Request.Headers[_options.RequestSignatureCertificateHeaderName];
                 
                 if (!string.IsNullOrWhiteSpace(rawSignature) && string.IsNullOrWhiteSpace(rawCertificate)) {
-                    var error = $"Missing certificate in http header '{_options.SignatureCertificateHeaderName}'. Cannot validate signature.";
+                    var error = $"Missing certificate in http header '{_options.RequestSignatureCertificateHeaderName}'. Cannot validate signature.";
                     await WriteErrorResponse(httpContext, logger, HttpStatusCode.BadRequest, error);
                     return;
                 }
                 if (!string.IsNullOrWhiteSpace(rawSignature) && string.IsNullOrWhiteSpace(rawDigest)) {
-                    var error = $"Missing digest in http header '{_options.DigestHeaderName}'. Cannot validate signature.";
+                    var error = $"Missing digest in http header '{HttpDigest.HTTPHeaderName}'. Cannot validate signature.";
                     await WriteErrorResponse(httpContext, logger, HttpStatusCode.BadRequest, error);
                     return;
                 }
@@ -89,7 +91,7 @@ namespace Indice.Oba.AspNetCore.Middleware
                     await WriteErrorResponse(httpContext, logger, HttpStatusCode.Unauthorized, error);
                     return;
                 }
-                var signatureIsValid = validatedToken.Signature.Validate(validationKey, httpContext.Request.Headers);
+                var signatureIsValid = validatedToken.Signature.Validate(validationKey, httpContext.Request);
                 if (!signatureIsValid) {
                     var error = $"signature validation failed.";
                     await WriteErrorResponse(httpContext, logger, HttpStatusCode.Unauthorized, error);
@@ -98,9 +100,52 @@ namespace Indice.Oba.AspNetCore.Middleware
                 logger.LogInformation("Signature validated successfuly for path: '{0} {1}'", httpContext.Request.Method, httpContext.Request.Path);
                 // Call the next middleware delegate in the pipeline 
             }
-            await _next.Invoke(httpContext);
-            if (check) {
-                // polulate the response.
+
+            if (check && _options.ResponseSigning == true) {
+                using (var responseMemory = new MemoryStream()) {
+                    var originalStream = httpContext.Response.Body;
+                    httpContext.Response.Body = responseMemory;
+                    await _next.Invoke(httpContext);
+
+
+                    responseMemory.Seek(0, SeekOrigin.Begin);
+                    var content = responseMemory.ToArray();
+                    responseMemory.Seek(0, SeekOrigin.Begin);
+
+
+                    // Apply logic here for deciding which headers to add
+                    var signingCredentialsStore = httpContext.RequestServices.GetService<IHttpSigningCredentialsStore>();
+                    var validationKeysStore = httpContext.RequestServices.GetService<IHttpValidationKeysStore>(); 
+                    var signingCredentials = await signingCredentialsStore.GetSigningCredentialsAsync();
+                    var validationKeys = await validationKeysStore.GetValidationKeysAsync();
+                    var validationKey = validationKeys.First() as X509SecurityKey;
+                    var includedHeaders = new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase) {
+                        [HttpRequestTarget.HeaderName] = new HttpRequestTarget(httpContext.Request.Method, httpContext.Request.Path).ToString(),
+                        [HttpDigest.HTTPHeaderName] = new HttpDigest(signingCredentials.Algorithm, content).ToString(),
+                        ["Date"] = DateTime.UtcNow.ToString("r"),
+                        [_options.ResponseIdHeaderName] = Guid.NewGuid().ToString()
+                    };
+                    foreach (var name in headerNames) {
+                        if (httpContext.Response.Headers.ContainsKey(name)) {
+                            if (includedHeaders.ContainsKey(name)) {
+                                includedHeaders[name] = httpContext.Response.Headers[name];
+                            } else {
+                                includedHeaders.Add(name, httpContext.Response.Headers[name]);
+                            }
+                        } else if (name != HttpRequestTarget.HeaderName && includedHeaders.ContainsKey(name)) {
+                            httpContext.Response.Headers.Add(name, includedHeaders[name]);
+                        }
+                    }
+                    var signature = new HttpSignature(signingCredentials, includedHeaders, DateTime.UtcNow, null);
+                    httpContext.Response.Headers.Add(HttpSignature.HTTPHeaderName, signature.ToString());
+                    httpContext.Response.Headers.Add(_options.ResponseSignatureCertificateHeaderName, Convert.ToBase64String(validationKey.Certificate.Export(X509ContentType.Cert)));
+
+                    // go on with life
+                    await responseMemory.CopyToAsync(originalStream);
+                    httpContext.Response.Body = originalStream;
+                }
+            } else {
+                await _next.Invoke(httpContext);
             }
         }
 

@@ -30,8 +30,7 @@
     <PackageReference Include="Microsoft.AspNetCore.Http.Abstractions" Version="2.2.0" />
     <PackageReference Include="Microsoft.AspNetCore.Mvc" Version="2.2.0" />
     <PackageReference Include="Microsoft.EntityFrameworkCore.SqlServer" Version="2.2.0" />
-    <PackageReference Include="IdentityServer4" Version="2.4.0" />
-    <PackageReference Include="Indice.Psd2.Cryptography" Version="1.0.4" />
+    <PackageReference Include="Indice.Psd2.Cryptography" Version="1.0.5" />
   </ItemGroup>
 
   <ItemGroup>

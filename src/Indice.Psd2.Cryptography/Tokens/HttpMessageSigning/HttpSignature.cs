@@ -75,6 +75,8 @@ namespace Indice.Psd2.Cryptography.Tokens.HttpMessageSigning
                     }
                 } else if (signingCredentials.Key is RsaSecurityKey rsaKey) {
                     this[HttpSignatureParameterNames.Signature] = Convert.ToBase64String(HashAndSignBytes(Encoding.UTF8.GetBytes(message), rsaKey.Parameters, hashingAlgorithm));
+                } else if (signingCredentials.Key is X509SecurityKey x509Key) {
+                    this[HttpSignatureParameterNames.Signature] = Convert.ToBase64String(HashAndSignBytes(Encoding.UTF8.GetBytes(message), (RSACng)x509Key.PrivateKey, hashingAlgorithm));
                 }
                 Headers = new HashSet<string>(headerKeyValuesToSign.Where(x => x.Value != null).Select(x => x.Key.ToLowerInvariant()));
                 if (headerKeyValuesToSign.TryGetValue("Date", out var value)) {
@@ -88,6 +90,20 @@ namespace Indice.Psd2.Cryptography.Tokens.HttpMessageSigning
                 }
             }
             SigningCredentials = signingCredentials;
+        }
+
+        private static byte[] HashAndSignBytes(byte[] DataToSign, RSACng RSAalg, HashAlgorithmName hashAlgorithm) {
+            // Create a new instance of RSACryptoServiceProvider using the 
+            // key from RSAParameters.  
+            
+                try {
+                    // Hash and sign the data. Pass a new instance of SHA1CryptoServiceProvider
+                    // to specify the use of SHA1 for hashing.
+                    return RSAalg.SignData(DataToSign, hashAlgorithm, RSASignaturePadding.Pkcs1);
+                } catch (CryptographicException e) {
+                    Console.WriteLine(e.Message);
+                    return null;
+                }
         }
 
         private static byte[] HashAndSignBytes(byte[] DataToSign, RSAParameters Key, HashAlgorithmName hashAlgorithm) {

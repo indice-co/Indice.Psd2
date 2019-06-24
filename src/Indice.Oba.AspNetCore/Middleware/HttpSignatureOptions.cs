@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Security.Cryptography.X509Certificates;
 using System.Text;
 using Indice.Psd2.Cryptography.Tokens.HttpMessageSigning;
 using Microsoft.AspNetCore.Http;
@@ -20,17 +21,27 @@ namespace Indice.Oba.AspNetCore.Middleware
         /// <summary>
         /// The header name where the certificate used for signing the request will reside, in base64 encoding.  This header will be present in the request object if a signature is contained.
         /// </summary>
-        public string SignatureCertificateHeaderName { get; set; } = "TTP-Signature-Certificate";
+        public string RequestSignatureCertificateHeaderName { get; set; } = "TTP-Signature-Certificate";
 
         /// <summary>
-        /// The header name where the signature of the request will reside.
+        /// The header name where the certificate used for validating the response will reside, in base64 encoding.  This header will be present in the request object if a signature is contained.
         /// </summary>
-        public string DigestHeaderName { get; set; } = HttpDigest.HTTPHeaderName;
+        public string ResponseSignatureCertificateHeaderName { get; set; } = "ASPSP-Signature-Certificate";
+        
+        /// <summary>
+        /// The header name where the Response Id will be populated.  This is usualy a GUID.
+        /// </summary>
+        public string ResponseIdHeaderName { get; set; } = "X-Response-Id";
 
         /// <summary>
-        /// The header name where the signature of the request will reside.
+        /// Enalbes request validation
         /// </summary>
-        public string SignatureHeaderName { get; set; } = HttpSignature.HTTPHeaderName;
+        public bool RequestValidation { get; set; } = true;
+
+        /// <summary>
+        /// Enalbes response signing.
+        /// </summary>
+        public bool? ResponseSigning { get; set; }
 
         /// <summary>
         /// Adds a new map entry to the dictionary of mappings. This will be picked up by the <see cref="HttpSignatureMiddleware"/> 

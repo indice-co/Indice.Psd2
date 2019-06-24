@@ -31,14 +31,15 @@ namespace Indice.Psd2.Cryptography.Tokens.HttpMessageSigning
         /// <param name="requestBody"></param>
         /// <param name="signingCredentials"></param>
         /// <param name="requestDate"></param>
+        /// <param name="requestTarget"></param>
         /// <param name="createdDate"></param>
         /// <param name="expirationDate"></param>
         /// <param name="requestId"></param>
-        public HttpSignatureSecurityToken(SigningCredentials signingCredentials, byte[] requestBody, string requestId, DateTime? requestDate = null, DateTime? createdDate = null, DateTime? expirationDate = null) 
+        public HttpSignatureSecurityToken(SigningCredentials signingCredentials, byte[] requestBody, string requestId, DateTime? requestDate = null, HttpRequestTarget requestTarget = null, DateTime? createdDate = null, DateTime? expirationDate = null) 
             : this(
                   signingCredentials, 
                   requestBody, 
-                  new Dictionary<string, string> { ["X-Request-Id"] = requestId, ["Date"] = requestDate?.ToString("r") }, 
+                  new Dictionary<string, string> { ["X-Request-Id"] = requestId, ["Date"] = requestDate?.ToString("r"), [HttpRequestTarget.HeaderName] = requestTarget?.ToString()  }, 
                   createdDate, 
                   expirationDate)
             {
