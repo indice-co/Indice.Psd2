@@ -19,7 +19,7 @@ namespace Indice.Psd2.Cryptography.Tokens.HttpMessageSigning
         /// <summary>
         /// provides a mapping for the 'algorithm' value so that values are within the Http Signature namespace.
         /// </summary>
-        private readonly IDictionary<string, string> OutboundAlgorithmMap = new Dictionary<string, string>() {
+        private readonly IDictionary<string, string> OutboundAlgorithmMap = new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase) {
             [HashAlgorithmName.MD5.Name] = "md5",
             [HashAlgorithmName.SHA1.Name] = "sha-1",
             [HashAlgorithmName.SHA256.Name] = "sha-256",
@@ -35,7 +35,7 @@ namespace Indice.Psd2.Cryptography.Tokens.HttpMessageSigning
         /// <summary>
         /// provides a mapping for the 'algorithm' value so that values are within the Http Signature namespace.
         /// </summary>
-        private readonly IDictionary<string, string> InboundAlgorithmMap = new Dictionary<string, string>() {
+        private readonly IDictionary<string, string> InboundAlgorithmMap = new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase) {
             ["md5"] = HashAlgorithmName.MD5.Name,
             ["sha-1"] = HashAlgorithmName.SHA1.Name,
             ["sha-256"] = HashAlgorithmName.SHA256.Name,
@@ -107,6 +107,9 @@ namespace Indice.Psd2.Cryptography.Tokens.HttpMessageSigning
         /// <returns></returns>
         public static HttpDigest Parse(string headerValue) {
             var equalsSignPosition = headerValue.IndexOf('='); // do not use split because base64 uses the equals sign.
+            if (equalsSignPosition < 0) {
+                throw new FormatException($"Cannot parse HttpDigest from raw value {headerValue}");
+            }
             var digest = new HttpDigest {
                 Algorithm = headerValue.Substring(0, equalsSignPosition),
                 Output = headerValue.Substring(equalsSignPosition + 1),

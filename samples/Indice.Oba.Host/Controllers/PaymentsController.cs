@@ -2,8 +2,10 @@
 using System.Collections.Concurrent;
 using System.Collections.Generic;
 using System.Linq;
+using System.Net.Http;
 using System.Threading.Tasks;
 using Indice.Oba.Host.Models;
+using Indice.Psd2.Cryptography.Tokens.HttpMessageSigning;
 using Microsoft.AspNetCore.Mvc;
 
 namespace Indice.Oba.Host.Controllers
@@ -52,6 +54,19 @@ namespace Indice.Oba.Host.Controllers
             [FromHeader(Name = "TTP-Signature-Certificate")] string cert,
             [FromQuery]string status = null) {
             return Ok(Payments.Values.Where(x => status == null || x.Status.Equals(status, StringComparison.OrdinalIgnoreCase)).ToList());
+        }
+
+        [HttpPost("test-client")]
+        [ProducesResponseType(204, Type = typeof(void))]
+        public IActionResult TestClient(
+            [FromHeader(Name = "X-Request-Id")] string requestId,
+            [FromHeader(Name = "Digest")] string digest,
+            [FromHeader(Name = "Signature")] string signature,
+            [FromHeader(Name = "TTP-Signature-Certificate")] string cert) {
+
+            //var httpClient = new HttpClient(new HttpSignatureDelegatingHandler());
+            
+            return NoContent();
         }
     }
 }

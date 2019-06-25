@@ -23,7 +23,7 @@ namespace Indice.Psd2.Cryptography.Tokens.HttpMessageSigning
         /// <summary>
         /// provides a mapping for the 'algorithm' value so that values are within the Http Signature namespace.
         /// </summary>
-        private readonly IDictionary<string, string> OutboundAlgorithmMap = new Dictionary<string, string>() {
+        private readonly IDictionary<string, string> OutboundAlgorithmMap = new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase) {
             [SecurityAlgorithms.RsaSha256Signature] = "rsa-sha256",
             [SecurityAlgorithms.RsaSha512Signature] = "rsa-sha512",
         };
@@ -31,7 +31,7 @@ namespace Indice.Psd2.Cryptography.Tokens.HttpMessageSigning
         /// <summary>
         /// provides a mapping for the 'algorithm' value so that values are within the Http Signature namespace.
         /// </summary>
-        private readonly IDictionary<string, string> InboundAlgorithmMap = new Dictionary<string, string>() {
+        private readonly IDictionary<string, string> InboundAlgorithmMap = new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase) {
             ["rsa-sha256"] = SecurityAlgorithms.RsaSha256Signature,
             ["rsa-sha512"] = SecurityAlgorithms.RsaSha512Signature,
         };
@@ -285,10 +285,16 @@ namespace Indice.Psd2.Cryptography.Tokens.HttpMessageSigning
         /// <param name="headerValue"></param>
         /// <returns></returns>
         public static HttpSignature Parse(string headerValue) {
-            var components = headerValue.Split(',').Select(x => new {
-                EqualsSignPosition = x.Trim().IndexOf('='),
-                Value = x.Trim()
-            }).ToDictionary(x => x.Value.Substring(0, x.EqualsSignPosition), x => x.Value.Substring(x.EqualsSignPosition + 1).Trim('"'));
+
+            var components = default(Dictionary<string, string>);
+            try {
+                components = headerValue.Split(',').Select(x => new {
+                    EqualsSignPosition = x.Trim().IndexOf('='),
+                    Value = x.Trim()
+                }).ToDictionary(x => x.Value.Substring(0, x.EqualsSignPosition), x => x.Value.Substring(x.EqualsSignPosition + 1).Trim('"'));
+            } catch {
+                throw new FormatException($"Cannot parse HttpSignature from raw value {headerValue}");
+            }
             var signature = new HttpSignature();
             foreach (var item in components) {
                 if (signature.ContainsKey(item.Key)) 
@@ -330,19 +336,41 @@ namespace Indice.Psd2.Cryptography.Tokens.HttpMessageSigning
         /// Validate the signature against the requested payload.
         /// </summary>
         /// <param name="key">The public key</param>
+        /// <param name="requestUri"></param>
+        /// <param name="requestMethod"></param>
+        /// <param name="responseHeaders"></param>
+        /// <returns></returns>
+        public bool Validate(SecurityKey key, Uri requestUri, string requestMethod, IEnumerable<KeyValuePair<string, IEnumerable<string>>> responseHeaders) {
+            var headers = responseHeaders.ToDictionary(x => x.Key, x => x.Value.FirstOrDefault());
+            var rawTarget = requestUri.PathAndQuery;
+            headers.Add(HttpRequestTarget.HeaderName, new HttpRequestTarget(requestMethod, rawTarget).ToString());
+            return Validate(key, headers);
+        }
+
+        /// <summary>
+        /// Validate the signature against the requested payload.
+        /// </summary>
+        /// <param name="key">The public key</param>
         /// <param name="headers"></param>
         /// <returns></returns>
         public bool Validate(SecurityKey key, IDictionary<string, string> headers) {
             var cryptoProviderFactory = key.CryptoProviderFactory;
             var signatureProvider = cryptoProviderFactory.CreateForVerifying(key, InboundAlgorithmMap[Algorithm]);
-            var headersToValidate = Headers.Select(x => new KeyValuePair<string, string>(x, headers[x]));
-            var message = GenerateMessage(headersToValidate);
             try {
+                var headersToValidate = Headers.Select(x => new KeyValuePair<string, string>(x, headers[x]));
+                var message = GenerateMessage(headersToValidate);
+
                 return signatureProvider.Verify(Encoding.UTF8.GetBytes(message), Convert.FromBase64String(Signature));
+            } catch (KeyNotFoundException) {
+                // a header is missing from the list. 
+                // Although defined in the Signature header names 
+                // it is not present in the header values.
+                return false;
             } finally {
                 cryptoProviderFactory.ReleaseSignatureProvider(signatureProvider);
             }
         }
+
 
         private static string GenerateMessage(IEnumerable<KeyValuePair<string, string>> headerKeyValues) {
             var message = string.Join("\n", headerKeyValues.Where(x => x.Value != null).Select(x => $"{x.Key.ToLowerInvariant()}: {SerializeComponent(x.Value)}"));

@@ -74,9 +74,6 @@ namespace Indice.Oba.AspNetCore.Middleware
 
                 var requestBody = new byte[0];
                 switch (httpContext.Request.Method) {
-                    case "GET":
-                        requestBody = Encoding.UTF8.GetBytes(httpContext.Request.QueryString.ToString());
-                        break;
                     case "POST":
                     case "PUT":
                         requestBody = await GetRequestBody(httpContext.Request);
