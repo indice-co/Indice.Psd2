@@ -34,7 +34,7 @@ namespace Indice.Oba.AspNetCore.Middleware
         public string ResponseIdHeaderName { get; set; } = "X-Response-Id";
 
         /// <summary>
-        /// Enalbes request validation
+        /// Enables request validation
         /// </summary>
         public bool RequestValidation { get; set; } = true;
 

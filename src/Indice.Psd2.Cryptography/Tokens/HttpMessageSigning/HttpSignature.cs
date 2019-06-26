@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Diagnostics;
 using System.Globalization;
 using System.Linq;
 using System.Security.Cryptography;
@@ -26,6 +27,9 @@ namespace Indice.Psd2.Cryptography.Tokens.HttpMessageSigning
         private readonly IDictionary<string, string> OutboundAlgorithmMap = new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase) {
             [SecurityAlgorithms.RsaSha256Signature] = "rsa-sha256",
             [SecurityAlgorithms.RsaSha512Signature] = "rsa-sha512",
+            [SecurityAlgorithms.RsaSha256] = "rsa-sha256",
+            [SecurityAlgorithms.RsaSha384] = "rsa-sha384",
+            [SecurityAlgorithms.RsaSha512] = "rsa-sha512",
         };
 
         /// <summary>
@@ -33,7 +37,8 @@ namespace Indice.Psd2.Cryptography.Tokens.HttpMessageSigning
         /// </summary>
         private readonly IDictionary<string, string> InboundAlgorithmMap = new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase) {
             ["rsa-sha256"] = SecurityAlgorithms.RsaSha256Signature,
-            ["rsa-sha512"] = SecurityAlgorithms.RsaSha512Signature,
+            ["rsa-sha384"] = SecurityAlgorithms.RsaSha384Signature,
+            ["rsa-sha512"] = SecurityAlgorithms.RsaSha512Signature
         };
 
         /// <summary>
@@ -341,9 +346,12 @@ namespace Indice.Psd2.Cryptography.Tokens.HttpMessageSigning
         /// <param name="responseHeaders"></param>
         /// <returns></returns>
         public bool Validate(SecurityKey key, Uri requestUri, string requestMethod, IEnumerable<KeyValuePair<string, IEnumerable<string>>> responseHeaders) {
-            var headers = responseHeaders.ToDictionary(x => x.Key, x => x.Value.FirstOrDefault());
+            var headers = responseHeaders.ToDictionary(x => x.Key, x => x.Value.FirstOrDefault(), StringComparer.OrdinalIgnoreCase);
             var rawTarget = requestUri.PathAndQuery;
             headers.Add(HttpRequestTarget.HeaderName, new HttpRequestTarget(requestMethod, rawTarget).ToString());
+            foreach (var h in headers) { 
+                Debug.WriteLine($"Chania Bank: {h.Key}: {h.Value}");
+            }
             return Validate(key, headers);
         }
 
@@ -359,7 +367,6 @@ namespace Indice.Psd2.Cryptography.Tokens.HttpMessageSigning
             try {
                 var headersToValidate = Headers.Select(x => new KeyValuePair<string, string>(x, headers[x]));
                 var message = GenerateMessage(headersToValidate);
-
                 return signatureProvider.Verify(Encoding.UTF8.GetBytes(message), Convert.FromBase64String(Signature));
             } catch (KeyNotFoundException) {
                 // a header is missing from the list. 

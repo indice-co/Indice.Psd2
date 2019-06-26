@@ -1,11 +1,9 @@
 ﻿using System;
 using System.Collections.Generic;
-using System.IO;
+using System.Diagnostics;
 using System.Linq;
 using System.Net.Http;
-using System.Net.Http.Headers;
 using System.Security.Cryptography.X509Certificates;
-using System.Text;
 using System.Threading;
 using System.Threading.Tasks;
 using Microsoft.IdentityModel.Tokens;
@@ -26,7 +24,7 @@ namespace Indice.Psd2.Cryptography.Tokens.HttpMessageSigning
         /// The header name where the certificate used for validating the response will reside, in base64 encoding.  This header will be present in the request object if a signature is contained.
         /// </summary>
         public static string ResponseSignatureCertificateHeaderName = "ASPSP-Signature-Certificate";
-        
+
         /// <summary>
         /// Signing credentials used to sign outgoing requests.
         /// </summary>
@@ -40,19 +38,15 @@ namespace Indice.Psd2.Cryptography.Tokens.HttpMessageSigning
         /// <summary>
         ///  Creates a new instance of the <see cref="HttpSignatureDelegatingHandler"/> class.
         /// </summary>
-        public HttpSignatureDelegatingHandler(SigningCredentials credential, IEnumerable<string> headerNames) : base() {
-            Credential = credential;
-            HeaderNames = headerNames.ToArray();
-        }
+        public HttpSignatureDelegatingHandler(SigningCredentials credential, IEnumerable<string> headerNames) : this(credential, headerNames, null) { }
 
         /// <summary>
-        /// Creates a new instance of the <see cref="HttpSignatureDelegatingHandler"/> class with a
-        /// specific inner handler.
+        /// Creates a new instance of the <see cref="HttpSignatureDelegatingHandler"/> class with a specific inner handler.
         /// </summary>
         /// <param name="credential">Signing credentials used to sign outgoing requests.</param>
         /// <param name="headerNames">Header names to include in the <see cref="HttpSignature"/></param>
         /// <param name="innerHandler">The inner handler which is responsible for processing the HTTP response messages.</param>
-        public HttpSignatureDelegatingHandler(SigningCredentials credential, IEnumerable<string> headerNames, HttpMessageHandler innerHandler) : base (innerHandler) {
+        public HttpSignatureDelegatingHandler(SigningCredentials credential, IEnumerable<string> headerNames, HttpMessageHandler innerHandler) : base(innerHandler ?? new HttpClientHandler()) {
             Credential = credential;
             HeaderNames = headerNames.ToArray();
         }
@@ -64,12 +58,10 @@ namespace Indice.Psd2.Cryptography.Tokens.HttpMessageSigning
         /// <param name="request">The HTTP request message to send to the server.</param>
         /// <param name="cancellationToken">A cancellation token to cancel operation.</param>
         /// <returns>The task object representing the asynchronous operation.</returns>
-        protected override async Task<HttpResponseMessage> SendAsync(
-            HttpRequestMessage request,
-            CancellationToken cancellationToken) {
+        protected override async Task<HttpResponseMessage> SendAsync(HttpRequestMessage request, CancellationToken cancellationToken) {
             // Sign the request.
             await SignRequest(request);
-            // base.SendAsync calls the inner handler
+            // base.SendAsync calls the inner handler.
             var response = await base.SendAsync(request, cancellationToken);
             // Validate the response.
             await ValidateResponse(request, response);
@@ -77,19 +69,23 @@ namespace Indice.Psd2.Cryptography.Tokens.HttpMessageSigning
         }
 
         private static async Task ValidateResponse(HttpRequestMessage request, HttpResponseMessage response) {
-            var rawSignature = response.Headers.GetValues(HttpSignature.HTTPHeaderName).FirstOrDefault();
-            if (string.IsNullOrWhiteSpace(rawSignature))
+            if (!response.Headers.TryGetValues(HttpSignature.HTTPHeaderName, out var signatureValues) || signatureValues.Count() == 0) {
                 return;
-            var rawDigest = response.Headers.GetValues(HttpDigest.HTTPHeaderName).FirstOrDefault();
-            var rawCertificate = response.Headers.GetValues(RequestSignatureCertificateHeaderName).FirstOrDefault();
-            if (!string.IsNullOrWhiteSpace(rawSignature) && string.IsNullOrWhiteSpace(rawCertificate)) {
-                var error = $"Missing certificate in http header '{RequestSignatureCertificateHeaderName}'. Cannot validate signature.";
+            }
+            if (!response.Headers.TryGetValues(ResponseSignatureCertificateHeaderName, out var certValues) || certValues.Count() == 0) {
+                var error = $"Missing certificate in HTTP header '{ResponseSignatureCertificateHeaderName}'. Cannot validate signature.";
                 throw new Exception(error);
             }
-            if (!string.IsNullOrWhiteSpace(rawSignature) && string.IsNullOrWhiteSpace(rawDigest)) {
-                var error = $"Missing digest in http header '{HttpDigest.HTTPHeaderName}'. Cannot validate signature.";
+            if (!response.Headers.TryGetValues(HttpDigest.HTTPHeaderName, out var digestValues) || digestValues.Count() == 0) {
+                var error = $"Missing digest in HTTP header '{HttpDigest.HTTPHeaderName}'. Cannot validate signature.";
                 throw new Exception(error);
             }
+            var rawDigest = digestValues.First();
+            var rawSignature = signatureValues.First();
+            var rawCertificate = certValues.First();
+            Debug.WriteLine($"Chania Bank: Raw Digest: {rawDigest}");
+            Debug.WriteLine($"Chania Bank: Raw Signature: {rawSignature}");
+            Debug.WriteLine($"Chania Bank: Raw Certificate: {rawCertificate}");
             X509Certificate2 cert;
             try {
                 cert = new X509Certificate2(Convert.FromBase64String(rawCertificate));
@@ -98,53 +94,55 @@ namespace Indice.Psd2.Cryptography.Tokens.HttpMessageSigning
                 throw new Exception(error, inner);
             }
             var validationKey = new X509SecurityKey(cert);
+            Debug.WriteLine($"Chania Bank: Validation Key: {validationKey.KeyId}");
             var validatedToken = new HttpSignatureSecurityToken(rawDigest, rawSignature);
-
+            Debug.WriteLine($"Chania Bank: Validated Token Digest: {validatedToken.Digest}");
             var responseBody = await response.Content.ReadAsByteArrayAsync();
-            // validate the request.
+            // Validate the request.
             var disgestIsValid = validatedToken.Digest.Validate(responseBody);
             if (!disgestIsValid) {
-                var error = $"response digest validation failed.";
+                var error = $"Response digest validation failed.";
                 throw new Exception(error);
             }
             var signatureIsValid = validatedToken.Signature.Validate(validationKey, request.RequestUri, request.Method.Method, response.Headers);
             if (!signatureIsValid) {
-                var error = $"response signature validation failed.";
+                var error = $"Response signature validation failed.";
                 throw new Exception(error);
             }
         }
 
         private async Task SignRequest(HttpRequestMessage request) {
-            var content = new byte[0];
-            switch (request.Method.Method) {
-                case "GET":
-                    content = Encoding.UTF8.GetBytes(request.RequestUri.Query.TrimStart('?'));
-                    break;
-                default:
-                    content = await request.Content.ReadAsByteArrayAsync();
-                    break;
-            }
+            var content = request.Content != null ? (await request.Content.ReadAsByteArrayAsync()) : new byte[0];
             var validationKey = Credential.Key as X509SecurityKey;
-            var includedHeaders = new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase) {
+            request.Headers.Date = DateTimeOffset.UtcNow;
+            var extraHeaders = new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase) {
                 [HttpRequestTarget.HeaderName] = new HttpRequestTarget(request.Method.Method, request.RequestUri.PathAndQuery).ToString(),
                 [HttpDigest.HTTPHeaderName] = new HttpDigest(Credential.Algorithm, content).ToString(),
                 ["Date"] = (request.Headers.Date ?? DateTimeOffset.UtcNow).ToString("r")
             };
+            var includedHeaders = new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase);
             foreach (var name in HeaderNames) {
-                if (request.Headers.Contains(name)) {
+                if (name == HttpRequestTarget.HeaderName) {
+                    // Do nothing.
+                } else if (request.Headers.Contains(name)) {
                     var value = request.Headers.GetValues(name).FirstOrDefault();
                     if (includedHeaders.ContainsKey(name)) {
                         includedHeaders[name] = value;
                     } else {
                         includedHeaders.Add(name, value);
                     }
-                } else if (name != HttpRequestTarget.HeaderName && includedHeaders.ContainsKey(name)) {
-                    request.Headers.Add(name, includedHeaders[name]);
+                } else if (name != HttpRequestTarget.HeaderName && extraHeaders.ContainsKey(name)) {
+                    if (name != HttpRequestTarget.HeaderName) {
+                        request.Headers.Add(name, extraHeaders[name]);
+                    }
+                    includedHeaders.Add(name, extraHeaders[name]);
+                    Debug.WriteLine($"Chania Bank: Added Header {name}: {includedHeaders[name]}");
                 }
             }
-            var signature = new HttpSignature(Credential, includedHeaders, DateTime.UtcNow, null);
+            var signature = new HttpSignature(Credential, extraHeaders, DateTime.UtcNow, null);
             request.Headers.Add(HttpSignature.HTTPHeaderName, signature.ToString());
-            request.Headers.Add(ResponseSignatureCertificateHeaderName, Convert.ToBase64String(validationKey.Certificate.Export(X509ContentType.Cert)));
+            Debug.WriteLine($"Chania Bank: {HttpSignature.HTTPHeaderName} Header: {signature}");
+            request.Headers.Add(RequestSignatureCertificateHeaderName, Convert.ToBase64String(validationKey.Certificate.Export(X509ContentType.Cert)));
         }
     }
 }

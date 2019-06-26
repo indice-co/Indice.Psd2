@@ -1,7 +1,4 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Text;
-using Indice.Oba.AspNetCore.Middleware;
+﻿using Indice.Oba.AspNetCore.Middleware;
 
 namespace Microsoft.AspNetCore.Builder
 {
@@ -18,7 +15,7 @@ namespace Microsoft.AspNetCore.Builder
         /// <param name="builder"></param>
         /// <returns>The builder</returns>
         public static IApplicationBuilder UseHttpSignatures(this IApplicationBuilder builder) {
-            return builder.UseMiddleware<HttpSignatureMiddleware>();
+            return builder.UseMiddleware<HttpSignatureMiddleware>(new SystemClock());
         }
     }
 }

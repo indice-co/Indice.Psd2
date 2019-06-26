@@ -1,19 +1,22 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Diagnostics;
 using System.IO;
 using System.Linq;
 using System.Net;
 using System.Security.Cryptography.X509Certificates;
-using System.Text;
 using System.Threading.Tasks;
 using Indice.Psd2.Cryptography.Tokens.HttpMessageSigning;
 using Microsoft.AspNetCore.Http;
+using Microsoft.AspNetCore.Http.Features;
 using Microsoft.AspNetCore.Http.Internal;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Extensions.Internal;
 using Microsoft.Extensions.Logging;
 using Microsoft.IdentityModel.Tokens;
+using Microsoft.Net.Http.Headers;
 using Newtonsoft.Json;
-using Microsoft.Extensions.DependencyInjection;
 
 namespace Indice.Oba.AspNetCore.Middleware
 {
@@ -25,39 +28,37 @@ namespace Indice.Oba.AspNetCore.Middleware
         // The middleware delegate to call after this one finishes processing
         private readonly RequestDelegate _next;
         private readonly HttpSignatureOptions _options;
+        private readonly ISystemClock _systemClock;
 
         /// <summary>
         /// construct the middleware
         /// </summary>
         /// <param name="next"></param>
         /// <param name="options"></param>
-        public HttpSignatureMiddleware(RequestDelegate next, HttpSignatureOptions options) {
-            _next = next;
-            _options = options;
+        /// <param name="systemClock"></param>
+        public HttpSignatureMiddleware(RequestDelegate next, HttpSignatureOptions options, ISystemClock systemClock) {
+            _next = next ?? throw new ArgumentNullException(nameof(next));
+            _options = options ?? throw new ArgumentNullException(nameof(options));
+            _systemClock = systemClock ?? throw new ArgumentNullException(nameof(systemClock));
         }
 
-
         /// <summary>
-        /// Invokes the middleware
+        /// Invokes the middleware.
         /// </summary>
-        /// <param name="httpContext"></param>
-        /// <param name="logger"></param>
-        /// <returns></returns>
+        /// <param name="httpContext">Encapsulates all HTTP-specific information about an individual HTTP request.</param>
+        /// <param name="logger">A generic interface for logging.</param>
         public async Task Invoke(HttpContext httpContext, ILogger<HttpSignatureMiddleware> logger) {
             var headerNames = new List<string>();
-            var check =  _options.RequestValidation && _options.TryMatch(httpContext.Request.Path, out headerNames);
-            if (check && httpContext.Request.Headers.ContainsKey(HttpSignature.HTTPHeaderName)) {
+            var mustValidate = _options.RequestValidation && _options.TryMatch(httpContext.Request.Path, out headerNames);
+            if (mustValidate && httpContext.Request.Headers.ContainsKey(HttpSignature.HTTPHeaderName)) {
                 var rawSignature = httpContext.Request.Headers[HttpSignature.HTTPHeaderName];
+                Debug.WriteLine($"Chania Bank: Raw Signature: {rawSignature}");
                 var rawDigest = httpContext.Request.Headers[HttpDigest.HTTPHeaderName];
+                Debug.WriteLine($"Chania Bank: Raw Digest: {rawDigest}");
                 var rawCertificate = httpContext.Request.Headers[_options.RequestSignatureCertificateHeaderName];
-                
+                Debug.WriteLine($"Chania Bank: Raw Certificate: {rawCertificate}");
                 if (!string.IsNullOrWhiteSpace(rawSignature) && string.IsNullOrWhiteSpace(rawCertificate)) {
-                    var error = $"Missing certificate in http header '{_options.RequestSignatureCertificateHeaderName}'. Cannot validate signature.";
-                    await WriteErrorResponse(httpContext, logger, HttpStatusCode.BadRequest, error);
-                    return;
-                }
-                if (!string.IsNullOrWhiteSpace(rawSignature) && string.IsNullOrWhiteSpace(rawDigest)) {
-                    var error = $"Missing digest in http header '{HttpDigest.HTTPHeaderName}'. Cannot validate signature.";
+                    var error = $"Missing certificate in HTTP header '{_options.RequestSignatureCertificateHeaderName}'. Cannot validate signature.";
                     await WriteErrorResponse(httpContext, logger, HttpStatusCode.BadRequest, error);
                     return;
                 }
@@ -70,8 +71,9 @@ namespace Indice.Oba.AspNetCore.Middleware
                     return;
                 }
                 var validationKey = new X509SecurityKey(cert);
-                var validatedToken = new HttpSignatureSecurityToken(rawDigest, rawSignature);
-
+                Debug.WriteLine($"Chania Bank: Validation Key: {validationKey.KeyId}");
+                var httpSignature = HttpSignature.Parse(rawSignature);
+                Debug.WriteLine($"Chania Bank: HTTP Signature: {httpSignature}");
                 var requestBody = new byte[0];
                 switch (httpContext.Request.Method) {
                     case "POST":
@@ -81,47 +83,55 @@ namespace Indice.Oba.AspNetCore.Middleware
                     default:
                         break;
                 }
-                // validate the request.
-                var disgestIsValid = validatedToken.Digest.Validate(requestBody);
-                if (!disgestIsValid) {
-                    var error = $"digest validation failed.";
-                    await WriteErrorResponse(httpContext, logger, HttpStatusCode.Unauthorized, error);
-                    return;
+                // Validate the request.
+                if (httpSignature.Headers.Contains(HttpDigest.HTTPHeaderName)) {
+                    if (!string.IsNullOrWhiteSpace(rawSignature) && string.IsNullOrWhiteSpace(rawDigest)) {
+                        var error = $"Missing digest in HTTP header '{HttpDigest.HTTPHeaderName}'. Cannot validate signature.";
+                        await WriteErrorResponse(httpContext, logger, HttpStatusCode.BadRequest, error);
+                        return;
+                    }
+                    var httpDigest = HttpDigest.Parse(rawDigest);
+                    Debug.WriteLine($"Chania Bank: HTTP Digest: {httpDigest}");
+                    var digestIsValid = httpDigest.Validate(requestBody);
+                    if (!digestIsValid) {
+                        var error = $"Digest validation failed.";
+                        await WriteErrorResponse(httpContext, logger, HttpStatusCode.Unauthorized, error);
+                        return;
+                    }
                 }
-                var signatureIsValid = validatedToken.Signature.Validate(validationKey, httpContext.Request);
+                var signatureIsValid = httpSignature.Validate(validationKey, httpContext.Request);
                 if (!signatureIsValid) {
-                    var error = $"signature validation failed.";
+                    var error = $"Signature validation failed.";
                     await WriteErrorResponse(httpContext, logger, HttpStatusCode.Unauthorized, error);
                     return;
                 }
                 logger.LogInformation("Signature validated successfuly for path: '{0} {1}'", httpContext.Request.Method, httpContext.Request.Path);
-                // Call the next middleware delegate in the pipeline 
+                // Call the next middleware delegate in the pipeline.
             }
-
-            if (check && _options.ResponseSigning == true) {
+            if (mustValidate && _options.ResponseSigning == true) {
                 using (var responseMemory = new MemoryStream()) {
                     var originalStream = httpContext.Response.Body;
                     httpContext.Response.Body = responseMemory;
                     await _next.Invoke(httpContext);
-
-
                     responseMemory.Seek(0, SeekOrigin.Begin);
                     var content = responseMemory.ToArray();
                     responseMemory.Seek(0, SeekOrigin.Begin);
-
-
-                    // Apply logic here for deciding which headers to add
+                    // Apply logic here for deciding which headers to add.
                     var signingCredentialsStore = httpContext.RequestServices.GetService<IHttpSigningCredentialsStore>();
-                    var validationKeysStore = httpContext.RequestServices.GetService<IHttpValidationKeysStore>(); 
+                    var validationKeysStore = httpContext.RequestServices.GetService<IHttpValidationKeysStore>();
                     var signingCredentials = await signingCredentialsStore.GetSigningCredentialsAsync();
                     var validationKeys = await validationKeysStore.GetValidationKeysAsync();
                     var validationKey = validationKeys.First() as X509SecurityKey;
-                    var includedHeaders = new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase) {
-                        [HttpRequestTarget.HeaderName] = new HttpRequestTarget(httpContext.Request.Method, httpContext.Request.Path).ToString(),
+                    Debug.WriteLine($"Chania Bank: Validation Key: {validationKey.KeyId}");
+                    var rawTarget = httpContext.Features.Get<IHttpRequestFeature>().RawTarget;
+                    Debug.WriteLine($"Chania Bank: Raw Target: {rawTarget}");
+                    var extraHeaders = new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase) {
+                        [HttpRequestTarget.HeaderName] = new HttpRequestTarget(httpContext.Request.Method, rawTarget).ToString(),
                         [HttpDigest.HTTPHeaderName] = new HttpDigest(signingCredentials.Algorithm, content).ToString(),
-                        ["Date"] = DateTime.UtcNow.ToString("r"),
+                        [HeaderNames.Date] = _systemClock.UtcNow.ToString("r"), //DateTimeOffset.UtcNow.ToString("r"),
                         [_options.ResponseIdHeaderName] = Guid.NewGuid().ToString()
                     };
+                    var includedHeaders = new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase);
                     foreach (var name in headerNames) {
                         if (httpContext.Response.Headers.ContainsKey(name)) {
                             if (includedHeaders.ContainsKey(name)) {
@@ -129,15 +139,19 @@ namespace Indice.Oba.AspNetCore.Middleware
                             } else {
                                 includedHeaders.Add(name, httpContext.Response.Headers[name]);
                             }
-                        } else if (name != HttpRequestTarget.HeaderName && includedHeaders.ContainsKey(name)) {
-                            httpContext.Response.Headers.Add(name, includedHeaders[name]);
+                        } else if (extraHeaders.ContainsKey(name)) {
+                            if (name != HttpRequestTarget.HeaderName) { 
+                                httpContext.Response.Headers.Add(name, extraHeaders[name]);
+                            }
+                            includedHeaders.Add(name, extraHeaders[name]);
+                            Debug.WriteLine($"Chania Bank: Added Header {name}: {includedHeaders[name]}");
                         }
                     }
                     var signature = new HttpSignature(signingCredentials, includedHeaders, DateTime.UtcNow, null);
                     httpContext.Response.Headers.Add(HttpSignature.HTTPHeaderName, signature.ToString());
+                    Debug.WriteLine($"Chania Bank: {HttpSignature.HTTPHeaderName} Header: {signature}");
                     httpContext.Response.Headers.Add(_options.ResponseSignatureCertificateHeaderName, Convert.ToBase64String(validationKey.Certificate.Export(X509ContentType.Cert)));
-
-                    // go on with life
+                    // Go on with life.
                     await responseMemory.CopyToAsync(originalStream);
                     httpContext.Response.Body = originalStream;
                 }
@@ -157,9 +171,10 @@ namespace Indice.Oba.AspNetCore.Middleware
         }
 
         private static async Task WriteErrorResponse(HttpContext httpContext, ILogger<HttpSignatureMiddleware> logger, HttpStatusCode statusCode, string error) {
+            Debug.WriteLine($"Chania Bank: {error}");
+            logger.LogWarning(error);
             httpContext.Response.StatusCode = (int)statusCode;
             httpContext.Response.ContentType = "application/json";
-            logger.LogWarning(error);
             await httpContext.Response.WriteAsync(JsonConvert.SerializeObject(new ProblemDetails() {
                 Status = httpContext.Response.StatusCode,
                 Title = $"{statusCode}",

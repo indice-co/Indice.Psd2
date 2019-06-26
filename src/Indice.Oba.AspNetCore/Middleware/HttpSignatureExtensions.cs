@@ -24,7 +24,7 @@ namespace Indice.Oba.AspNetCore.Middleware
         /// <param name="httpRequest"></param>
         /// <returns></returns>
         public static bool Validate(this HttpSignature signature, SecurityKey key, HttpRequest httpRequest) {
-            var headers = httpRequest.Headers.ToDictionary(x => x.Key, x => (string)x.Value);
+            var headers = httpRequest.Headers.ToDictionary(x => x.Key, x => (string)x.Value, StringComparer.OrdinalIgnoreCase);
             var rawTarget = httpRequest.HttpContext.Features.Get<IHttpRequestFeature>().RawTarget;
             headers.Add(HttpRequestTarget.HeaderName, new HttpRequestTarget(httpRequest.Method, rawTarget).ToString());
             return signature.Validate(key, headers);
@@ -38,7 +38,7 @@ namespace Indice.Oba.AspNetCore.Middleware
         /// <param name="headers"></param>
         /// <returns></returns>
         public static bool Validate(this HttpSignature signature, SecurityKey key, IDictionary<string, StringValues> headers) {
-            return signature.Validate(key, headers.ToDictionary(x => x.Key, x => (string)x.Value));
+            return signature.Validate(key, headers.ToDictionary(x => x.Key, x => (string)x.Value, StringComparer.OrdinalIgnoreCase));
         }
     }
 }

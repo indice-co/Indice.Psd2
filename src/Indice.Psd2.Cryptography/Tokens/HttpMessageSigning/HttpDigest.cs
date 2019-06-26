@@ -27,9 +27,9 @@ namespace Indice.Psd2.Cryptography.Tokens.HttpMessageSigning
             [HashAlgorithmName.SHA512.Name] = "sha-512",
             [SecurityAlgorithms.RsaSha256] = "sha-256",
             [SecurityAlgorithms.RsaSha256Signature] = "sha-256",
-            [SecurityAlgorithms.RsaSha384] = "sha-256",
-            [SecurityAlgorithms.RsaSha384Signature] = "sha-256",
-            [SecurityAlgorithms.RsaSha512] = "sha-384",
+            [SecurityAlgorithms.RsaSha384] = "sha-384",
+            [SecurityAlgorithms.RsaSha384Signature] = "sha-384",
+            [SecurityAlgorithms.RsaSha512] = "sha-512",
             [SecurityAlgorithms.RsaSha512Signature] = "sha-512",
         };
         /// <summary>
@@ -88,6 +88,9 @@ namespace Indice.Psd2.Cryptography.Tokens.HttpMessageSigning
         /// </summary>
         /// <returns></returns>
         public bool Validate(byte[] requestBody) {
+            if (!InboundAlgorithmMap.ContainsKey(Algorithm)) {
+                throw new Exception($"Cannot validate Digest. Unsupported hashing algorithm '{Algorithm}'");
+            }
             var hash = HashToBase64(InboundAlgorithmMap[Algorithm], requestBody);
             return hash.Equals(Output);
         }
