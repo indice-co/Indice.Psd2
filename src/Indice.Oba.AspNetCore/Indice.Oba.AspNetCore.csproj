@@ -3,7 +3,7 @@
   <PropertyGroup>
     <Description>Indice.Oba.AspNetCore Class Library</Description>
     <Copyright>Copyright (c) 2019 Indice</Copyright>
-    <VersionPrefix>1.1.0</VersionPrefix>
+    <VersionPrefix>1.1.1</VersionPrefix>
     <!--<VersionSuffix>beta1</VersionSuffix>-->
     <Authors>c.leftheris, itsenes</Authors>
     <TargetFrameworks>netcoreapp2.2;netstandard2.0</TargetFrameworks>
@@ -12,7 +12,7 @@
   <PropertyGroup Label="Package">
     <PackageId>Indice.Oba.AspNetCore</PackageId>
     <PackageTags>Psd2;OBA;FAPI;Extensions</PackageTags>
-    <PackageReleaseNotes>Http Signatures</PackageReleaseNotes>
+    <PackageReleaseNotes>Update to newest Indice.Psd2.Cryptography</PackageReleaseNotes>
     <PackageIconUrl>https://raw.githubusercontent.com/indice-co/Indice.Psd2/master/icon/icon-128.png</PackageIconUrl>
     <PackageProjectUrl>https://github.com/indice-co/Indice.Psd2</PackageProjectUrl>
     <PackageLicenseExpression>MIT</PackageLicenseExpression>
@@ -30,7 +30,7 @@
     <PackageReference Include="Microsoft.AspNetCore.Http.Abstractions" Version="2.2.0" />
     <PackageReference Include="Microsoft.AspNetCore.Mvc" Version="2.2.0" />
     <PackageReference Include="Microsoft.EntityFrameworkCore.SqlServer" Version="2.2.0" />
-    <PackageReference Include="Indice.Psd2.Cryptography" Version="1.1.0" />
+    <PackageReference Include="Indice.Psd2.Cryptography" Version="1.1.1" />
   </ItemGroup>
 
   <ItemGroup>

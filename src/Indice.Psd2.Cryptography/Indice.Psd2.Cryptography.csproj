@@ -3,7 +3,7 @@
     <Description>Indice.Psd2.Cryptography Class Library</Description>
     <Copyright>Copyright (c) 2019 Indice</Copyright>
     <AssemblyTitle>Indice.Psd2.Cryptography</AssemblyTitle>
-    <VersionPrefix>1.1.0</VersionPrefix>
+    <VersionPrefix>1.1.1</VersionPrefix>
     <!--<VersionSuffix>beta1</VersionSuffix>-->
     <Authors>c.leftheris, itsenes</Authors>
     <TargetFrameworks>netcoreapp2.2;netstandard2.0</TargetFrameworks>
@@ -15,7 +15,7 @@
   <PropertyGroup Label="Package">
     <PackageId>Indice.Psd2.Cryptography</PackageId>
     <PackageTags>Psd2;Cryptography;Utilities</PackageTags>
-    <PackageReleaseNotes>QWAC certificate generation and parsing</PackageReleaseNotes>
+    <PackageReleaseNotes>Fix some bugs on HttpSignatureMiddleware and corresponding message handler.</PackageReleaseNotes>
     <PackageIconUrl>https://raw.githubusercontent.com/indice-co/Indice.Psd2/master/icon/icon-128.png</PackageIconUrl>
     <PackageProjectUrl>https://github.com/indice-co/Indice.Psd2</PackageProjectUrl>
     <PackageLicenseExpression>MIT</PackageLicenseExpression>
