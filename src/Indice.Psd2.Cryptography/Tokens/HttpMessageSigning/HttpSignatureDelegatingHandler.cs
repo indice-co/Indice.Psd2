@@ -76,14 +76,8 @@ namespace Indice.Psd2.Cryptography.Tokens.HttpMessageSigning
                 var error = $"Missing certificate in HTTP header '{ResponseSignatureCertificateHeaderName}'. Cannot validate signature.";
                 throw new Exception(error);
             }
-            if (!response.Headers.TryGetValues(HttpDigest.HTTPHeaderName, out var digestValues) || digestValues.Count() == 0) {
-                var error = $"Missing digest in HTTP header '{HttpDigest.HTTPHeaderName}'. Cannot validate signature.";
-                throw new Exception(error);
-            }
-            var rawDigest = digestValues.First();
             var rawSignature = signatureValues.First();
             var rawCertificate = certValues.First();
-            Debug.WriteLine($"Chania Bank: Raw Digest: {rawDigest}");
             Debug.WriteLine($"Chania Bank: Raw Signature: {rawSignature}");
             Debug.WriteLine($"Chania Bank: Raw Certificate: {rawCertificate}");
             X509Certificate2 cert;
@@ -95,16 +89,21 @@ namespace Indice.Psd2.Cryptography.Tokens.HttpMessageSigning
             }
             var validationKey = new X509SecurityKey(cert);
             Debug.WriteLine($"Chania Bank: Validation Key: {validationKey.KeyId}");
-            var validatedToken = new HttpSignatureSecurityToken(rawDigest, rawSignature);
-            Debug.WriteLine($"Chania Bank: Validated Token Digest: {validatedToken.Digest}");
-            var responseBody = await response.Content.ReadAsByteArrayAsync();
-            // Validate the request.
-            var disgestIsValid = validatedToken.Digest.Validate(responseBody);
-            if (!disgestIsValid) {
-                var error = $"Response digest validation failed.";
-                throw new Exception(error);
+            var httpSignature = HttpSignature.Parse(rawSignature);
+            if (response.Headers.TryGetValues(HttpDigest.HTTPHeaderName, out var digestValues) && digestValues.Count() > 0) {
+                var rawDigest = digestValues.First();
+                Debug.WriteLine($"Chania Bank: Raw Digest: {rawDigest}");
+                var httpDigest = HttpDigest.Parse(rawDigest);
+                Debug.WriteLine($"Chania Bank: Validated Token Digest: {httpDigest}");
+                var responseBody = await response.Content.ReadAsByteArrayAsync();
+                // Validate the request.
+                var disgestIsValid = httpDigest.Validate(responseBody);
+                if (!disgestIsValid) {
+                    var error = $"Response digest validation failed.";
+                    throw new Exception(error);
+                }
             }
-            var signatureIsValid = validatedToken.Signature.Validate(validationKey, request.RequestUri, request.Method.Method, response.Headers);
+            var signatureIsValid = httpSignature.Validate(validationKey, request.RequestUri, request.Method.Method, response.Headers);
             if (!signatureIsValid) {
                 var error = $"Response signature validation failed.";
                 throw new Exception(error);

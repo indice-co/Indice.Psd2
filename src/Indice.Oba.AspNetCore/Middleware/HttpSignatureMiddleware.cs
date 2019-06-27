@@ -50,14 +50,19 @@ namespace Indice.Oba.AspNetCore.Middleware
         public async Task Invoke(HttpContext httpContext, ILogger<HttpSignatureMiddleware> logger) {
             var headerNames = new List<string>();
             var mustValidate = _options.RequestValidation && _options.TryMatch(httpContext.Request.Path, out headerNames);
-            if (mustValidate && httpContext.Request.Headers.ContainsKey(HttpSignature.HTTPHeaderName)) {
+            if (mustValidate || httpContext.Request.Headers.ContainsKey(HttpSignature.HTTPHeaderName)) {
                 var rawSignature = httpContext.Request.Headers[HttpSignature.HTTPHeaderName];
                 Debug.WriteLine($"Chania Bank: Raw Signature: {rawSignature}");
                 var rawDigest = httpContext.Request.Headers[HttpDigest.HTTPHeaderName];
                 Debug.WriteLine($"Chania Bank: Raw Digest: {rawDigest}");
                 var rawCertificate = httpContext.Request.Headers[_options.RequestSignatureCertificateHeaderName];
                 Debug.WriteLine($"Chania Bank: Raw Certificate: {rawCertificate}");
-                if (!string.IsNullOrWhiteSpace(rawSignature) && string.IsNullOrWhiteSpace(rawCertificate)) {
+                if (string.IsNullOrWhiteSpace(rawSignature)) {
+                    var error = $"Missing httpSignature in HTTP header '{HttpSignature.HTTPHeaderName}'. Cannot validate signature.";
+                    await WriteErrorResponse(httpContext, logger, HttpStatusCode.BadRequest, error);
+                    return;
+                }
+                if (string.IsNullOrWhiteSpace(rawCertificate)) {
                     var error = $"Missing certificate in HTTP header '{_options.RequestSignatureCertificateHeaderName}'. Cannot validate signature.";
                     await WriteErrorResponse(httpContext, logger, HttpStatusCode.BadRequest, error);
                     return;
@@ -140,7 +145,7 @@ namespace Indice.Oba.AspNetCore.Middleware
                                 includedHeaders.Add(name, httpContext.Response.Headers[name]);
                             }
                         } else if (extraHeaders.ContainsKey(name)) {
-                            if (name != HttpRequestTarget.HeaderName) { 
+                            if (name != HttpRequestTarget.HeaderName) {
                                 httpContext.Response.Headers.Add(name, extraHeaders[name]);
                             }
                             includedHeaders.Add(name, extraHeaders[name]);

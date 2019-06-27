@@ -2,7 +2,7 @@
   <PropertyGroup>
     <Description>Indice.Psd2.IdentityServer4 Class Library</Description>
     <Copyright>Copyright (c) 2019 Indice</Copyright>
-    <VersionPrefix>1.1.1</VersionPrefix>
+    <VersionPrefix>1.1.2</VersionPrefix>
     <!--<VersionSuffix>beta1</VersionSuffix>-->
     <Authors>c.leftheris, itsenes</Authors>
     <TargetFrameworks>netstandard2.0</TargetFrameworks>
@@ -11,7 +11,7 @@
   <PropertyGroup Label="Package">
     <PackageId>Indice.Psd2.IdentityServer4</PackageId>
     <PackageTags>Psd2;IdentityServer4;Extensions</PackageTags>
-    <PackageReleaseNotes>Update to newest Indice.Psd2.Cryptography</PackageReleaseNotes>
+    <PackageReleaseNotes>Update Indice.Psd2.Cryptography.</PackageReleaseNotes>
     <PackageIconUrl>https://raw.githubusercontent.com/indice-co/Indice.Psd2/master/icon/icon-128.png</PackageIconUrl>
     <PackageProjectUrl>https://github.com/indice-co/Indice.Psd2</PackageProjectUrl>
     <PackageLicenseExpression>MIT</PackageLicenseExpression>
@@ -30,7 +30,7 @@
   </PropertyGroup>
   <ItemGroup>
     <PackageReference Include="IdentityServer4" Version="2.4.0" />
-    <PackageReference Include="Indice.Psd2.Cryptography" Version="1.1.1" />
+    <PackageReference Include="Indice.Psd2.Cryptography" Version="1.1.2" />
   </ItemGroup>
 
   <ItemGroup>
