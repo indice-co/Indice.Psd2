@@ -12,7 +12,7 @@ namespace Indice.Oba.Host.Swagger
     {
         public void Apply(OpenApiSchema schema, SchemaFilterContext context) {
 
-            if (context.Type == typeof(Psd2CertificateRequest)) {
+            if (context.ApiModel.Type == typeof(Psd2CertificateRequest)) {
                 schema.Example = Psd2CertificateRequest.Example().ToOpenApiAny();
             }
         }

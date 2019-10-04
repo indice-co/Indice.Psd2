@@ -13,6 +13,7 @@ using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
 
@@ -20,18 +21,18 @@ namespace Indice.Oba.Host
 {
     public class Startup
     {
-        public Startup(IConfiguration configuration, IHostingEnvironment env) {
+        public Startup(IConfiguration configuration, IWebHostEnvironment env) {
             Configuration = configuration;
             Environment = env;
         }
 
         public IConfiguration Configuration { get; }
-        public IHostingEnvironment Environment { get; }
+        public IWebHostEnvironment Environment { get; }
 
         // This method gets called by the runtime. Use this method to add services to the container.
         public void ConfigureServices(IServiceCollection services) {
-            services.AddMvc()
-                    .SetCompatibilityVersion(CompatibilityVersion.Version_2_2)
+            services.AddControllersWithViews()
+                    .SetCompatibilityVersion(CompatibilityVersion.Latest)
                     .AddCertificateEndpoints(x => {
                         x.IssuerDomain = Configuration["Certificates:Issuer"];
                         x.AddEntitiyFrameworkStore(options => {
@@ -71,7 +72,7 @@ namespace Indice.Oba.Host
         }
 
         // This method gets called by the runtime. Use this method to configure the HTTP request pipeline.
-        public void Configure(IApplicationBuilder app, IHostingEnvironment env) {
+        public void Configure(IApplicationBuilder app, IWebHostEnvironment env) {
             if (env.IsDevelopment()) {
                 app.UseDeveloperExceptionPage();
             } else {
@@ -79,13 +80,16 @@ namespace Indice.Oba.Host
                 app.UseHsts();
             }
             app.UseHttpsRedirection();
+            app.UseRouting();
             app.UseHttpSignatures();
             app.UseSwagger();
             app.UseSwaggerUI(x => {
                 x.RoutePrefix = "swagger/ui";
                 x.SwaggerEndpoint($"/swagger/cert/swagger.json", "cert");
             });
-            app.UseMvc();
+            app.UseEndpoints(endpoints => {
+                endpoints.MapControllers();
+            });
         }
     }
 }

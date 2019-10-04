@@ -1,7 +1,6 @@
 ﻿// original code https://github.com/aspnet/AspNetCore/blob/e717a8443e552f02fc96bd2c6733da3b90e34d6a/src/Shared/CertificateGeneration/CertificateManager.cs
 // Copyright (c) .NET Foundation. All rights reserved.
 // Licensed under the Apache License, Version 2.0. See License.txt in the project root for license information.
-#if NETCoreApp22
 using System;
 using System.Collections.Generic;
 using System.Diagnostics;
@@ -998,4 +997,3 @@ namespace Indice.Psd2.Cryptography
         }
     }
 }
-#endif

@@ -9,7 +9,6 @@ using System.Threading.Tasks;
 using Indice.Psd2.Cryptography.Tokens.HttpMessageSigning;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Http.Features;
-using Microsoft.AspNetCore.Http.Internal;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Internal;
@@ -167,7 +166,6 @@ namespace Indice.Oba.AspNetCore.Middleware
 
         private async Task<byte[]> GetRequestBody(HttpRequest request) {
             request.EnableBuffering();
-            request.EnableRewind();
             using (var requestStream = new MemoryStream()) {
                 await request.Body.CopyToAsync(requestStream);
                 request.Body.Seek(0, SeekOrigin.Begin);

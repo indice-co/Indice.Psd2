@@ -2,17 +2,17 @@
   <PropertyGroup>
     <Description>Indice.Oba.AspNetCore Class Library</Description>
     <Copyright>Copyright (c) 2019 Indice</Copyright>
-    <VersionPrefix>1.1.3</VersionPrefix>
-    <!--<VersionSuffix>beta1</VersionSuffix>-->
+    <VersionPrefix>3.0.0</VersionPrefix>
+    <VersionSuffix>beta1</VersionSuffix>
     <Authors>c.leftheris, itsenes</Authors>
-    <TargetFrameworks>netcoreapp2.2;netstandard2.0</TargetFrameworks>
+    <TargetFramework>netcoreapp3.0</TargetFramework>
     <GenerateDocumentationFile>true</GenerateDocumentationFile>
   </PropertyGroup>
   <PropertyGroup Label="Package">
     <PackageId>Indice.Oba.AspNetCore</PackageId>
     <PackageTags>Psd2;OBA;FAPI;Extensions</PackageTags>
-    <PackageReleaseNotes>Update HttpSignatureMiddleware and update Indice.Psd2.Cryptography.</PackageReleaseNotes>
-    <PackageIconUrl>https://raw.githubusercontent.com/indice-co/Indice.Psd2/master/icon/icon-128.png</PackageIconUrl>
+    <PackageReleaseNotes>.Net Core 3.0.</PackageReleaseNotes>
+    <PackageIcon>icon-128.png</PackageIcon>
     <PackageProjectUrl>https://github.com/indice-co/Indice.Psd2</PackageProjectUrl>
     <PackageLicenseExpression>MIT</PackageLicenseExpression>
     <RepositoryType>git</RepositoryType>
@@ -25,10 +25,14 @@
     <AllowedOutputExtensionsInPackageBuildOutputFolder>$(AllowedOutputExtensionsInPackageBuildOutputFolder);.pdb</AllowedOutputExtensionsInPackageBuildOutputFolder>
   </PropertyGroup>
   <ItemGroup>
-    <PackageReference Include="Microsoft.AspNetCore.Http.Abstractions" Version="2.2.0" />
-    <PackageReference Include="Microsoft.AspNetCore.Mvc" Version="2.2.0" />
-    <PackageReference Include="Microsoft.EntityFrameworkCore.SqlServer" Version="2.2.0" />
-    <!--<PackageReference Include="Indice.Psd2.Cryptography" Version="1.1.2" />-->
+    <None Include="..\..\icon\icon-128.png" Pack="true" Visible="false" PackagePath="" />
+  </ItemGroup>
+  <ItemGroup>
+    <FrameworkReference Include="Microsoft.AspNetCore.App" />
+  </ItemGroup>
+  <ItemGroup>
+    <PackageReference Include="Microsoft.EntityFrameworkCore.SqlServer" Version="3.0.0" />
+    <PackageReference Include="Indice.Psd2.Cryptography" Version="3.0.0-beta1" />
   </ItemGroup>
   <ItemGroup>
     <ProjectReference Include="..\Indice.Psd2.Cryptography\Indice.Psd2.Cryptography.csproj" />

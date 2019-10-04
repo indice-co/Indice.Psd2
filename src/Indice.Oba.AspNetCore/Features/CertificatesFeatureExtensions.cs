@@ -43,7 +43,7 @@ namespace Microsoft.Extensions.DependencyInjection
             options.Services = null;
             if (options.Path == null) {
                 var serviceProvider = mvcBuilder.Services.BuildServiceProvider();
-                var hostingEnvironment = serviceProvider.GetRequiredService<IHostingEnvironment>();
+                var hostingEnvironment = serviceProvider.GetRequiredService<IWebHostEnvironment>();
                 options.Path = Path.Combine(hostingEnvironment.ContentRootPath, "App_Data", "certs");
             }
             mvcBuilder.Services.AddSingleton(options);
@@ -52,7 +52,6 @@ namespace Microsoft.Extensions.DependencyInjection
                 Directory.CreateDirectory(options.Path);
             }
             if (!File.Exists(Path.Combine(options.Path, "ca.pfx"))) {
-#if NETCoreApp22
                 var serviceProvider = mvcBuilder.Services.BuildServiceProvider();
                 var manager = new CertificateManager();
                 var issuingCert = manager.CreateRootCACertificate(options.IssuerDomain);
@@ -62,7 +61,6 @@ namespace Microsoft.Extensions.DependencyInjection
                 File.WriteAllText(Path.Combine(options.Path, "ca.cer"), certBase64);
                 var store = serviceProvider.GetService<ICertificatesStore>();
                 store.Add(issuingCert, null);
-#endif
             }
             return mvcBuilder;
         }
