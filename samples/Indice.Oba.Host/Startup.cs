@@ -1,21 +1,15 @@
 ﻿using System;
-using System.Collections.Generic;
 using System.IO;
-using System.Linq;
 using System.Reflection;
 using System.Security.Cryptography.X509Certificates;
-using System.Threading.Tasks;
 using Indice.Oba.Host.Swagger;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Hosting;
-using Microsoft.AspNetCore.HttpsPolicy;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
-using Microsoft.Extensions.Logging;
-using Microsoft.Extensions.Options;
 
 namespace Indice.Oba.Host
 {
@@ -35,7 +29,7 @@ namespace Indice.Oba.Host
                     .SetCompatibilityVersion(CompatibilityVersion.Latest)
                     .AddCertificateEndpoints(x => {
                         x.IssuerDomain = Configuration["Certificates:Issuer"];
-                        x.AddEntitiyFrameworkStore(options => {
+                        x.AddEntityFrameworkStore(options => {
                             options.ConfigureDbContext = (a) => {
                                 a.UseSqlServer(Configuration.GetConnectionString("CertificatesDb"));
                             };

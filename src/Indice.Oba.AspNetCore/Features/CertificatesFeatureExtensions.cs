@@ -70,7 +70,7 @@ namespace Microsoft.Extensions.DependencyInjection
         /// </summary>
         /// <param name="options"></param>
         /// <param name="configureAction"></param>
-        public static void AddEntitiyFrameworkStore(this CertificateEndpointsOptions options, Action<CertificatesStoreOptions> configureAction) {
+        public static void AddEntityFrameworkStore(this CertificateEndpointsOptions options, Action<CertificatesStoreOptions> configureAction) {
             var storeOptions = new CertificatesStoreOptions() {
                 DefaultSchema = "cert",
             };

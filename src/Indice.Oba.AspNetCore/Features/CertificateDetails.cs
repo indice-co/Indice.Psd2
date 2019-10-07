@@ -1,6 +1,4 @@
 ﻿using System;
-using System.Collections.Generic;
-using System.Text;
 
 namespace Indice.Oba.AspNetCore.Features
 {
@@ -10,28 +8,27 @@ namespace Indice.Oba.AspNetCore.Features
     public class CertificateDetails
     {
         /// <summary>
-        /// Base 64 Pem encoded cer
+        /// Base 64 Pem encoded cer.
         /// </summary>
         public string EncodedCert { get; set; }
-
         /// <summary>
-        /// Private key base64
+        /// Private key base64.
         /// </summary>
         public string PrivateKey { get; set; }
         /// <summary>
-        /// Subject Key Identifier
+        /// Subject Key Identifier.
         /// </summary>
         public string KeyId { get; set; }
         /// <summary>
-        /// Serial number
+        /// Serial number.
         /// </summary>
         public string SerialNumber { get; set; }
         /// <summary>
-        /// Authority Subject Key Identifier (issuing certificate Subject Key Identifier)
+        /// Authority Subject Key Identifier (issuing certificate Subject Key Identifier).
         /// </summary>
         public string AuthorityKeyId { get; set; }
         /// <summary>
-        /// SHA256WITHRSA
+        /// SHA256WITHRSA.
         /// </summary>
         public string Algorithm { get; set; }
     }
@@ -42,7 +39,7 @@ namespace Indice.Oba.AspNetCore.Features
     public class RevokedCertificateDetails
     {
         /// <summary>
-        /// Serial number
+        /// Serial number.
         /// </summary>
         public string SerialNumber { get; set; }
         /// <summary>
