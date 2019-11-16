@@ -1,6 +1,4 @@
 ﻿using System;
-using System.Collections.Generic;
-using System.Net.Http.Headers;
 using System.Security.Cryptography;
 using System.Security.Cryptography.X509Certificates;
 using System.Text;
@@ -11,7 +9,7 @@ using Microsoft.Extensions.Logging;
 namespace Indice.Oba.AspNetCore.Features
 {
     /// <summary>
-    /// <see cref="OutputFormatter"/> for convertiong <seealso cref="CertificateDetails"/> to pem format.
+    /// <see cref="OutputFormatter"/> for converting <seealso cref="CertificateDetails"/> to PEM format.
     /// </summary>
     public class CertificateOutputFormatter : OutputFormatter
     {
@@ -55,7 +53,7 @@ namespace Indice.Oba.AspNetCore.Features
                         buffer = Encoding.ASCII.GetBytes(certificateDetails.EncodedCert);
                         await response.Body.WriteAsync(buffer, 0, buffer.Length);
                         break;
-                    case "application/pkcs8": 
+                    case "application/pkcs8":
                         buffer = Encoding.ASCII.GetBytes(certificateDetails.PrivateKey);
                         await response.Body.WriteAsync(buffer, 0, buffer.Length);
                         break;
@@ -63,10 +61,7 @@ namespace Indice.Oba.AspNetCore.Features
                         var password = context.HttpContext.Request.Query["password"][0];
                         var cert = new X509Certificate2(Encoding.ASCII.GetBytes(certificateDetails.EncodedCert));
                         var privateKey = certificateDetails.PrivateKey.ReadAsRSAKey();
-                        buffer = new byte[0];
-#if NETCoreApp22
                         buffer = cert.CopyWithPrivateKey(RSA.Create(privateKey)).Export(X509ContentType.Pkcs12, password);
-#endif
                         cert.Dispose();
                         response.Headers.Add("Content-Disposition", "attachment; filename=certificate.pfx");
                         await response.Body.WriteAsync(buffer, 0, buffer.Length);

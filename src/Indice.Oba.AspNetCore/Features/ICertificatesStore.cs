@@ -2,7 +2,6 @@
 using System.Collections.Generic;
 using System.Security.Cryptography;
 using System.Security.Cryptography.X509Certificates;
-using System.Text;
 using System.Threading.Tasks;
 
 namespace Indice.Oba.AspNetCore.Features
@@ -76,7 +75,8 @@ namespace Indice.Oba.AspNetCore.Features
                 SerialNumber = certificate.SerialNumber?.ToLower(),
                 AuthorityKeyId = authkeyId?.ToLower(),
                 Algorithm = "sha256RSA"
-            }, certificate.Subject, certificate.Thumbprint, metadata, isCA);
+            }, 
+            certificate.Subject, certificate.Thumbprint, metadata, isCA);
             return response;
         }
     }

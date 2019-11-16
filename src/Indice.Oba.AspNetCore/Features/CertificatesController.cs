@@ -1,11 +1,9 @@
 ﻿using System;
 using System.Collections.Generic;
-using System.ComponentModel.DataAnnotations;
 using System.IO;
 using System.Linq;
 using System.Security.Cryptography;
 using System.Security.Cryptography.X509Certificates;
-using System.Text;
 using System.Threading.Tasks;
 using Indice.Psd2.Cryptography;
 using Indice.Psd2.Cryptography.X509Certificates;
@@ -16,13 +14,13 @@ using Microsoft.Extensions.DependencyInjection;
 namespace Indice.Oba.AspNetCore.Features
 {
     /// <summary>
-    /// Creates an avatar based on a given name (first and last name) plus parameters
+    /// Controller that contains methods to manage PSD2 certificates.
     /// </summary>
     [Route(".certificates")]
     [ApiExplorerSettings(GroupName = "cert")]
     [ApiController]
-    internal class CertificatesController : ControllerBase {
-
+    internal class CertificatesController : ControllerBase
+    {
         public CertificatesController(CertificateEndpointsOptions options, ICertificatesStore store) {
             Options = options ?? throw new ArgumentNullException(nameof(options));
             Store = store ?? throw new ArgumentNullException(nameof(store));
@@ -50,13 +48,10 @@ namespace Indice.Oba.AspNetCore.Features
         [Produces("application/json")]
         [ProducesResponseType(statusCode: 200, type: typeof(CertificateDetails))]
         [HttpPost]
-        public async Task<IActionResult> CreateCertificate([FromBody] Psd2CertificateRequest request) {
-            var cert = default(X509Certificate2);
+        public async Task<IActionResult> CreateCertificate([FromBody]Psd2CertificateRequest request) {
             var issuer = new X509Certificate2(Path.Combine(Options.Path, "ca.pfx"), Options.PfxPassphrase, X509KeyStorageFlags.MachineKeySet);
-#if NETCoreApp22
             var manager = new CertificateManager();
-            cert = manager.CreateQWACs(request, Options.IssuerDomain, issuer, out var privateKey);
-#endif
+            var cert = manager.CreateQWACs(request, Options.IssuerDomain, issuer, out _);
             var response = await Store.Add(cert, request);
             cert.Dispose();
             return Ok(response);
@@ -66,14 +61,13 @@ namespace Indice.Oba.AspNetCore.Features
         /// Exports a certificates. 
         /// </summary>
         /// <param name="keyId">The subject key identifier</param>
-        /// <param name="format">The format can be any of the following file extensions *json*, *pfx*, *cer*, *crt*</param>
-        /// <param name="password">In case of selected format is that of a container chain we will also need a password (pfx). Otherwize this part is ignored</param>
-        /// <returns></returns>
+        /// <param name="format">The format can be any of the following file extensions *json*, *pfx*, *cer*, *crt*.</param>
+        /// <param name="password">In case of selected format is that of a container chain we will also need a password (pfx). Otherwise this part is ignored.</param>
         [FormatFilter]
         [Produces("application/json", "application/x-x509-user-cert", "application/pkix-cert", "application/pkcs8", "application/x-pkcs12")]
         [ProducesResponseType(statusCode: 200, type: typeof(CertificateDetails))]
         [HttpGet("{keyId}.{format?}")]
-        public async Task<IActionResult> Export([FromRoute] string keyId, [FromRoute] string format, [FromQuery] string password) {
+        public async Task<IActionResult> Export([FromRoute]string keyId, [FromRoute]string format, [FromQuery]string password) {
             var response = await Store.GetById(keyId);
             if (response == null) {
                 return NotFound();
@@ -86,27 +80,24 @@ namespace Indice.Oba.AspNetCore.Features
         }
 
         /// <summary>
-        /// Revoke a certificate
+        /// Revoke a certificate.
         /// </summary>
         /// <param name="keyId"></param>
-        /// <returns></returns>
-        [ApiExplorerSettings(GroupName = "cert", IgnoreApi = true )]
+        [ApiExplorerSettings(GroupName = "cert", IgnoreApi = true)]
         [Produces("application/json")]
         [ProducesResponseType(statusCode: 204, type: typeof(void))]
         [HttpPut("{keyId}/revoke")]
-        public async Task<IActionResult> Revoke([FromRoute] string keyId) {
+        public async Task<IActionResult> Revoke([FromRoute]string keyId) {
             await Store.Revoke(keyId);
             return NoContent();
         }
 
-
         /// <summary>
-        /// List all available certifcates.
+        /// List all available certificates.
         /// </summary>
         /// <param name="notBefore">The issued date from which to search.</param>
-        /// <param name="revoked">If true searches only for revoked</param>
-        /// <param name="authorityKeyId">The issuing certificate subject key id</param>
-        /// <returns></returns>
+        /// <param name="revoked">If true searches only for revoked certificates.</param>
+        /// <param name="authorityKeyId">The issuing certificate subject key id.</param>
         [Produces("application/json")]
         [ProducesResponseType(statusCode: 200, type: typeof(List<CertificateDetails>))]
         [HttpGet]
@@ -116,16 +107,15 @@ namespace Indice.Oba.AspNetCore.Features
         }
 
         /// <summary>
-        /// Certificate revocation list. CRL
+        /// Certificate revocation list.
         /// </summary>
-        /// <returns></returns>
         [Produces("application/x-pkcs7-crl")]
         [ProducesResponseType(statusCode: 200, type: typeof(IFormFile))]
         [HttpGet("revoked.crl")]
         public async Task<IActionResult> RevokationList() {
             var issuer = new X509Certificate2(Path.Combine(Options.Path, "ca.pfx"), Options.PfxPassphrase);
             var results = await Store.GetRevocationList();
-            var crl = new CertificateRevocationList() {
+            var crl = new CertificateRevocationList {
                 AuthorizationKeyId = issuer.GetSubjectKeyIdentifier().ToLower(),
                 Country = "GR",
                 Organization = "Sample Authority",
@@ -137,7 +127,8 @@ namespace Indice.Oba.AspNetCore.Features
                     ReasonCode = RevokedCertificate.CRLReasonCode.Superseded,
                     RevocationDate = x.RevocationDate,
                     SerialNumber = x.SerialNumber
-                }).ToList()
+                })
+                .ToList()
             };
             var crlSeq = new CertificateRevocationListSequence(crl);
             var data = crlSeq.SignAndSerialize(issuer.PrivateKey as RSA);

@@ -10,6 +10,7 @@ using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
+using Microsoft.OpenApi.Models;
 
 namespace Indice.Oba.Host
 {
@@ -30,20 +31,18 @@ namespace Indice.Oba.Host
                     .AddCertificateEndpoints(x => {
                         x.IssuerDomain = Configuration["Certificates:Issuer"];
                         x.AddEntityFrameworkStore(options => {
-                            options.ConfigureDbContext = (a) => {
-                                a.UseSqlServer(Configuration.GetConnectionString("CertificatesDb"));
+                            options.ConfigureDbContext = builder => {
+                                builder.UseSqlServer(Configuration.GetConnectionString("CertificatesDb"));
                             };
                         });
                     });
-
             services.AddSwaggerGen(x => {
                 x.SchemaFilter<SchemaExamplesFilter>();
-                x.SwaggerDoc("cert", new Microsoft.OpenApi.Models.OpenApiInfo() {
+                x.SwaggerDoc("cert", new OpenApiInfo {
                     Description = "Certificate *utilities*",
                     Title = "Certificate",
                     Version = "v1"
                 });
-
                 var xmlFiles = new[] {
                     $"{Assembly.GetEntryAssembly().GetName().Name}.xml",
                     "Indice.Oba.AspNetCore.xml",
@@ -51,18 +50,18 @@ namespace Indice.Oba.Host
                 };
                 foreach (var xmlFile in xmlFiles) {
                     var xmlPath = Path.Combine(AppContext.BaseDirectory, xmlFile);
-                    if (File.Exists(xmlPath))
+                    if (File.Exists(xmlPath)) {
                         x.IncludeXmlComments(xmlPath);
-                } 
-
+                    }
+                }
             });
-
-            var httpSignatureCertificate = new X509Certificate2(Path.Combine(Environment.ContentRootPath, "test.pfx"), Configuration["HttpSignatures:PfxPass"], X509KeyStorageFlags.MachineKeySet);
+            var httpSignatureCertificate = new X509Certificate2(Path.Combine(Environment.ContentRootPath, Configuration["HttpSignatures:PfxName"]), Configuration["HttpSignatures:PfxPass"], X509KeyStorageFlags.MachineKeySet);
             services.AddHttpSignatures(options => {
                 options.MapPath("/payments", "(request target)", "date", "digest", "x-response-id");
                 options.MapPath("/payments/execute", "(request target)", "date", "digest", "x-response-id");
                 //options.ResponseSigning = false;
-            }).AddSigningCredential(httpSignatureCertificate);
+            })
+            .AddSigningCredential(httpSignatureCertificate);
         }
 
         // This method gets called by the runtime. Use this method to configure the HTTP request pipeline.

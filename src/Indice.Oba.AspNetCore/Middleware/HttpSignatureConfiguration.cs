@@ -1,9 +1,6 @@
 ﻿using System;
-using System.Collections.Generic;
 using System.Linq;
-using System.Reflection;
 using System.Security.Cryptography.X509Certificates;
-using System.Text;
 using Indice.Oba.AspNetCore.Middleware;
 using Microsoft.IdentityModel.Tokens;
 
@@ -22,7 +19,7 @@ namespace Microsoft.Extensions.DependencyInjection
         /// <param name="setupAction"></param>
         /// <returns></returns>
         public static IHttpSignatureBuilder AddHttpSignatures(this IServiceCollection services, Action<HttpSignatureOptions> setupAction = null) {
-            var builder = new HttpSignatureBuilder() {
+            var builder = new HttpSignatureBuilder {
                 Services = services
             };
             var existingService = services.Where(x => x.ServiceType == typeof(HttpSignatureOptions)).LastOrDefault();
