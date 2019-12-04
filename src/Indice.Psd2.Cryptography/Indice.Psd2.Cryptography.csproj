@@ -4,7 +4,6 @@
     <Copyright>Copyright (c) 2019 Indice</Copyright>
     <AssemblyTitle>Indice.Psd2.Cryptography</AssemblyTitle>
     <VersionPrefix>3.0.0</VersionPrefix>
-    <VersionSuffix>beta1</VersionSuffix>
     <Authors>c.leftheris, itsenes</Authors>
     <TargetFramework>netstandard2.1</TargetFramework>
     <AssemblyName>Indice.Psd2.Cryptography</AssemblyName>
@@ -28,10 +27,6 @@
     <EmbedUntrackedSources>true</EmbedUntrackedSources>
     <AllowedOutputExtensionsInPackageBuildOutputFolder>$(AllowedOutputExtensionsInPackageBuildOutputFolder);.pdb</AllowedOutputExtensionsInPackageBuildOutputFolder> 
   </PropertyGroup>
-  <PropertyGroup Condition="'$(TargetFramework)' == 'netcoreapp2.2'">
-    <AssemblyTitle>Indice.Psd2.Cryptography .NET Core App 2.2</AssemblyTitle>
-    <DefineConstants>$(DefineConstants);NETCoreApp22</DefineConstants>    
-  </PropertyGroup>
   <ItemGroup>
     <None Include="..\..\icon\icon-128.png" Pack="true" Visible="false" PackagePath="" />
   </ItemGroup>
@@ -47,6 +42,6 @@
     <PackageReference Include="System.ComponentModel.Annotations" Version="4.6.0" />
     <PackageReference Include="DerConverter" Version="3.0.0.81" />
     <PackageReference Include="PemUtils" Version="3.0.0.81" />
-    <PackageReference Include="Microsoft.SourceLink.GitHub" Version="1.0.0-beta2-19367-01" PrivateAssets="All" />
+    <PackageReference Include="Microsoft.SourceLink.GitHub" Version="1.0.0" PrivateAssets="All" />
   </ItemGroup>
 </Project>

@@ -9,7 +9,7 @@ namespace Indice.Oba.Host.Controllers
 {
     [ApiController]
     [Route("payments")]
-    public class PaymentsController : ControllerBase
+    internal class PaymentsController : ControllerBase
     {
         private static readonly ConcurrentDictionary<Guid, Payment> Payments = new ConcurrentDictionary<Guid, Payment>();
 
