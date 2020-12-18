@@ -76,12 +76,13 @@ cIrtF3LFmXhdwJUAkgTLTZt7RYi/KKRCL0om7SEsM/QOjbWkrRl+
             var jwt = new JwtSecurityTokenHandler().WriteToken(token);
             // validate
             SecurityToken validatedToken;
-            var validationParameters = new TokenValidationParameters();
-            validationParameters.IssuerSigningKey = new X509SecurityKey(new X509Certificate2(Convert.FromBase64String(TEST_X509_PublicKey_2048)));
-            validationParameters.ValidAudience = ValidAudience;
-            validationParameters.ValidIssuer = ValidIssuer;
-            validationParameters.ValidateIssuerSigningKey = true;
-            validationParameters.IssuerSigningKeyValidator = new Psd2IssuerSigningKeyValidator().Validate;
+            var validationParameters = new TokenValidationParameters {
+                IssuerSigningKey = new X509SecurityKey(new X509Certificate2(Convert.FromBase64String(TEST_X509_PublicKey_2048))),
+                ValidAudience = ValidAudience,
+                ValidIssuer = ValidIssuer,
+                ValidateIssuerSigningKey = true,
+                IssuerSigningKeyValidator = new Psd2IssuerSigningKeyValidator().Validate
+            };
 
             var principal = new JwtSecurityTokenHandler().ValidateToken(jwt, validationParameters, out validatedToken);
 

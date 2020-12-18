@@ -110,6 +110,16 @@ namespace Indice.Psd2.Cryptography.X509Certificates
         }
 
         /// <summary>
+        /// adds SERIALNUMBER (2.5.4.5 Oid)
+        /// </summary>
+        /// <param name="serialNumber"></param>
+        /// <returns></returns>
+        public SubjectBuilder AddSerialNumber(string serialNumber) {
+            Data.Add("SERIALNUMBER", serialNumber);
+            return this;
+        }
+
+        /// <summary>
         /// Generate the <see cref="X500DistinguishedName"/>
         /// </summary>
         /// <param name="flags">Controls the delimiter</param>

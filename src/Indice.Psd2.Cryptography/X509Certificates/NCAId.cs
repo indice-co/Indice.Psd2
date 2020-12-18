@@ -1,6 +1,7 @@
 ﻿using System;
 using System.ComponentModel;
 using System.Globalization;
+using System.Linq;
 using System.Text.RegularExpressions;
 
 namespace Indice.Psd2.Cryptography.X509Certificates
@@ -13,7 +14,7 @@ namespace Indice.Psd2.Cryptography.X509Certificates
     [TypeConverter(typeof(NCAIdTypeConverter))]
     public struct NCAId
     {
-        private const string REGEX_PATTERN = "(PSD)?([A-Z]{2})(-|_)([A-Z]{2,8})(-|_)(.+)";
+        private const string REGEX_PATTERN = "(PSD)?([A-Z]{2})[-_]([A-Z]{2,8})([-_](.+))?";
 
         /// <summary>
         /// Construct from the distinct parts.
@@ -91,10 +92,7 @@ namespace Indice.Psd2.Cryptography.X509Certificates
         /// </summary>
         /// <returns></returns>
         public override string ToString() {
-            if (IsValid)
-                return $"{Prefix}{CountryCode}-{SupervisionAuthority}-{AuthorizationNumber}";
-            else
-                return AuthorizationNumber;
+            return string.Join('-', new[] { $"{Prefix}{CountryCode}", SupervisionAuthority, AuthorizationNumber }.Where(x => !string.IsNullOrEmpty(x)));
         }
 
         /// <summary>
@@ -115,7 +113,7 @@ namespace Indice.Psd2.Cryptography.X509Certificates
                 }
             }
             var match = regex.Match(text);
-            return new NCAId(match.Groups[1].Value, match.Groups[2].Value, match.Groups[4].Value, match.Groups[6].Value);
+            return new NCAId(match.Groups[1].Value, match.Groups[2].Value, match.Groups[3].Value, match.Groups[5].Value);
         }
 
         /// <summary>

@@ -10,6 +10,9 @@ namespace Indice.Psd2.Cryptography.X509Certificates
         public static int[] OidToArray(this string oid) {
             return oid.Split('.').Select(x => int.Parse(x)).ToArray();
         }
+        public static string ToOidString(this int[] oid) {
+            return string.Join('.', oid);
+        }
 
         public static string ToHexString(this IEnumerable<byte> data) {
             var text = string.Join("", data.Select(x => x.ToString("X2")));

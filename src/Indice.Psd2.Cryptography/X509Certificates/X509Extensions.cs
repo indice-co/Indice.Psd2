@@ -130,9 +130,24 @@ namespace System.Security.Cryptography.X509Certificates
             var extension = cert.Extensions[QualifiedCertificateStatementsExtension.Oid_QC_Statements];
             if (extension != null) {
                 var qcStatements = new QualifiedCertificateStatementsExtension(extension, extension.Critical);
-                type = qcStatements.Psd2Type;
+                type = qcStatements.Statements.Psd2Type;
             }
             return type;
+        }
+
+        /// <summary>
+        /// Find the ETSI QualifiedExtensions extension and extract all information.
+        /// </summary>
+        /// <param name="cert"></param>
+        /// <returns></returns>
+        public static QualifiedCertificateStatements GetQualifiedCertificateStatements(this X509Certificate2 cert) {
+            var statements = default(QualifiedCertificateStatements);
+            var extension = cert.Extensions[QualifiedCertificateStatementsExtension.Oid_QC_Statements];
+            if (extension != null) {
+                var qcStatements = new QualifiedCertificateStatementsExtension(extension, extension.Critical);
+                statements = qcStatements.Statements;
+            }
+            return statements;
         }
 
         /// <summary>

@@ -85,7 +85,7 @@ namespace Indice.Psd2.Cryptography.X509Certificates
             using (var decoder = new DefaultDerAsnDecoder()) {
                 decoder.RegisterType(ContextSpecificString.Id, (dcdr, identifier, data) => new ContextSpecificString(dcdr, identifier, data));
                 var sequence = decoder.Decode(RawData) as DerAsnSequence;
-                _AccessDescriptions = new AccessDescriptionList(sequence.Value).ExtractLocations();
+                _AccessDescriptions = new AccessDescriptionList(sequence.Value).Extract();
                 _decoded = true;
             }
             
@@ -149,10 +149,10 @@ namespace Indice.Psd2.Cryptography.X509Certificates
         }
 
         /// <summary>
-        /// Deserializes the raw data into the list of <see cref="Uri"/>.
+        /// Deserializes the raw data into the list of <see cref="AccessDescription"/>.
         /// </summary>
         /// <returns>Deserilized contents</returns>
-        public AccessDescription[] ExtractLocations() {
+        public AccessDescription[] Extract() {
             var descriptions = new List<AccessDescription>();
             
             foreach (var item in Value) {
@@ -202,5 +202,10 @@ namespace Indice.Psd2.Cryptography.X509Certificates
             /// </summary>
             CertificationAuthorityIssuer = 2,
         }
+
+        /// <inheritdoc/>
+        public override string ToString() => !string.IsNullOrEmpty(AccessLocation) ?
+                                                $"{AccessLocation} ({(AccessMethod == AccessMethodType.CertificationAuthorityIssuer ? "cer" : "OSCP")})" :
+                                            base.ToString();
     }
 }

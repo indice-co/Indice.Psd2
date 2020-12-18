@@ -230,7 +230,7 @@ namespace Indice.Psd2.Cryptography
         public X509Certificate2 CreateQWACs(Psd2CertificateRequest request, string issuerDomain, X509Certificate2 issuer, out RSA privateKey) {
             var notBefore = DateTimeOffset.UtcNow.AddDays(-1);
             var notAfter = DateTimeOffset.UtcNow.AddDays(request.ValidityInDays);
-            var authorizationNumber = new NCAId(null, request.CountryCode, request.AuthorityId, request.AuthorizationNumber);
+            var authorizationNumber = new NCAId("PSD", request.CountryCode, request.AuthorityId, request.AuthorizationNumber);
             var subject = new SubjectBuilder().AddCommonName(request.CommonName)
                                 .AddOrganization(request.Organization, request.OrganizationUnit)
                                 .AddLocation(request.CountryCode, request.State, request.City)
@@ -238,7 +238,7 @@ namespace Indice.Psd2.Cryptography
                                 .Build();
             var extensions = new List<X509Extension>();
             
-            var psd2Type = new Psd2Attributes() {
+            var psd2 = new Psd2Attributes() {
                 AuthorityName = request.AuthorityName,
                 AuthorizationId = authorizationNumber,
                 HasAccountInformation = request.Roles.Aisp,
@@ -246,7 +246,15 @@ namespace Indice.Psd2.Cryptography
                 HasIssuingOfCardBasedPaymentInstruments = request.Roles.Piisp,
                 HasAccountServicing = request.Roles.Aspsp,
             };
-            var psd2Extension = new QualifiedCertificateStatementsExtension(psd2Type, critical: false);
+            var psd2Extension = new QualifiedCertificateStatementsExtension(
+                isCompliant: true, 
+                psd2: psd2,
+                retentionPeriod: 20,                                                    // optional
+                isQSCD: true,                                                           // optional
+                limit: new QcMonetaryValue { CurrencyCode = "EUR", Value = 1000000 },   // optional
+                pdsLocations: new List<PdsLocation> { new PdsLocation { Language = "EN", Url = "https://www.etsi.org/deliver/etsi_en/319400_319499/31941205/02.02.03_20/en_31941205v020203a.pdf" } },
+                type: QcTypeIdentifiers.Web,
+                critical: false);
             var authorityInformation = new AuthorityInformationAccessExtension(new[] {
                 new AccessDescription {
                     AccessMethod = AccessDescription.AccessMethodType.CertificationAuthorityIssuer,
