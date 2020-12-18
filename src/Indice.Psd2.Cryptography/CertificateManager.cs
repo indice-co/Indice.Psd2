@@ -101,7 +101,7 @@ namespace Indice.Psd2.Cryptography
             bool isValid,
             bool requireExportable = true,
             DiagnosticInformation diagnostics = null) {
-            diagnostics?.Debug($"Listing '{purpose.ToString()}' certificates on '{location}\\{storeName}'.");
+            diagnostics?.Debug($"Listing '{purpose}' certificates on '{location}\\{storeName}'.");
             var certificates = new List<X509Certificate2>();
             try {
                 using (var store = new X509Store(storeName, location)) {
@@ -237,18 +237,30 @@ namespace Indice.Psd2.Cryptography
                                 .AddOrganizationIdentifier(authorizationNumber)
                                 .Build();
             var extensions = new List<X509Extension>();
-            
-            var psd2 = new Psd2Attributes() {
-                AuthorityName = request.AuthorityName,
-                AuthorizationId = authorizationNumber,
-                HasAccountInformation = request.Roles.Aisp,
-                HasPaymentInitiation = request.Roles.Pisp,
-                HasIssuingOfCardBasedPaymentInstruments = request.Roles.Piisp,
-                HasAccountServicing = request.Roles.Aspsp,
-            };
-            var psd2Extension = new QualifiedCertificateStatementsExtension(
+            var keyUsage = new X509KeyUsageExtension(X509KeyUsageFlags.DigitalSignature | X509KeyUsageFlags.KeyEncipherment, critical: true);
+            var enhancedKeyUsage = new X509EnhancedKeyUsageExtension(
+                new OidCollection() {
+                    new Oid(
+                        ServerAuthenticationEnhancedKeyUsageOid,
+                        ServerAuthenticationEnhancedKeyUsageOidFriendlyName),
+                    new Oid(
+                        ClientAuthenticationEnhancedKeyUsageOid,
+                        ClientAuthenticationEnhancedKeyUsageOidFriendlyName),
+                },
+                critical: true);
+            var policies = new CertificatePoliciesExtension(new[] { 
+                new PolicyInformation { PolicyIdentifier = PolicyInformation.Oid_QCP_w }
+            }, critical: false);
+            var qcStatements = new QualifiedCertificateStatementsExtension(
                 isCompliant: true, 
-                psd2: psd2,
+                psd2: new Psd2Attributes() {
+                    AuthorityName = request.AuthorityName,
+                    AuthorizationId = new NCAId(null, request.CountryCode, request.AuthorityId, null),
+                    HasAccountInformation = request.Roles.Aisp,
+                    HasPaymentInitiation = request.Roles.Pisp,
+                    HasIssuingOfCardBasedPaymentInstruments = request.Roles.Piisp,
+                    HasAccountServicing = request.Roles.Aspsp,
+                },
                 retentionPeriod: 20,                                                    // optional
                 isQSCD: true,                                                           // optional
                 limit: new QcMonetaryValue { CurrencyCode = "EUR", Value = 1000000 },   // optional
@@ -264,9 +276,16 @@ namespace Indice.Psd2.Cryptography
             var crlDistributionPoints = new CRLDistributionPointsExtension(new[] {
                 new CRLDistributionPoint {  FullName = new [] { $"http://{issuerDomain}/.certificates/revoked.crl" } },
             }, critical: false);
-            extensions.Add(psd2Extension);
-            extensions.Add(crlDistributionPoints);
+            var sanBuilder = new SubjectAlternativeNameBuilder();
+            sanBuilder.AddDnsName(request.CommonName);
+
             extensions.Add(authorityInformation);
+            extensions.Add(crlDistributionPoints);
+            extensions.Add(enhancedKeyUsage);
+            extensions.Add(policies);
+            extensions.Add(qcStatements);
+            extensions.Add(keyUsage);
+            extensions.Add(sanBuilder.Build(critical:true));
             var certificate = CreateCertificate(issuer ?? CreateRootCACertificate(issuerDomain), subject, extensions, notBefore, notAfter, out privateKey);
             if (RuntimeInformation.IsOSPlatform(OSPlatform.Windows)) {
                 certificate.FriendlyName = "Qualified website authentication certificate QWAC";
