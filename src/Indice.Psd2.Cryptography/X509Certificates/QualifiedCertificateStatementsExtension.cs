@@ -19,8 +19,6 @@ namespace Indice.Psd2.Cryptography.X509Certificates
     /// and specified in EU standards.
     /// ETSI EN 319 412-5 (v2.1.1, 2016-02 or later)
     /// https://www.etsi.org/deliver/etsi_en/319400_319499/31941205/02.01.01_60/en_31941205v020101p.pdf
-    /// ETSI TS 101 862 (v1.3.3, 2006-01 or later)
-    /// https://www.etsi.org/deliver/etsi_ts/101800_101899/101862/01.03.03_60/ts_101862v010303p.pdf
     /// ETSI TS 119 495 (v1.1.2, 2018-07 or later)
     /// https://www.etsi.org/deliver/etsi_ts/119400_119499/119495/01.01.02_60/ts_119495v010102p.pdf
     /// 
