@@ -263,7 +263,7 @@ namespace Indice.Psd2.Cryptography
                 },
                 retentionPeriod: 20,                                                    // optional
                 isQSCD: true,                                                           // optional
-                limit: new QcMonetaryValue { CurrencyCode = "EUR", Value = 1000000 },   // optional
+                limit: new QcMonetaryValue { CurrencyCode = "EUR", Value = 456000 },   // optional
                 pdsLocations: new List<PdsLocation> { new PdsLocation { Language = "EN", Url = "https://www.etsi.org/deliver/etsi_en/319400_319499/31941205/02.02.03_20/en_31941205v020203a.pdf" } },
                 type: QcTypeIdentifiers.Web,
                 critical: false);
@@ -278,7 +278,9 @@ namespace Indice.Psd2.Cryptography
             }, critical: false);
             var sanBuilder = new SubjectAlternativeNameBuilder();
             sanBuilder.AddDnsName(request.CommonName);
-
+            var organizationIdentifier = new CABForumOrganizationIdentifierExtension(
+                new CABForumOrganizationIdentifier(authorizationNumber), 
+                critical: false);
             extensions.Add(authorityInformation);
             extensions.Add(crlDistributionPoints);
             extensions.Add(enhancedKeyUsage);
@@ -286,6 +288,7 @@ namespace Indice.Psd2.Cryptography
             extensions.Add(qcStatements);
             extensions.Add(keyUsage);
             extensions.Add(sanBuilder.Build(critical:true));
+            extensions.Add(organizationIdentifier);
             var certificate = CreateCertificate(issuer ?? CreateRootCACertificate(issuerDomain), subject, extensions, notBefore, notAfter, out privateKey);
             if (RuntimeInformation.IsOSPlatform(OSPlatform.Windows)) {
                 certificate.FriendlyName = "Qualified website authentication certificate QWAC";

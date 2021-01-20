@@ -69,6 +69,7 @@ namespace Indice.Psd2.Cryptography.X509Certificates
             if (isQSCD) {
                 statements.Add(new QcSSCDStatement());
             }
+            statements.Add(new QcTypeStatement(type));
             if (pdsLocations?.Any() == true) {
                 statements.Add(new QcPdsStatement(pdsLocations));
             }
@@ -406,7 +407,7 @@ namespace Indice.Psd2.Cryptography.X509Certificates
         public QcLimitValueStatement(decimal limitValue, string currenyCode) : base(Array.Empty<DerAsnType>()) {
             var parts = decimal.GetBits(limitValue);
             var scale = (byte)((parts[3] >> 16) & 0x7F);
-            var amount = ((BigInteger)limitValue) * scale;
+            var amount = ((BigInteger)limitValue) * (int)Math.Pow(10.0, scale);
             var oid = new DerAsnObjectIdentifier(DerAsnIdentifiers.Primitive.ObjectIdentifier, Oid_QcLimitValue.OidToArray());
             Value = new DerAsnType[] { oid, new DerAsnSequence(new DerAsnType[] {
                 new DerAsnPrintableString(currenyCode.Substring(0, 3)),
