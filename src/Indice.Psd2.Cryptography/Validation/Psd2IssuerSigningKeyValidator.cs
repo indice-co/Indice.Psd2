@@ -15,9 +15,8 @@ namespace Indice.Psd2.Cryptography.Validation
     /// Takes the public key <see cref="X509Certificate"/> and extracts Ps2 attributes contained. Then validates the <see cref="NCAId"/> against the subject. 
     /// Furthermore it also should validate the cerificate NCAId to be in the trusted registry. And finaly the authority (certificate issuer for) should be on one if the NCA or CEB trusted issuer lists.
     /// </summary>
-    public class Psd2IssuerSigningKeyValidator
-    {
-        
+    public class Psd2IssuerSigningKeyValidator {
+
         //public bool ValidateNCA_TrustedIssuers { get; set; }
         //public bool ValidateNCA_Enrolled_TPP { get; set; }
 
@@ -48,8 +47,13 @@ namespace Indice.Psd2.Cryptography.Validation
         /// <returns></returns>
         protected virtual bool ValidateInternal(X509SecurityKey asymetricKey, JwtSecurityToken jwtToken, TokenValidationParameters validationParameters) {
             var attributes = asymetricKey.Certificate.GetPsd2Attributes();
+            var organizationId = asymetricKey.Certificate.GetCABForumOrganizationIdentifier();
+            var subjectOrgId = asymetricKey.Certificate.GetSubjectBuilder().GetOrganizationIdentifier();
             var ok = false;
-            ok = attributes?.AuthorizationId.ToString() == jwtToken.Subject || attributes?.AuthorizationId.AuthorizationNumber == jwtToken.Subject;
+            ok = attributes?.AuthorizationId.ToString() == jwtToken.Subject ||
+                 attributes?.AuthorizationId.AuthorizationNumber == jwtToken.Subject ||
+                 organizationId?.ToString() == jwtToken.Subject ||
+                 subjectOrgId == jwtToken.Subject;
             return ok;
         }
     }

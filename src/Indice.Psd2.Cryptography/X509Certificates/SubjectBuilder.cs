@@ -11,13 +11,35 @@ namespace Indice.Psd2.Cryptography.X509Certificates
     /// </summary>
     public class SubjectBuilder
     {
-        private Dictionary<string, string> Data { get; } = new Dictionary<string, string>();
+        private Dictionary<string, string> Subject { get; }
 
         /// <summary>
         /// Helps build a the subject for the <see cref="X500DistinguishedName"/> extention. Using fluent configuration.
         /// </summary>
-        public SubjectBuilder() {
+        public SubjectBuilder() : this(new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase)) {
+        }
 
+        /// <summary>
+        /// Initializes the subject builder using a list of key value pairs.
+        /// </summary>
+        public SubjectBuilder(Dictionary<string, string> subject) {
+            Subject = subject;
+        }
+
+        /// <summary>
+        /// Gets the value of one part of the subject by key.
+        /// </summary>
+        /// <param name="key">Key can any of the OU, O, C, E names etc.</param>
+        /// <returns></returns>
+        public string this[string key] => GetValue(key);
+
+        /// <summary>
+        /// Get a value from the subject or null if there is none.
+        /// </summary>
+        /// <param name="key"></param>
+        /// <returns></returns>
+        public string GetValue(string key) {
+            return Subject.ContainsKey(key) ? Subject[key] : null;
         }
 
         /// <summary>
@@ -27,7 +49,7 @@ namespace Indice.Psd2.Cryptography.X509Certificates
         /// <param name="value"></param>
         /// <returns></returns>
         public SubjectBuilder Add(string key, string value) {
-            Data.Add(key, value);
+            Subject.Add(key, value);
             return this;
         }
 
@@ -37,7 +59,7 @@ namespace Indice.Psd2.Cryptography.X509Certificates
         /// <param name="value"></param>
         /// <returns></returns>
         public SubjectBuilder AddCommonName(string value) {
-            Data.Add("CN", value);
+            Subject.Add("CN", value);
             return this;
         }
 
@@ -48,8 +70,8 @@ namespace Indice.Psd2.Cryptography.X509Certificates
         /// <param name="organizationUnit"></param>
         /// <returns></returns>
         public SubjectBuilder AddOrganization(string organizationName, string organizationUnit) {
-            Data.Add("O", organizationName);
-            Data.Add("OU", organizationUnit);
+            Subject.Add("O", organizationName);
+            Subject.Add("OU", organizationUnit);
             return this;
         }
 
@@ -61,11 +83,11 @@ namespace Indice.Psd2.Cryptography.X509Certificates
         /// <param name="city"></param>
         /// <returns></returns>
         public SubjectBuilder AddLocation(string countryCode, string state = null, string city = null) {
-            Data.Add("C", countryCode);
+            Subject.Add("C", countryCode);
             if (!string.IsNullOrEmpty(state))
-                Data.Add("S", state);
+                Subject.Add("S", state);
             if (!string.IsNullOrEmpty(city))
-                Data.Add("L", city);
+                Subject.Add("L", city);
             return this;
         }
 
@@ -75,7 +97,7 @@ namespace Indice.Psd2.Cryptography.X509Certificates
         /// <param name="email"></param>
         /// <returns></returns>
         public SubjectBuilder AddEmail(string email) {
-            Data.Add("E", email);
+            Subject.Add("E", email);
             return this;
         }
 
@@ -85,7 +107,7 @@ namespace Indice.Psd2.Cryptography.X509Certificates
         /// <param name="userIdentifier"></param>
         /// <returns></returns>
         public SubjectBuilder AddUserIdentifier(string userIdentifier) {
-            Data.Add("UID", userIdentifier);
+            Subject.Add("UID", userIdentifier);
             return this;
         }
 
@@ -95,7 +117,7 @@ namespace Indice.Psd2.Cryptography.X509Certificates
         /// <param name="domainComponent"></param>
         /// <returns></returns>
         public SubjectBuilder AddDomainComponent(string domainComponent) {
-            Data.Add("DC", domainComponent);
+            Subject.Add("DC", domainComponent);
             return this;
         }
 
@@ -105,7 +127,7 @@ namespace Indice.Psd2.Cryptography.X509Certificates
         /// <param name="id"></param>
         /// <returns></returns>
         public SubjectBuilder AddOrganizationIdentifier(string id) {
-            Data.Add("2.5.4.97", id);
+            Subject.Add("2.5.4.97", id);
             return this;
         }
 
@@ -115,9 +137,16 @@ namespace Indice.Psd2.Cryptography.X509Certificates
         /// <param name="serialNumber"></param>
         /// <returns></returns>
         public SubjectBuilder AddSerialNumber(string serialNumber) {
-            Data.Add("SERIALNUMBER", serialNumber);
+            Subject.Add("SERIALNUMBER", serialNumber);
             return this;
         }
+
+
+        /// <summary>
+        /// Gets Organization identifier as it is identified by the 2.5.4.97 Oid
+        /// </summary>
+        /// <returns></returns>
+        public string GetOrganizationIdentifier() => GetValue("2.5.4.97");
 
         /// <summary>
         /// Generate the <see cref="X500DistinguishedName"/>
@@ -134,11 +163,23 @@ namespace Indice.Psd2.Cryptography.X509Certificates
                 delimiter = ';';
             }
 #if NETCOREAPP22
-            var name = string.Join(delimiter, Data.Select(x => $"{x.Key}={x.Value}").ToArray());
+            var name = string.Join(delimiter, Subject.Select(x => $"{x.Key}={x.Value}").ToArray());
 #else
-            var name = string.Join(delimiter.ToString(), Data.Select(x => $"{x.Key}={x.Value}").ToArray());
+            var name = string.Join(delimiter.ToString(), Subject.Select(x => $"{x.Key}={x.Value}").ToArray());
 #endif
             return new X500DistinguishedName(name, flags);
+        }
+
+        /// <summary>
+        /// Parses the string representation of the <see cref="X500DistinguishedName"/> extention into an instance of the <see cref="SubjectBuilder"/> class.
+        /// </summary>
+        /// <param name="subject"></param>
+        /// <returns></returns>
+        public static SubjectBuilder Parse(string subject) {
+            if (string.IsNullOrWhiteSpace(subject)) {
+                throw new ArgumentException("Subject cannot be blank", nameof(subject));
+            }
+            return new SubjectBuilder(subject.Split(';', '\n', ',').Select(x => x.Split('=')).ToDictionary(x => x[0], x => x[1]));
         }
     }
 }

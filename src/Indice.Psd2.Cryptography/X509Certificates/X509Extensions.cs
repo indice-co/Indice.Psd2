@@ -207,6 +207,29 @@ namespace System.Security.Cryptography.X509Certificates
         }
 
         /// <summary>
+        /// Find the Organization Identifier. PSD2
+        /// </summary>
+        /// <param name="cert"></param>
+        /// <returns></returns>
+        public static CABForumOrganizationIdentifier GetCABForumOrganizationIdentifier(this X509Certificate2 cert) {
+            var org = default(CABForumOrganizationIdentifier);
+            var extension = cert.Extensions[CABForumOrganizationIdentifierExtension.Oid_CabForumOrganizationIdentifier];
+            if (extension != null) {
+                org = new CABForumOrganizationIdentifierExtension(extension, extension.Critical).OrganizationIdentifier;
+            }
+            return org;
+        }
+
+        /// <summary>
+        /// Initialized an instance of the <see cref="SubjectBuilder"/> using the certificate <seealso cref="X509Certificate2.SubjectName"/>
+        /// </summary>
+        /// <param name="cert"></param>
+        /// <returns></returns>
+        public static SubjectBuilder GetSubjectBuilder(this X509Certificate2 cert) {
+            return SubjectBuilder.Parse(cert.Subject);
+        }
+
+        /// <summary>
         /// Find the KeyIdentifier of the issuer certificate.
         /// </summary>
         /// <param name="cert"></param>
