@@ -13,7 +13,7 @@ namespace Indice.Psd2.Cryptography.X509Certificates
 {
     //https://tools.ietf.org/html/rfc4325#ref-X.680
     /// <summary>
-    /// Authority Information Access CRL Extension
+    /// Authority Information Access Extension
     /// 
     /// id-pe-authorityInfoAccess OBJECT IDENTIFIER  ::=  { id-pe 1 }
     ///   

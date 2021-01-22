@@ -121,21 +121,6 @@ namespace System.Security.Cryptography.X509Certificates
         }
 
         /// <summary>
-        /// Find the Psd2 QualifiedExtensions extension and extract the psd2 attributes.
-        /// </summary>
-        /// <param name="cert"></param>
-        /// <returns></returns>
-        public static Psd2Attributes GetPsd2Attributes(this X509Certificate2 cert) {
-            var type = default(Psd2Attributes);
-            var extension = cert.Extensions[QualifiedCertificateStatementsExtension.Oid_QC_Statements];
-            if (extension != null) {
-                var qcStatements = new QualifiedCertificateStatementsExtension(extension, extension.Critical);
-                type = qcStatements.Statements.Psd2Type;
-            }
-            return type;
-        }
-
-        /// <summary>
         /// Find the ETSI QualifiedExtensions extension and extract all information.
         /// </summary>
         /// <param name="cert"></param>
@@ -179,7 +164,7 @@ namespace System.Security.Cryptography.X509Certificates
         }
 
         /// <summary>
-        /// Find the AIA descriptions.
+        /// Find the AIA descriptions. Authority Information Access Extension
         /// </summary>
         /// <param name="cert"></param>
         /// <returns></returns>
@@ -190,6 +175,23 @@ namespace System.Security.Cryptography.X509Certificates
                 accessDescriptions = new AuthorityInformationAccessExtension(extension, extension.Critical).AccessDescriptions;
             }
             return accessDescriptions;
+        }
+
+        /// <summary>
+        /// Certificate Policies Extension.
+        /// This extension lists certificate policies, recognized by the issuing CA, that apply to the certificate, 
+        /// together with optional qualifier information pertaining to these certificate policies. 
+        /// Typically, different certificate policies will relate to different applications which may use the certified key.
+        /// </summary>
+        /// <param name="cert"></param>
+        /// <returns></returns>
+        public static PolicyInformation[] GetCertificatePolicies(this X509Certificate2 cert) {
+            var policies = default(PolicyInformation[]);
+            var extension = cert.Extensions[CertificatePoliciesExtension.Oid_CertificatePolicies];
+            if (extension != null) {
+                policies = new CertificatePoliciesExtension(extension, extension.Critical).Policies;
+            }
+            return policies;
         }
 
         /// <summary>
@@ -207,7 +209,7 @@ namespace System.Security.Cryptography.X509Certificates
         }
 
         /// <summary>
-        /// Find the Organization Identifier. PSD2
+        /// Find the Organization Identifier. PSD2 CA/Browser Forum OrganizationIdentifier
         /// </summary>
         /// <param name="cert"></param>
         /// <returns></returns>

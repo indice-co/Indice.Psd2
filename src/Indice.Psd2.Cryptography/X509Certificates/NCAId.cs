@@ -147,13 +147,15 @@ namespace Indice.Psd2.Cryptography.X509Certificates
         /// <param name="obj"></param>
         /// <returns></returns>
         public override bool Equals(object obj) {
-            if (obj != null && obj is NCAId) {
-                var other = ((NCAId)obj);
+            if (obj != null && obj is NCAId other) {
+                return other.CountryCode == CountryCode &&
+                       other.SupervisionAuthority == SupervisionAuthority &&
+                       other.AuthorizationNumber == AuthorizationNumber;
+            } else if (obj != null && obj is string text && TryParse(text, out other)) {
                 return other.CountryCode == CountryCode &&
                        other.SupervisionAuthority == SupervisionAuthority &&
                        other.AuthorizationNumber == AuthorizationNumber;
             }
-
             return base.Equals(obj);
         }
 

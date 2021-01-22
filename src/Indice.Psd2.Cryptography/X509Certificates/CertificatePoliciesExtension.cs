@@ -297,6 +297,11 @@ namespace Indice.Psd2.Cryptography.X509Certificates
 
         /// <inheritdoc/>
         public override string ToString() => Name ?? base.ToString();
+
+        /// <summary>
+        /// Checks whether the policy identifies the certificate as EU qualified certificate.
+        /// </summary>
+        public bool IsEUQualifiedCertificate => PolicyIdentifier.StartsWith(Oid_QCP);
     }
 
     /// <summary>

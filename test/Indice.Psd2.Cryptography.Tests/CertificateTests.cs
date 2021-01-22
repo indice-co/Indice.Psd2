@@ -91,7 +91,7 @@ namespace Indice.Psd2.Cryptography.Tests
             Assert.True(true);
         }
 
-        [Fact]
+        [Fact(Skip = "This is an integration test" )]
         public async Task IssueOnlineAndValidate() {
             var http = new HttpClient();
             var response = await http.PostAsync("https://localhost:5001/.certificates", new StringContent(JsonConvert.SerializeObject(new Psd2CertificateRequest {
@@ -112,8 +112,8 @@ namespace Indice.Psd2.Cryptography.Tests
             var details = JsonConvert.DeserializeObject<CertificateDetails>(await response.Content.ReadAsStringAsync());
             var certificate = new X509Certificate2(Encoding.UTF8.GetBytes(details.EncodedCert));
             var validator = new Psd2ClientCertificateValidator();
-            validator.Validate(certificate);
-            Assert.True(true);
+            bool valid = validator.Validate(certificate, QcTypeIdentifiers.Web, out var errors);
+            Assert.True(valid, string.Join("\n", errors));
         }
 
         //[Fact]

@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Security.Cryptography.X509Certificates;
 using System.Text;
+using Indice.Psd2.Cryptography.X509Certificates;
 
 namespace Indice.Psd2.Cryptography.Validation
 {
@@ -25,48 +26,64 @@ namespace Indice.Psd2.Cryptography.Validation
         /// Validate the <see cref="X509Certificate2"/> for PSD2 compliance.
         /// </summary>
         /// <param name="certificate"></param>
-        public void Validate(X509Certificate2 certificate) {
+        /// <param name="type">QC Type identifier. qSeal, qSign, Web. If passed null checks any of the valid ones</param>
+        /// <param name="errors"></param>
+        public bool Validate(X509Certificate2 certificate, X509Certificates.QcTypeIdentifiers? type, out IEnumerable<string> errors) {
+            var errorList = new List<string>();
+            errors = errorList;
             var authorityKeyId = certificate.GetAuthorityKeyIdentifier();
 
             if (string.IsNullOrEmpty(authorityKeyId)) {
-                throw new Exception("Missing authority Key Identifier extension");
+                errorList.Add("Missing authority Key Identifier extension");
             }
-            var psd2Attributes = certificate.GetPsd2Attributes();
-            if (psd2Attributes == null) {
-                throw new Exception("This is not a valid QWAC or QCseal");
-            }
-            if (!psd2Attributes.Roles.Any()) {
-                throw new Exception("There are no roles defined in this certificate");
-            }
-            if (!psd2Attributes.AuthorizationId.IsValid) {
-                throw new Exception($"The NCAId is not in a valid format {psd2Attributes.AuthorizationId}");
+            var qcStatements = certificate.GetQualifiedCertificateStatements();
+            if (qcStatements == null) {
+                errorList.Add("Missing the QcStatements X509Certivicate extension");
+            } else {
+                if (!qcStatements.IsCompliant) 
+                    errorList.Add($"Although the certificate has the QcStatements X509Certivicate extension it is not a compliant \"European Qualified Certificate\". ");
+                if (qcStatements?.Psd2Type == null)
+                    errorList.Add("This is not a valid QWAC or QCseal. Missing the PSD2 type QcStatement");
+                if (type.HasValue && type.Value != qcStatements.Type) { 
+                    errorList.Add($"{qcStatements.Type} is not a valid QcTypeIdentifier for the current use of this certificate. Expected option {type}");
+                } else if ((int)qcStatements.Type < 0 && 3 < (int)qcStatements.Type) {
+                    errorList.Add($"{qcStatements.Type} is not a valid QcTypeIdentifier. Valid options include {QcTypeIdentifiers.Web}, {QcTypeIdentifiers.eSeal} and {QcTypeIdentifiers.eSign}");
+                }
+                if (!qcStatements.Psd2Type.Roles.Any()) {
+                    errorList.Add("There are no roles defined in this certificate");
+                }
+                //if (!qcStatements.Psd2Type.AuthorizationId.IsValid) {
+                //    errorList.Add($"The NCAId is not in a valid format {qcStatements.Psd2Type.AuthorizationId}");
+                //}
             }
             var accessDescriptions = certificate.GetAuthorityInformationAccess();
             if (accessDescriptions == null || !accessDescriptions.Any()) {
-                throw new Exception($"There is no Authority Information Access extension inside the certificate.");
+                errorList.Add($"There is no Authority Information Access extension inside the certificate.");
             }
-            foreach (var info in accessDescriptions) {
-                // make a ping to see if the certificate if accessible. This points to the CA issuing cert.
-                // we are only interested in CertificationAuthorityIssuer types of accessmethods according to spec.
-                // also we are interested in endpoints that point to .cer or .crt files through http(s) and not their LDAP counterparts.
-                // Could also download.
-                if (info.AccessMethod == X509Certificates.AccessDescription.AccessMethodType.CertificationAuthorityIssuer) {
-                    var uri = new Uri(info.AccessLocation);
-                    if (uri.Scheme == "http" || uri.Scheme == "https") {
-                        //var crt = 
-                    }
-                }
+            var policies = certificate.GetCertificatePolicies();
+            if (policies == null || !policies.Any(x => x.IsEUQualifiedCertificate)) {
+                errorList.Add($"There is no Certificate Policy that identifies the current certificate as EU Qualified. There should be one in every eIDAs cert. Acceptable policy identifiers include: QCP-n, QCP-l, QCP-n-qscd, QCP-l-qscd, QCP-w");
             }
             var crlDistributionPoints = certificate.GetCRLDistributionPoints();
             if (crlDistributionPoints == null || !crlDistributionPoints.Any()) {
-                throw new Exception($"There is no CRL distribution points extension inside the certificate.");
+                errorList.Add($"There is no CRL distribution points extension inside the certificate.");
             }
-            // here are the revocation lists.
-            // could do this also using the Cerificate chain.
-            foreach (var point in crlDistributionPoints) {
-                
+            var authorizationId = qcStatements.Psd2Type.AuthorizationId;
+            var organizationId = certificate.GetCABForumOrganizationIdentifier();
+            var subjectOrgId = certificate.GetSubjectBuilder().GetOrganizationIdentifier();
+            if (string.IsNullOrEmpty(subjectOrgId)) {
+                errorList.Add("The subject must contain the Organization Identifier as defined in PSD2 by the 2.5.4.97 Oid");
             }
-
+            if (organizationId == null) {
+                errorList.Add("There is no CA/Browser Forum OrganizationIdentifier extension inside the certificate. Oid 2.23.140.3.1");
+            }
+            if (!string.IsNullOrEmpty(subjectOrgId) && organizationId != null) {
+                if (!NCAId.TryParse(organizationId.ToString(), out var id) || !id.IsValid) {
+                    errorList.Add($"The organizationId inside the CA/Browser Forum OrganizationIdentifier has an invalid format. {organizationId}");
+                } else if (!id.Equals(subjectOrgId)) { 
+                    errorList.Add($"The organizationId inside the CA/Browser Forum OrganizationIdentifier is not the same with the one in the subject, {organizationId} != {subjectOrgId}");
+                }
+            }
             var chain = new X509Chain();
             chain.ChainPolicy.RevocationMode = X509RevocationMode.Online;
             chain.Build(certificate);
@@ -76,6 +93,7 @@ namespace Indice.Psd2.Cryptography.Validation
             }
             chain.Reset();
 
+            return errorList.Count == 0;
         }
     }
 }

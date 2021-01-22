@@ -146,7 +146,7 @@ namespace Indice.Psd2.Cryptography.X509Certificates
         /// Gets Organization identifier as it is identified by the 2.5.4.97 Oid
         /// </summary>
         /// <returns></returns>
-        public string GetOrganizationIdentifier() => GetValue("2.5.4.97");
+        public string GetOrganizationIdentifier() => GetValue("2.5.4.97") ?? GetValue("OID.2.5.4.97");
 
         /// <summary>
         /// Generate the <see cref="X500DistinguishedName"/>
@@ -179,7 +179,7 @@ namespace Indice.Psd2.Cryptography.X509Certificates
             if (string.IsNullOrWhiteSpace(subject)) {
                 throw new ArgumentException("Subject cannot be blank", nameof(subject));
             }
-            return new SubjectBuilder(subject.Split(';', '\n', ',').Select(x => x.Split('=')).ToDictionary(x => x[0], x => x[1]));
+            return new SubjectBuilder(subject.Split(';', '\n', ',').Select(x => x.Split('=')).ToDictionary(x => x[0].Trim(), x => x[1]));
         }
     }
 }

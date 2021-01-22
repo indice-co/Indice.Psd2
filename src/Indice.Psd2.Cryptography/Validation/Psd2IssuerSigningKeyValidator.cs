@@ -19,6 +19,7 @@ namespace Indice.Psd2.Cryptography.Validation
 
         //public bool ValidateNCA_TrustedIssuers { get; set; }
         //public bool ValidateNCA_Enrolled_TPP { get; set; }
+        //public bool Validate_eIDAS { get; set; }
 
         /// <summary>
         /// Validates the issuer signing key according to PSD2.
@@ -46,14 +47,15 @@ namespace Indice.Psd2.Cryptography.Validation
         /// <param name="validationParameters">The <see cref="TokenValidationParameters" /> required for validation.</param>
         /// <returns></returns>
         protected virtual bool ValidateInternal(X509SecurityKey asymetricKey, JwtSecurityToken jwtToken, TokenValidationParameters validationParameters) {
-            var attributes = asymetricKey.Certificate.GetPsd2Attributes();
-            var organizationId = asymetricKey.Certificate.GetCABForumOrganizationIdentifier();
-            var subjectOrgId = asymetricKey.Certificate.GetSubjectBuilder().GetOrganizationIdentifier();
-            var ok = false;
-            ok = attributes?.AuthorizationId.ToString() == jwtToken.Subject ||
-                 attributes?.AuthorizationId.AuthorizationNumber == jwtToken.Subject ||
-                 organizationId?.ToString() == jwtToken.Subject ||
-                 subjectOrgId == jwtToken.Subject;
+            //var attributes = asymetricKey.Certificate.GetPsd2Attributes();
+            //var organizationId = asymetricKey.Certificate.GetCABForumOrganizationIdentifier();
+            //var subjectOrgId = asymetricKey.Certificate.GetSubjectBuilder().GetOrganizationIdentifier();
+            //var ok = false;
+            //ok = attributes?.AuthorizationId.ToString() == jwtToken.Subject ||
+            //     attributes?.AuthorizationId.AuthorizationNumber == jwtToken.Subject ||
+            //     organizationId?.ToString() == jwtToken.Subject ||
+            //     subjectOrgId == jwtToken.Subject;
+            var ok = true;
             return ok;
         }
     }
