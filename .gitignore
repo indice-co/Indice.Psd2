@@ -331,3 +331,4 @@ ASALocalRun/
 
 # Custom Excludes
 App_Data
+**/Properties/ServiceDependencies

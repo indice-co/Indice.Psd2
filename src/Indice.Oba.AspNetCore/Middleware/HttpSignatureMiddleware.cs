@@ -151,7 +151,7 @@ namespace Indice.Oba.AspNetCore.Middleware
                             Debug.WriteLine($"Chania Bank: Added Header {name}: {includedHeaders[name]}");
                         }
                     }
-                    var signature = new HttpSignature(signingCredentials, includedHeaders, DateTime.UtcNow, null);
+                    var signature = new HttpSignature(signingCredentials, includedHeaders, null, null);
                     httpContext.Response.Headers.Add(HttpSignature.HTTPHeaderName, signature.ToString());
                     Debug.WriteLine($"Chania Bank: {HttpSignature.HTTPHeaderName} Header: {signature}");
                     httpContext.Response.Headers.Add(_options.ResponseSignatureCertificateHeaderName, Convert.ToBase64String(validationKey.Certificate.Export(X509ContentType.Cert)));
