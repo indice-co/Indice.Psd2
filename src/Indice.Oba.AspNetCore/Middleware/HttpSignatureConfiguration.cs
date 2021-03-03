@@ -11,7 +11,6 @@ namespace Microsoft.Extensions.DependencyInjection
     /// </summary>
     public static class HttpSignatureConfiguration
     {
-
         /// <summary>
         /// Adds Http signature related services to the specified <see cref="IServiceCollection"/>.
         /// </summary>

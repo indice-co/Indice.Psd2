@@ -7,6 +7,14 @@
     <UserSecretsId>c4cfa362-a2ea-4609-914d-7ab21fe13b51</UserSecretsId>
   </PropertyGroup>
   <ItemGroup>
+    <None Remove="signatures-certificate.pfx" />
+  </ItemGroup>
+  <ItemGroup>
+    <Content Include="signatures-certificate.pfx">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </Content>
+  </ItemGroup>
+  <ItemGroup>
     <PackageReference Include="Swashbuckle.AspNetCore" Version="5.0.0-rc4" />
   </ItemGroup>
   <ItemGroup>

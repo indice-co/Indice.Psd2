@@ -1,9 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Linq;
-using System.Security.Cryptography.X509Certificates;
-using System.Text;
-using Indice.Psd2.Cryptography.Tokens.HttpMessageSigning;
 using Microsoft.AspNetCore.Http;
 
 namespace Indice.Oba.AspNetCore.Middleware
@@ -32,6 +29,16 @@ namespace Indice.Oba.AspNetCore.Middleware
         /// The header name where the Response Id will be populated.  This is usualy a GUID.
         /// </summary>
         public string ResponseIdHeaderName { get; set; } = "X-Response-Id";
+
+        /// <summary>
+        /// The header name where the request was created. Defaults to 'X-Date'. This header is used when validating the signature of a request as the (created) parameter.
+        /// </summary>
+        public string RequestCreatedHeaderName { get; set; } = "X-Date";
+
+        /// <summary>
+        /// The header name where the response was created. Defaults to 'X-Date'. This header is used when generating the signature for the response as the (created) parameter.
+        /// </summary>
+        public string ResponseCreatedHeaderName { get; set; } = "X-Date";
 
         /// <summary>
         /// Enables request validation

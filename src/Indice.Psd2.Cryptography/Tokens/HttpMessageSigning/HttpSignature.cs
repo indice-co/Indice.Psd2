@@ -84,7 +84,7 @@ namespace Indice.Psd2.Cryptography.Tokens.HttpMessageSigning
                     this[HttpSignatureParameterNames.Signature] = Convert.ToBase64String(HashAndSignBytes(Encoding.UTF8.GetBytes(message), (RSACng)x509Key.PrivateKey, hashingAlgorithm));
                 }
                 Headers = new HashSet<string>(headerKeyValuesToSign.Where(x => x.Value != null).Select(x => x.Key.ToLowerInvariant()));
-                if (headerKeyValuesToSign.TryGetValue("Date", out var value)) {
+                if (headerKeyValuesToSign.TryGetValue(HeaderFieldNames.Created, out var value)) {
                     Created = GetDate(value);
                 }
                 if (createdDate.HasValue) {
@@ -100,15 +100,15 @@ namespace Indice.Psd2.Cryptography.Tokens.HttpMessageSigning
         private static byte[] HashAndSignBytes(byte[] DataToSign, RSACng RSAalg, HashAlgorithmName hashAlgorithm) {
             // Create a new instance of RSACryptoServiceProvider using the 
             // key from RSAParameters.  
-            
-                try {
-                    // Hash and sign the data. Pass a new instance of SHA1CryptoServiceProvider
-                    // to specify the use of SHA1 for hashing.
-                    return RSAalg.SignData(DataToSign, hashAlgorithm, RSASignaturePadding.Pkcs1);
-                } catch (CryptographicException e) {
-                    Console.WriteLine(e.Message);
-                    return null;
-                }
+
+            try {
+                // Hash and sign the data. Pass a new instance of SHA1CryptoServiceProvider
+                // to specify the use of SHA1 for hashing.
+                return RSAalg.SignData(DataToSign, hashAlgorithm, RSASignaturePadding.Pkcs1);
+            } catch (CryptographicException e) {
+                Console.WriteLine(e.Message);
+                return null;
+            }
         }
 
         private static byte[] HashAndSignBytes(byte[] DataToSign, RSAParameters Key, HashAlgorithmName hashAlgorithm) {
@@ -235,7 +235,7 @@ namespace Indice.Psd2.Cryptography.Tokens.HttpMessageSigning
             }
             return null;
         }
-        
+
         /// <summary>
         /// Get a date type component
         /// </summary>
@@ -269,7 +269,7 @@ namespace Indice.Psd2.Cryptography.Tokens.HttpMessageSigning
                 return null;
 
             if (value is string str)
-                return str;
+                return str.Length == 29 && DateTime.TryParse(value.ToString(), out var date) ? ((DateTimeOffset)date).ToUniversalTime().ToUnixTimeSeconds().ToString() : str;
             else if (value is DateTime) {
                 return ((DateTimeOffset)(DateTime)value).ToUniversalTime().ToUnixTimeSeconds().ToString();
             }
@@ -302,7 +302,7 @@ namespace Indice.Psd2.Cryptography.Tokens.HttpMessageSigning
             }
             var signature = new HttpSignature();
             foreach (var item in components) {
-                if (signature.ContainsKey(item.Key)) 
+                if (signature.ContainsKey(item.Key))
                     signature[item.Key] = item.Value;
                 else
                     signature.Add(item.Key, item.Value);
@@ -317,16 +317,18 @@ namespace Indice.Psd2.Cryptography.Tokens.HttpMessageSigning
         /// <param name="digest"></param>
         /// <param name="requestId"></param>
         /// <param name="requestDate"></param>
+        /// <param name="httpRequestTarget"></param>
         /// <param name="extraHeaderKeyValues">extra parameters to include</param>
         /// <returns></returns>
-        public bool Validate(SecurityKey key, string digest, string requestId, DateTime? requestDate = null, IDictionary<string, string> extraHeaderKeyValues = null) {
+        public bool Validate(SecurityKey key, string digest, string requestId, DateTime requestDate, HttpRequestTarget httpRequestTarget, IDictionary<string, string> extraHeaderKeyValues = null) {
             var headers = new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase) {
                 ["X-Request-Id"] = requestId,
-                ["Date"] = requestDate?.ToString("r"),
-                [HttpDigest.HTTPHeaderName] = digest
+                [HeaderFieldNames.Created] = requestDate.ToString("r"),
+                [HttpDigest.HTTPHeaderName] = digest,
+                [HttpRequestTarget.HeaderName] = httpRequestTarget.ToString()
             };
             if (extraHeaderKeyValues != null) {
-                foreach (var item  in extraHeaderKeyValues) {
+                foreach (var item in extraHeaderKeyValues) {
                     if (headers.ContainsKey(item.Key)) {
                         headers[item.Key] = item.Value;
                     } else {
@@ -343,14 +345,16 @@ namespace Indice.Psd2.Cryptography.Tokens.HttpMessageSigning
         /// <param name="key">The public key</param>
         /// <param name="requestUri"></param>
         /// <param name="requestMethod"></param>
+        /// <param name="createdDate"></param>
         /// <param name="responseHeaders"></param>
         /// <returns></returns>
-        public bool Validate(SecurityKey key, Uri requestUri, string requestMethod, IEnumerable<KeyValuePair<string, IEnumerable<string>>> responseHeaders) {
+        public bool Validate(SecurityKey key, Uri requestUri, string requestMethod, string createdDate, IEnumerable<KeyValuePair<string, IEnumerable<string>>> responseHeaders) {
             var headers = responseHeaders.ToDictionary(x => x.Key, x => x.Value.FirstOrDefault(), StringComparer.OrdinalIgnoreCase);
             var rawTarget = requestUri.PathAndQuery;
             headers.Add(HttpRequestTarget.HeaderName, new HttpRequestTarget(requestMethod, rawTarget).ToString());
-            foreach (var h in headers) { 
-                Debug.WriteLine($"Chania Bank: {h.Key}: {h.Value}");
+            headers.Add(HeaderFieldNames.Created, createdDate);
+            foreach (var h in headers) {
+                Debug.WriteLine($"Http Signature: {h.Key}: {h.Value}");
             }
             return Validate(key, headers);
         }

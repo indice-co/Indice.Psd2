@@ -51,11 +51,11 @@ namespace Indice.Oba.AspNetCore.Middleware
             var mustValidate = _options.RequestValidation && _options.TryMatch(httpContext.Request.Path, out headerNames);
             if (mustValidate || httpContext.Request.Headers.ContainsKey(HttpSignature.HTTPHeaderName)) {
                 var rawSignature = httpContext.Request.Headers[HttpSignature.HTTPHeaderName];
-                Debug.WriteLine($"Chania Bank: Raw Signature: {rawSignature}");
+                Debug.WriteLine($"{nameof(HttpSignatureMiddleware)}: Raw Signature: {rawSignature}");
                 var rawDigest = httpContext.Request.Headers[HttpDigest.HTTPHeaderName];
-                Debug.WriteLine($"Chania Bank: Raw Digest: {rawDigest}");
+                Debug.WriteLine($"{nameof(HttpSignatureMiddleware)}: Raw Digest: {rawDigest}");
                 var rawCertificate = httpContext.Request.Headers[_options.RequestSignatureCertificateHeaderName];
-                Debug.WriteLine($"Chania Bank: Raw Certificate: {rawCertificate}");
+                Debug.WriteLine($"{nameof(HttpSignatureMiddleware)}: Raw Certificate: {rawCertificate}");
                 if (string.IsNullOrWhiteSpace(rawSignature)) {
                     var error = $"Missing httpSignature in HTTP header '{HttpSignature.HTTPHeaderName}'. Cannot validate signature.";
                     await WriteErrorResponse(httpContext, logger, HttpStatusCode.BadRequest, error);
@@ -75,9 +75,9 @@ namespace Indice.Oba.AspNetCore.Middleware
                     return;
                 }
                 var validationKey = new X509SecurityKey(cert);
-                Debug.WriteLine($"Chania Bank: Validation Key: {validationKey.KeyId}");
+                Debug.WriteLine($"{nameof(HttpSignatureMiddleware)}: Validation Key: {validationKey.KeyId}");
                 var httpSignature = HttpSignature.Parse(rawSignature);
-                Debug.WriteLine($"Chania Bank: HTTP Signature: {httpSignature}");
+                Debug.WriteLine($"{nameof(HttpSignatureMiddleware)}: HTTP Signature: {httpSignature}");
                 var requestBody = new byte[0];
                 switch (httpContext.Request.Method) {
                     case "POST":
@@ -95,7 +95,7 @@ namespace Indice.Oba.AspNetCore.Middleware
                         return;
                     }
                     var httpDigest = HttpDigest.Parse(rawDigest);
-                    Debug.WriteLine($"Chania Bank: HTTP Digest: {httpDigest}");
+                    Debug.WriteLine($"{nameof(HttpSignatureMiddleware)}: HTTP Digest: {httpDigest}");
                     var digestIsValid = httpDigest.Validate(requestBody);
                     if (!digestIsValid) {
                         var error = $"Digest validation failed.";
@@ -126,13 +126,14 @@ namespace Indice.Oba.AspNetCore.Middleware
                     var signingCredentials = await signingCredentialsStore.GetSigningCredentialsAsync();
                     var validationKeys = await validationKeysStore.GetValidationKeysAsync();
                     var validationKey = validationKeys.First() as X509SecurityKey;
-                    Debug.WriteLine($"Chania Bank: Validation Key: {validationKey.KeyId}");
-                    var rawTarget = httpContext.Features.Get<IHttpRequestFeature>().RawTarget;
-                    Debug.WriteLine($"Chania Bank: Raw Target: {rawTarget}");
+                    Debug.WriteLine($"{nameof(HttpSignatureMiddleware)}: Validation Key: {validationKey.KeyId}");
+                    var requestFeature = httpContext.Features.Get<IHttpRequestFeature>();
+                    var rawTarget = $"{requestFeature.Path}{requestFeature.QueryString}";
+                    Debug.WriteLine($"{nameof(HttpSignatureMiddleware)}: Raw Target: {rawTarget}");
                     var extraHeaders = new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase) {
                         [HttpRequestTarget.HeaderName] = new HttpRequestTarget(httpContext.Request.Method, rawTarget).ToString(),
                         [HttpDigest.HTTPHeaderName] = new HttpDigest(signingCredentials.Algorithm, content).ToString(),
-                        [HeaderNames.Date] = _systemClock.UtcNow.ToString("r"), //DateTimeOffset.UtcNow.ToString("r"),
+                        [HeaderFieldNames.Created] = _systemClock.UtcNow.ToString("r"), //DateTimeOffset.UtcNow.ToString("r"),
                         [_options.ResponseIdHeaderName] = Guid.NewGuid().ToString()
                     };
                     var includedHeaders = new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase);
@@ -145,15 +146,16 @@ namespace Indice.Oba.AspNetCore.Middleware
                             }
                         } else if (extraHeaders.ContainsKey(name)) {
                             if (name != HttpRequestTarget.HeaderName) {
-                                httpContext.Response.Headers.Add(name, extraHeaders[name]);
+                                var responseHeaderName = name == HeaderFieldNames.Created ? _options.ResponseCreatedHeaderName : name;
+                                httpContext.Response.Headers.Add(responseHeaderName, extraHeaders[name]);
                             }
                             includedHeaders.Add(name, extraHeaders[name]);
-                            Debug.WriteLine($"Chania Bank: Added Header {name}: {includedHeaders[name]}");
+                            Debug.WriteLine($"{nameof(HttpSignatureMiddleware)}: Added Header {name}: {includedHeaders[name]}");
                         }
                     }
                     var signature = new HttpSignature(signingCredentials, includedHeaders, null, null);
                     httpContext.Response.Headers.Add(HttpSignature.HTTPHeaderName, signature.ToString());
-                    Debug.WriteLine($"Chania Bank: {HttpSignature.HTTPHeaderName} Header: {signature}");
+                    Debug.WriteLine($"{nameof(HttpSignatureMiddleware)}: {HttpSignature.HTTPHeaderName} Header: {signature}");
                     httpContext.Response.Headers.Add(_options.ResponseSignatureCertificateHeaderName, Convert.ToBase64String(validationKey.Certificate.Export(X509ContentType.Cert)));
                     // Go on with life.
                     await responseMemory.CopyToAsync(originalStream);
@@ -174,7 +176,7 @@ namespace Indice.Oba.AspNetCore.Middleware
         }
 
         private static async Task WriteErrorResponse(HttpContext httpContext, ILogger<HttpSignatureMiddleware> logger, HttpStatusCode statusCode, string error) {
-            Debug.WriteLine($"Chania Bank: {error}");
+            Debug.WriteLine($"{nameof(HttpSignatureMiddleware)}: {error}");
             logger.LogWarning(error);
             httpContext.Response.StatusCode = (int)statusCode;
             httpContext.Response.ContentType = "application/json";

@@ -1,7 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Linq;
-using System.Text;
 using Indice.Psd2.Cryptography.Tokens.HttpMessageSigning;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Http.Features;
@@ -25,8 +24,11 @@ namespace Indice.Oba.AspNetCore.Middleware
         /// <returns></returns>
         public static bool Validate(this HttpSignature signature, SecurityKey key, HttpRequest httpRequest) {
             var headers = httpRequest.Headers.ToDictionary(x => x.Key, x => (string)x.Value, StringComparer.OrdinalIgnoreCase);
-            var rawTarget = httpRequest.HttpContext.Features.Get<IHttpRequestFeature>().RawTarget;
+            var requestFeature = httpRequest.HttpContext.Features.Get<IHttpRequestFeature>();
+            var rawTarget = $"{requestFeature.Path}{requestFeature.QueryString}";
+            var options = (HttpSignatureOptions)httpRequest.HttpContext.RequestServices.GetService(typeof(HttpSignatureOptions));
             headers.Add(HttpRequestTarget.HeaderName, new HttpRequestTarget(httpRequest.Method, rawTarget).ToString());
+            headers.Add(HeaderFieldNames.Created, httpRequest.Headers[options.RequestCreatedHeaderName]);
             return signature.Validate(key, headers);
         }
 

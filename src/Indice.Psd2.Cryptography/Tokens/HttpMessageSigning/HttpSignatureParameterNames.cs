@@ -1,8 +1,4 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Text;
-
-namespace Indice.Psd2.Cryptography.Tokens.HttpMessageSigning
+﻿namespace Indice.Psd2.Cryptography.Tokens.HttpMessageSigning
 {
     /// <summary>
     /// List of Signature header parameter names see: https://tools.ietf.org/html/draft-cavage-http-signatures-11#section-2.1.

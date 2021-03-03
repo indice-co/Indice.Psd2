@@ -8,6 +8,7 @@
 
   <ItemGroup>
     <PackageReference Include="IdentityModel" Version="4.1.1" />
+    <PackageReference Include="Microsoft.AspNetCore.TestHost" Version="3.1.12" />
     <PackageReference Include="Microsoft.NET.Test.Sdk" Version="16.4.0" />
     <PackageReference Include="System.IdentityModel.Tokens.Jwt" Version="5.6.0" />
     <PackageReference Include="xunit" Version="2.4.1" />
@@ -15,6 +16,7 @@
   </ItemGroup>
 
   <ItemGroup>
+    <ProjectReference Include="..\..\samples\Indice.Oba.Host\Indice.Oba.Host.csproj" />
     <ProjectReference Include="..\..\src\Indice.Oba.AspNetCore\Indice.Oba.AspNetCore.csproj" />
     <ProjectReference Include="..\..\src\Indice.Psd2.Cryptography\Indice.Psd2.Cryptography.csproj" />
     <ProjectReference Include="..\..\src\Indice.Psd2.IdentityServer4\Indice.Psd2.IdentityServer4.csproj" />

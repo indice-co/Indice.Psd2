@@ -3,6 +3,7 @@ using System.IO;
 using System.Reflection;
 using System.Security.Cryptography.X509Certificates;
 using Indice.Oba.Host.Swagger;
+using Indice.Psd2.Cryptography.Tokens.HttpMessageSigning;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Hosting;
 using Microsoft.AspNetCore.Mvc;
@@ -55,13 +56,12 @@ namespace Indice.Oba.Host
                     }
                 }
             });
-            //var httpSignatureCertificate = new X509Certificate2(Path.Combine(Environment.ContentRootPath, Configuration["HttpSignatures:PfxName"]), Configuration["HttpSignatures:PfxPass"], X509KeyStorageFlags.MachineKeySet);
-            //services.AddHttpSignatures(options => {
-            //    options.MapPath("/payments", "(request target)", "date", "digest", "x-response-id");
-            //    options.MapPath("/payments/execute", "(request target)", "date", "digest", "x-response-id");
-            //    //options.ResponseSigning = false;
-            //})
-            //.AddSigningCredential(httpSignatureCertificate);
+            var httpSignatureCertificate = new X509Certificate2(Path.Combine(Environment.ContentRootPath, Configuration["HttpSignatures:PfxName"]), Configuration["HttpSignatures:PfxPass"], X509KeyStorageFlags.MachineKeySet);
+            services.AddHttpSignatures(options => {
+                options.MapPath("/payments", HeaderFieldNames.RequestTarget, HeaderFieldNames.Created, HttpDigest.HTTPHeaderName, "x-response-id");
+                options.MapPath("/payments/execute", HeaderFieldNames.RequestTarget, HeaderFieldNames.Created, HttpDigest.HTTPHeaderName, "x-response-id");
+            })
+            .AddSigningCredential(httpSignatureCertificate);
         }
 
         // This method gets called by the runtime. Use this method to configure the HTTP request pipeline.
@@ -74,7 +74,7 @@ namespace Indice.Oba.Host
             }
             app.UseHttpsRedirection();
             app.UseRouting();
-            //app.UseHttpSignatures();
+            app.UseHttpSignatures();
             app.UseSwagger();
             app.UseSwaggerUI(x => {
                 x.RoutePrefix = "swagger/ui";
