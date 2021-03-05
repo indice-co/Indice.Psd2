@@ -1,7 +1,8 @@
 ﻿using System;
-using System.Collections.Generic;
-using System.Text;
+using System.Diagnostics;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.EntityFrameworkCore.Infrastructure;
+using Microsoft.EntityFrameworkCore.Storage;
 
 namespace Indice.Oba.AspNetCore.Features.EF
 {
@@ -11,6 +12,8 @@ namespace Indice.Oba.AspNetCore.Features.EF
     /// <seealso cref="DbContext" />
     public class CertificatesDbContext : DbContext
     {
+        private static bool _alreadyCreated = false;
+
         /// <summary>
         /// Initializes a new instance of the <see cref="CertificatesDbContext"/> class.
         /// </summary>
@@ -20,9 +23,7 @@ namespace Indice.Oba.AspNetCore.Features.EF
         public CertificatesDbContext(DbContextOptions<CertificatesDbContext> options, CertificatesStoreOptions storeOptions)
             : base(options) {
             StoreOptions = storeOptions;
-#if DEBUG
-            Database.EnsureCreated();
-#endif
+            EnsuredCreated();
         }
 
         /// <summary>
@@ -50,12 +51,26 @@ namespace Indice.Oba.AspNetCore.Features.EF
         /// </remarks>
         protected override void OnModelCreating(ModelBuilder modelBuilder) {
             modelBuilder.HasDefaultSchema(StoreOptions.DefaultSchema ?? "cert");
-            
+
             modelBuilder.Entity<DbCertificate>(t => {
                 t.ToTable("CertificateData");
                 t.HasKey(x => x.KeyId);
             });
             base.OnModelCreating(modelBuilder);
+        }
+
+        /// <summary>
+        /// Check if the database has been created only while running in Debug mode. 
+        /// </summary>
+        private void EnsuredCreated() {
+            if (Debugger.IsAttached) {
+                var exists = Database.GetService<IRelationalDatabaseCreator>().Exists();
+                if (!exists && !_alreadyCreated) {
+                    // When no databases have been created, this ensures that the database creation process will run once.
+                    _alreadyCreated = true;
+                    Database.EnsureCreated();
+                }
+            }
         }
     }
 }

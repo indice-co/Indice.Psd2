@@ -2,7 +2,7 @@
   <PropertyGroup>
     <Description>Indice.Oba.AspNetCore Class Library</Description>
     <Copyright>Copyright (c) 2019 Indice</Copyright>
-    <VersionPrefix>3.1.1</VersionPrefix>
+    <VersionPrefix>3.1.2</VersionPrefix>
     <Authors>c.leftheris, itsenes</Authors>
     <TargetFramework>netcoreapp3.1</TargetFramework>
     <GenerateDocumentationFile>true</GenerateDocumentationFile>
