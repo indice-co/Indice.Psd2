@@ -3,8 +3,8 @@
     <Description>Indice.Psd2.Cryptography Class Library</Description>
     <Copyright>Copyright (c) 2019 Indice</Copyright>
     <AssemblyTitle>Indice.Psd2.Cryptography</AssemblyTitle>
-    <VersionPrefix>3.1.0</VersionPrefix>
-    <Authors>c.leftheris, itsenes</Authors>
+    <VersionPrefix>3.1.1</VersionPrefix>
+    <Authors>Constantinos Leftheris, Giannis Tsenes</Authors>
     <TargetFramework>netstandard2.1</TargetFramework>
     <AssemblyName>Indice.Psd2.Cryptography</AssemblyName>
     <AssemblyTitle>Indice.Psd2.Cryptography</AssemblyTitle>
@@ -14,7 +14,7 @@
   <PropertyGroup Label="Package">
     <PackageId>Indice.Psd2.Cryptography</PackageId>
     <PackageTags>Psd2;Cryptography;Utilities</PackageTags>
-    <PackageReleaseNotes>Implemented all missing QualifiedCertificate Statements and added a new CertificatePoliciesExtension.</PackageReleaseNotes>
+    <PackageReleaseNotes>Make use of (created) header name in message signature.</PackageReleaseNotes>
     <PackageIcon>icon-128.png</PackageIcon>
     <PackageProjectUrl>https://github.com/indice-co/Indice.Psd2</PackageProjectUrl>
     <PackageLicenseExpression>MIT</PackageLicenseExpression>
