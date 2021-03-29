@@ -31,6 +31,63 @@ namespace Indice.Psd2.Cryptography.Tokens.HttpMessageSigning
         /// The header name which corresponds to the (created) header name alias. Must be present in the request headers, if a signature is also contained. 
         /// </summary>
         public static string ResponseCreatedHeaderName = "X-Date";
+
+        /// <summary>
+        ///  Creates a new instance of the <see cref="HttpSignatureDelegatingHandler"/> class.
+        /// </summary>
+        /// <param name="credential">Signing credentials used to sign outgoing requests.</param>
+        /// <param name="headerNames">Header names to include in the <see cref="HttpSignature"/>.</param>
+        public HttpSignatureDelegatingHandler(
+            SigningCredentials credential,
+            IEnumerable<string> headerNames
+        ) : this(credential, headerNames, new Dictionary<string, string>()) { }
+
+        /// <summary>
+        /// Creates a new instance of the <see cref="HttpSignatureDelegatingHandler"/> class with a specific inner handler.
+        /// </summary>
+        /// <param name="credential">Signing credentials used to sign outgoing requests.</param>
+        /// <param name="headerNames">Header names to include in the <see cref="HttpSignature"/></param>
+        /// <param name="ignoredPaths">Paths that are exluded, optionally based on provided HTTP method.</param>
+        public HttpSignatureDelegatingHandler(
+            SigningCredentials credential,
+            IEnumerable<string> headerNames,
+            IDictionary<string, string> ignoredPaths
+        ) : this(credential, headerNames, ignoredPaths, null) { }
+
+        /// <summary>
+        /// Creates a new instance of the <see cref="HttpSignatureDelegatingHandler"/> class with a specific inner handler.
+        /// </summary>
+        /// <param name="credential">Signing credentials used to sign outgoing requests.</param>
+        /// <param name="headerNames">Header names to include in the <see cref="HttpSignature"/></param>
+        /// <param name="innerHandler">The inner handler which is responsible for processing the HTTP response messages.</param>
+        public HttpSignatureDelegatingHandler(
+            SigningCredentials credential,
+            IEnumerable<string> headerNames,
+            HttpMessageHandler innerHandler
+        ) : this(credential, headerNames, new Dictionary<string, string>(), innerHandler) { }
+
+        /// <summary>
+        /// Creates a new instance of the <see cref="HttpSignatureDelegatingHandler"/> class with a specific inner handler.
+        /// </summary>
+        /// <param name="credential">Signing credentials used to sign outgoing requests.</param>
+        /// <param name="headerNames">Header names to include in the <see cref="HttpSignature"/></param>
+        /// <param name="ignoredPaths">Paths that are exluded, optionally based on provided HTTP method.</param>
+        /// <param name="innerHandler">The inner handler which is responsible for processing the HTTP response messages.</param>
+        public HttpSignatureDelegatingHandler(
+            SigningCredentials credential,
+            IEnumerable<string> headerNames,
+            IDictionary<string, string> ignoredPaths,
+            HttpMessageHandler innerHandler
+        ) : base(innerHandler ?? new HttpClientHandler()) {
+            Credential = credential;
+            HeaderNames = headerNames.ToArray();
+            IgnoredPaths = ignoredPaths.Select(path => new { 
+                Key = path.Key.EnsureLeadingSlash(),
+                path.Value 
+            })
+            .ToDictionary(k => k.Key, v => v.Value, StringComparer.InvariantCultureIgnoreCase);
+        }
+
         /// <summary>
         /// Signing credentials used to sign outgoing requests.
         /// </summary>
@@ -39,22 +96,10 @@ namespace Indice.Psd2.Cryptography.Tokens.HttpMessageSigning
         /// Header names to include in the <see cref="HttpSignature"/>.
         /// </summary>
         public string[] HeaderNames { get; }
-
         /// <summary>
-        ///  Creates a new instance of the <see cref="HttpSignatureDelegatingHandler"/> class.
+        /// Paths that are exluded, optionally based on provided HTTP method.
         /// </summary>
-        public HttpSignatureDelegatingHandler(SigningCredentials credential, IEnumerable<string> headerNames) : this(credential, headerNames, null) { }
-
-        /// <summary>
-        /// Creates a new instance of the <see cref="HttpSignatureDelegatingHandler"/> class with a specific inner handler.
-        /// </summary>
-        /// <param name="credential">Signing credentials used to sign outgoing requests.</param>
-        /// <param name="headerNames">Header names to include in the <see cref="HttpSignature"/></param>
-        /// <param name="innerHandler">The inner handler which is responsible for processing the HTTP response messages.</param>
-        public HttpSignatureDelegatingHandler(SigningCredentials credential, IEnumerable<string> headerNames, HttpMessageHandler innerHandler) : base(innerHandler ?? new HttpClientHandler()) {
-            Credential = credential;
-            HeaderNames = headerNames.ToArray();
-        }
+        public IDictionary<string, string> IgnoredPaths { get; }
 
         /// <summary>
         /// Sends an HTTP request to the inner handler to send to the server as an asynchronous operation.
@@ -69,7 +114,10 @@ namespace Indice.Psd2.Cryptography.Tokens.HttpMessageSigning
             return response;
         }
 
-        private static async Task ValidateResponse(HttpRequestMessage request, HttpResponseMessage response) {
+        private async Task ValidateResponse(HttpRequestMessage request, HttpResponseMessage response) {
+            if (IsIgnoredPath(request.RequestUri.AbsolutePath, request.Method.Method)) {
+                return;
+            }
             if (!response.Headers.TryGetValues(HttpSignature.HTTPHeaderName, out var signatureValues) || signatureValues.Count() == 0) {
                 return;
             }
@@ -81,14 +129,14 @@ namespace Indice.Psd2.Cryptography.Tokens.HttpMessageSigning
             var rawCertificate = certValues.First();
             Debug.WriteLine($"{nameof(HttpSignatureDelegatingHandler)}: Raw Signature: {rawSignature}");
             Debug.WriteLine($"{nameof(HttpSignatureDelegatingHandler)}: Raw Certificate: {rawCertificate}");
-            X509Certificate2 cert;
+            X509Certificate2 certificate;
             try {
-                cert = new X509Certificate2(Convert.FromBase64String(rawCertificate));
+                certificate = new X509Certificate2(Convert.FromBase64String(rawCertificate));
             } catch (Exception inner) {
                 var error = $"Signature Certificate not in a valid format. Expected a base64 encoded x509.";
                 throw new Exception(error, inner);
             }
-            var validationKey = new X509SecurityKey(cert);
+            var validationKey = new X509SecurityKey(certificate);
             Debug.WriteLine($"{nameof(HttpSignatureDelegatingHandler)}: Validation Key: {validationKey.KeyId}");
             var httpSignature = HttpSignature.Parse(rawSignature);
             if (response.Headers.TryGetValues(HttpDigest.HTTPHeaderName, out var digestValues) && digestValues.Count() > 0) {
@@ -113,6 +161,9 @@ namespace Indice.Psd2.Cryptography.Tokens.HttpMessageSigning
         }
 
         private async Task SignRequest(HttpRequestMessage request) {
+            if (IsIgnoredPath(request.RequestUri.AbsolutePath, request.Method.Method)) {
+                return;
+            }
             var content = request.Content != null ? (await request.Content.ReadAsByteArrayAsync()) : new byte[0];
             var validationKey = Credential.Key as X509SecurityKey;
             var extraHeaders = new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase) {
@@ -149,6 +200,11 @@ namespace Indice.Psd2.Cryptography.Tokens.HttpMessageSigning
             request.Headers.Add(HttpSignature.HTTPHeaderName, signature.ToString());
             Debug.WriteLine($"HttpSignature: {HttpSignature.HTTPHeaderName} Header: {signature}");
             request.Headers.Add(RequestSignatureCertificateHeaderName, Convert.ToBase64String(validationKey.Certificate.Export(X509ContentType.Cert)));
+        }
+
+        private bool IsIgnoredPath(string path, string httpMethod) {
+            var isIgnoredpath = IgnoredPaths.ContainsKey(path) && IgnoredPaths[path].Equals(httpMethod, StringComparison.OrdinalIgnoreCase);
+            return isIgnoredpath;
         }
     }
 }

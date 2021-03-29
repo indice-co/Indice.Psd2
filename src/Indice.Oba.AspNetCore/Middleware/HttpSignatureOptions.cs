@@ -13,17 +13,17 @@ namespace Indice.Oba.AspNetCore.Middleware
         /// <summary>
         /// Paths that are exluded from <see cref="Mappings"/>, optionally based on provided HTTP method.
         /// </summary>
-        public Dictionary<string, string> ExcludedPaths { get; } = new Dictionary<string, string>(StringComparer.InvariantCultureIgnoreCase);
+        public Dictionary<string, string> IgnoredPaths { get; } = new Dictionary<string, string>(StringComparer.InvariantCultureIgnoreCase);
         /// <summary>
         /// Map of route paths and header names that will be included in the signatures.
         /// </summary>
         public Dictionary<string, List<string>> Mappings { get; } = new Dictionary<string, List<string>>(StringComparer.InvariantCultureIgnoreCase);
         /// <summary>
-        /// The header name where the certificate used for signing the request will reside, in base64 encoding.  This header will be present in the request object if a signature is contained.
+        /// The header name where the certificate used for signing the request will reside, in base64 encoding. This header will be present in the request object if a signature is contained.
         /// </summary>
         public string RequestSignatureCertificateHeaderName { get; } = "TTP-Signature-Certificate";
         /// <summary>
-        /// The header name where the certificate used for validating the response will reside, in base64 encoding.  This header will be present in the request object if a signature is contained.
+        /// The header name where the certificate used for validating the response will reside, in base64 encoding. This header will be present in the request object if a signature is contained.
         /// </summary>
         public string ResponseSignatureCertificateHeaderName { get; } = "ASPSP-Signature-Certificate";
         /// <summary>
@@ -45,7 +45,7 @@ namespace Indice.Oba.AspNetCore.Middleware
         /// <summary>
         /// Enalbes response signing.
         /// </summary>
-        public bool? ResponseSigning { get; set; }
+        public bool? ResponseSigning { get; set; } = true;
 
         /// <summary>
         /// Adds a new map entry to the dictionary of mappings. This will be picked up by the <see cref="HttpSignatureMiddleware"/> in order to determine which headers are included in each transmission.
@@ -66,21 +66,20 @@ namespace Indice.Oba.AspNetCore.Middleware
         /// Excludes a mapped path, optionally based on the given HTTP method. If HTTP method is not specified, every request to this path will not be used by <see cref="HttpSignatureMiddleware"/>.
         /// </summary>
         /// <param name="path">The path to exclude.</param>
-        /// <param name="httpMethods">The HTTP methods to exclude for the given path.</param>
-        public HttpSignatureOptions IgnorePath(PathString path, params string[] httpMethods) {
+        /// <param name="httpMethod">The HTTP methods to exclude for the given path.</param>
+        public HttpSignatureOptions IgnorePath(PathString path, string httpMethod) {
             // No HTTP methods specified, so exclude just the path (implies that all HTTP methods will be excluded for this path).
-            if (!(httpMethods?.Length > 0)) {
-                ExcludedPaths.Add(path.Value, "*");
+            if (!(httpMethod?.Length > 0)) {
+                IgnoredPaths.Add(path.Value, "*");
                 return this;
             }
-            foreach (var httpMethod in httpMethods) {
-                // There are more of course, but this seems enough for our needs.
-                var isValidHttpMethod = HttpMethods.IsGet(httpMethod) || HttpMethods.IsPost(httpMethod) || HttpMethods.IsPut(httpMethod) || HttpMethods.IsDelete(httpMethod) || HttpMethods.IsPatch(httpMethod);
-                if (!isValidHttpMethod) {
-                    throw new ArgumentException($"HTTP method {httpMethod} is not valid.");
-                }
-                ExcludedPaths.Add(path.Value, httpMethod);
+            // Validate HTTP method.
+            // There are more of course, but this seems enough for our needs.
+            var isValidHttpMethod = HttpMethods.IsGet(httpMethod) || HttpMethods.IsPost(httpMethod) || HttpMethods.IsPut(httpMethod) || HttpMethods.IsDelete(httpMethod) || HttpMethods.IsPatch(httpMethod);
+            if (!isValidHttpMethod) {
+                throw new ArgumentException($"HTTP method {httpMethod} is not valid.");
             }
+            IgnoredPaths.Add(path.Value, httpMethod);
             return this;
         }
 
@@ -94,14 +93,12 @@ namespace Indice.Oba.AspNetCore.Middleware
             headerNames = null;
             if (Mappings.ContainsKey(path)) {
                 headerNames = Mappings[path];
-
-                return true;
+                return !IsIgnoredPath(path, httpMethod);
             }
             var results = Mappings.Where(x => path.StartsWithSegments(x.Key));
             if (results.Any()) {
                 headerNames = results.OrderByDescending(x => x.Key.Length).First().Value;
-
-                return true;
+                return !IsIgnoredPath(path, httpMethod);
             }
             return false;
         }
@@ -120,7 +117,7 @@ namespace Indice.Oba.AspNetCore.Middleware
         }
 
         private bool IsIgnoredPath(PathString path, string httpMethod) {
-            var isIgnoredpath = ExcludedPaths.ContainsKey(path);
+            var isIgnoredpath = IgnoredPaths.ContainsKey(path) && IgnoredPaths[path].Equals(httpMethod, StringComparison.OrdinalIgnoreCase);
             return isIgnoredpath;
         }
     }

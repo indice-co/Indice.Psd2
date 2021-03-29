@@ -12,7 +12,7 @@ namespace Microsoft.Extensions.DependencyInjection
     public static class HttpSignatureConfiguration
     {
         /// <summary>
-        /// Adds Http signature related services to the specified <see cref="IServiceCollection"/>.
+        /// Adds HTTP signature related services to the specified <see cref="IServiceCollection"/>.
         /// </summary>
         /// <param name="services"></param>
         /// <param name="setupAction"></param>
@@ -24,7 +24,6 @@ namespace Microsoft.Extensions.DependencyInjection
             var existingService = services.Where(x => x.ServiceType == typeof(HttpSignatureOptions)).LastOrDefault();
             if (existingService == null) {
                 var options = new HttpSignatureOptions();
-                // reflect to find controller actions. 
                 setupAction?.Invoke(options);
                 services.AddSingleton(options);
                 builder.Options = options;
@@ -39,11 +38,7 @@ namespace Microsoft.Extensions.DependencyInjection
         /// <param name="credential">The credential.</param>
         /// <returns></returns>
         public static IHttpSignatureBuilder AddSigningCredential(this IHttpSignatureBuilder builder, SigningCredentials credential) {
-            // todo dom
-            if (!(credential.Key is AsymmetricSecurityKey
-                || credential.Key is JsonWebKey && ((JsonWebKey)credential.Key).HasPrivateKey))
-            //&& !credential.Key.IsSupportedAlgorithm(SecurityAlgorithms.RsaSha256Signature))
-            {
+            if (!(credential.Key is AsymmetricSecurityKey || (credential.Key is JsonWebKey key && key.HasPrivateKey))) {
                 throw new InvalidOperationException("Signing key is not asymmetric");
             }
             builder.Services.AddSingleton<IHttpSigningCredentialsStore>(new DefaultHttpSigningCredentialsStore(credential));
@@ -65,11 +60,9 @@ namespace Microsoft.Extensions.DependencyInjection
         /// <exception cref="InvalidOperationException">X509 certificate does not have a private key.</exception>
         public static IHttpSignatureBuilder AddSigningCredential(this IHttpSignatureBuilder builder, X509Certificate2 certificate) {
             if (certificate == null) throw new ArgumentNullException(nameof(certificate));
-
             if (!certificate.HasPrivateKey) {
                 throw new InvalidOperationException("X509 certificate does not have a private key.");
             }
-
             var credential = new SigningCredentials(new X509SecurityKey(certificate), "RS256");
             return builder.AddSigningCredential(credential);
         }
@@ -85,7 +78,6 @@ namespace Microsoft.Extensions.DependencyInjection
             if (rsaKey.PrivateKeyStatus == PrivateKeyStatus.DoesNotExist) {
                 throw new InvalidOperationException("RSA key does not have a private key.");
             }
-
             var credential = new SigningCredentials(rsaKey, "RS256");
             return builder.AddSigningCredential(credential);
         }

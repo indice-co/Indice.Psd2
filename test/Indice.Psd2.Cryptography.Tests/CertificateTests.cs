@@ -1,19 +1,11 @@
 using System;
-using System.Collections.Generic;
-using System.IdentityModel.Tokens.Jwt;
 using System.IO;
 using System.Net.Http;
 using System.Security.Cryptography;
 using System.Security.Cryptography.X509Certificates;
 using System.Text;
 using System.Threading.Tasks;
-using DerConverter.Asn;
-using DerConverter.Asn.KnownTypes;
-using IdentityModel;
-using Indice.Oba.AspNetCore.Features;
-using Indice.Psd2.Cryptography.Validation;
 using Indice.Psd2.Cryptography.X509Certificates;
-using Microsoft.IdentityModel.Tokens;
 using Newtonsoft.Json;
 using Xunit;
 
@@ -25,9 +17,8 @@ namespace Indice.Psd2.Cryptography.Tests
         public void Generate_QWACs() {
             var data = Psd2CertificateRequest.Example();
             var manager = new CertificateManager();
-            var privateKey = default(RSA);
             var caCert = manager.CreateRootCACertificate("identityserver.gr");
-            var cert = manager.CreateQWACs(data, "identityserver.gr", issuer: caCert, out privateKey);
+            var cert = manager.CreateQWACs(data, "identityserver.gr", issuer: caCert, out var privateKey);
             var certBase64 = cert.ExportToPEM();
             var publicBase64 = privateKey.ToSubjectPublicKeyInfo();
             var privateBase64 = privateKey.ToRSAPrivateKey();
@@ -73,8 +64,6 @@ namespace Indice.Psd2.Cryptography.Tests
                 }
             };
             var crlSeq = new CertificateRevocationListSequence(crl);
-
-
             var manager = new CertificateManager();
             var caCert = manager.CreateRootCACertificate("identityserver.gr");
             var data = crlSeq.SignAndSerialize(caCert.PrivateKey as RSA);
@@ -90,13 +79,6 @@ namespace Indice.Psd2.Cryptography.Tests
             var crl = crlSeq.Extract();
             Assert.True(true);
         }
-
-        //[Fact]
-        //public void Load_PFX() {
-        //    var data = Psd2CertificateRequest.Example();
-        //    var cacert = new X509Certificate2(Path.Combine(Directory.GetCurrentDirectory(), $"{data.AuthorizationNumber}.pfx"), "111");
-        //    Assert.True(true);
-        //}
 
         [Fact]
         public void ImportBase64Certificate() {

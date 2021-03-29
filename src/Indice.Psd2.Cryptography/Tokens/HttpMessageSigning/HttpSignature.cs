@@ -22,7 +22,7 @@ namespace Indice.Psd2.Cryptography.Tokens.HttpMessageSigning
         public const string HTTPHeaderName = "Signature";
 
         /// <summary>
-        /// provides a mapping for the 'algorithm' value so that values are within the Http Signature namespace.
+        /// Provides a mapping for the 'algorithm' value so that values are within the HTTP Signature namespace.
         /// </summary>
         private readonly IDictionary<string, string> OutboundAlgorithmMap = new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase) {
             [SecurityAlgorithms.RsaSha256Signature] = "rsa-sha256",
@@ -33,7 +33,7 @@ namespace Indice.Psd2.Cryptography.Tokens.HttpMessageSigning
         };
 
         /// <summary>
-        /// provides a mapping for the 'algorithm' value so that values are within the Http Signature namespace.
+        /// Provides a mapping for the 'algorithm' value so that values are within the HTTP Signature namespace.
         /// </summary>
         private readonly IDictionary<string, string> InboundAlgorithmMap = new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase) {
             ["rsa-sha256"] = SecurityAlgorithms.RsaSha256Signature,
@@ -43,33 +43,28 @@ namespace Indice.Psd2.Cryptography.Tokens.HttpMessageSigning
 
         /// <summary>
         /// Initializes a new instance of <see cref="HttpSignature"/>.
-        /// With the Header Parameters
         /// </summary>
-        public HttpSignature()
-            : this(null, null) {
-        }
+        public HttpSignature() : this(null, null) { }
 
         /// <summary>
         /// Initializes a new instance of <see cref="HttpSignature"/>.
-        /// With the Header Parameters
         /// </summary>
         /// <param name="signingCredentials"><see cref="SigningCredentials"/> used when creating the signature header.</param>
         /// <param name="headerKeyValuesToSign">The signing string contains several headers depending on which API you are using. The order is not important as long as you define them in the same order in the signature header.</param>
-        /// <param name="createdDate">Date to use on the created component. Usefull if the requestDate is missing from the http headers</param>
-        /// <param name="expirationDate">Expiration date</param>
-        public HttpSignature(SigningCredentials signingCredentials, IDictionary<string, string> headerKeyValuesToSign, DateTime? createdDate = null, DateTime? expirationDate = null)
-            : base(StringComparer.OrdinalIgnoreCase) {
+        /// <param name="createdDate">Date to use on the created component. Useful if the requestDate is missing from the HTTP headers.</param>
+        /// <param name="expirationDate">Expiration date.</param>
+        public HttpSignature(SigningCredentials signingCredentials, IDictionary<string, string> headerKeyValuesToSign, DateTime? createdDate = null, DateTime? expirationDate = null) : base(StringComparer.OrdinalIgnoreCase) {
             if (signingCredentials == null) {
                 this[HttpSignatureParameterNames.Algorithm] = SecurityAlgorithms.None;
             } else {
-                if (OutboundAlgorithmMap != null && OutboundAlgorithmMap.TryGetValue(signingCredentials.Algorithm, out string outboundAlg))
+                if (OutboundAlgorithmMap != null && OutboundAlgorithmMap.TryGetValue(signingCredentials.Algorithm, out string outboundAlg)) {
                     Algorithm = outboundAlg;
-                else
+                } else {
                     Algorithm = signingCredentials.Algorithm;
-
-                if (!string.IsNullOrEmpty(signingCredentials.Key.KeyId))
+                }
+                if (!string.IsNullOrEmpty(signingCredentials.Key.KeyId)) {
                     KeyId = signingCredentials.Key.KeyId;
-
+                }
                 var message = GenerateMessage(headerKeyValuesToSign);
                 var hashingAlgorithm = signingCredentials.Algorithm == OutboundAlgorithmMap[SecurityAlgorithms.RsaSha512Signature] ? HashAlgorithmName.SHA512 : HashAlgorithmName.SHA256;
                 if (signingCredentials is X509SigningCredentials x509SigningCredentials) {
@@ -98,12 +93,9 @@ namespace Indice.Psd2.Cryptography.Tokens.HttpMessageSigning
         }
 
         private static byte[] HashAndSignBytes(byte[] DataToSign, RSACng RSAalg, HashAlgorithmName hashAlgorithm) {
-            // Create a new instance of RSACryptoServiceProvider using the 
-            // key from RSAParameters.  
-
+            // Create a new instance of RSACryptoServiceProvider using the key from RSAParameters.  
             try {
-                // Hash and sign the data. Pass a new instance of SHA1CryptoServiceProvider
-                // to specify the use of SHA1 for hashing.
+                // Hash and sign the data. Pass a new instance of SHA1CryptoServiceProvider to specify the use of SHA1 for hashing.
                 return RSAalg.SignData(DataToSign, hashAlgorithm, RSASignaturePadding.Pkcs1);
             } catch (CryptographicException e) {
                 Console.WriteLine(e.Message);
@@ -112,19 +104,17 @@ namespace Indice.Psd2.Cryptography.Tokens.HttpMessageSigning
         }
 
         private static byte[] HashAndSignBytes(byte[] DataToSign, RSAParameters Key, HashAlgorithmName hashAlgorithm) {
-            // Create a new instance of RSACryptoServiceProvider using the 
-            // key from RSAParameters.  
+            // Create a new instance of RSACryptoServiceProvider using the key from RSAParameters.  
             using (var RSAalg = new RSACryptoServiceProvider()) {
                 try {
                     RSAalg.ImportParameters(Key);
-                    // Hash and sign the data. Pass a new instance of SHA1CryptoServiceProvider
-                    // to specify the use of SHA1 for hashing.
+                    // Hash and sign the data. Pass a new instance of SHA1CryptoServiceProvider to specify the use of SHA1 for hashing.
                     return RSAalg.SignData(DataToSign, hashAlgorithm, RSASignaturePadding.Pkcs1);
                 } catch (CryptographicException e) {
                     Console.WriteLine(e.Message);
                     return null;
                 } finally {
-                    // Set the keycontainer to be cleared when rsa is garbage collected.
+                    // Set the key container to be cleared when RSA is garbage collected.
                     RSAalg.PersistKeyInCsp = false;
                 }
             }
@@ -237,7 +227,7 @@ namespace Indice.Psd2.Cryptography.Tokens.HttpMessageSigning
         }
 
         /// <summary>
-        /// Get a date type component
+        /// Get a date type component.
         /// </summary>
         /// <param name="componentName">The key of the component.</param>
         /// <returns>The standard component ; or null if not found.</returns>
@@ -249,29 +239,29 @@ namespace Indice.Psd2.Cryptography.Tokens.HttpMessageSigning
         }
 
         internal static DateTime? GetDate(object value) {
-            if (value is string) {
-                if (long.TryParse((string)value, out var unixTime)) {
+            if (value is string @string) {
+                if (long.TryParse(@string, out var unixTime)) {
                     return DateTimeOffset.FromUnixTimeSeconds(unixTime).UtcDateTime;
                 }
-                if (DateTime.TryParseExact((string)value, "r", CultureInfo.InvariantCulture, DateTimeStyles.AssumeUniversal, out var date)) { // http header date format
+                if (DateTime.TryParseExact(@string, "r", CultureInfo.InvariantCulture, DateTimeStyles.AssumeUniversal, out var date)) { // http header date format
                     return date;
                 }
-            } else if (value is DateTime) {
-                return (DateTime)value;
-            } else if (value is long) {
-                return DateTimeOffset.FromUnixTimeSeconds((long)value).UtcDateTime;
+            } else if (value is DateTime time) {
+                return time;
+            } else if (value is long @int) {
+                return DateTimeOffset.FromUnixTimeSeconds(@int).UtcDateTime;
             }
             return null;
         }
 
         internal static string SerializeComponent(object value) {
-            if (value == null)
+            if (value == null) {
                 return null;
-
-            if (value is string str)
-                return str.Length == 29 && DateTime.TryParse(value.ToString(), out var date) ? ((DateTimeOffset)date).ToUniversalTime().ToUnixTimeSeconds().ToString() : str;
-            else if (value is DateTime) {
-                return ((DateTimeOffset)(DateTime)value).ToUniversalTime().ToUnixTimeSeconds().ToString();
+            }
+            if (value is string @string) {
+                return @string.Length == 29 && DateTime.TryParse(value.ToString(), out var date) ? ((DateTimeOffset)date).ToUniversalTime().ToUnixTimeSeconds().ToString() : @string;
+            } else if (value is DateTime time) {
+                return ((DateTimeOffset)time).ToUniversalTime().ToUnixTimeSeconds().ToString();
             }
             return value.ToString();
         }
@@ -280,32 +270,30 @@ namespace Indice.Psd2.Cryptography.Tokens.HttpMessageSigning
         /// Serializes this instance to string.
         /// </summary>
         /// <returns>This instance as an http header value.</returns>
-        public override string ToString() {
-            return string.Join(",", this.Select(x => $"{x.Key.ToLowerInvariant()}=\"{SerializeComponent(x.Value)}\""));
-        }
+        public override string ToString() => string.Join(",", this.Select(x => $"{x.Key.ToLowerInvariant()}=\"{SerializeComponent(x.Value)}\""));
 
         /// <summary>
         /// Parses the header value string into an <see cref="HttpSignature"/> instance.
         /// </summary>
-        /// <param name="headerValue"></param>
-        /// <returns></returns>
+        /// <param name="headerValue">The header value.</param>
         public static HttpSignature Parse(string headerValue) {
-
             var components = default(Dictionary<string, string>);
             try {
                 components = headerValue.Split(',').Select(x => new {
                     EqualsSignPosition = x.Trim().IndexOf('='),
                     Value = x.Trim()
-                }).ToDictionary(x => x.Value.Substring(0, x.EqualsSignPosition), x => x.Value.Substring(x.EqualsSignPosition + 1).Trim('"'));
+                })
+                .ToDictionary(x => x.Value.Substring(0, x.EqualsSignPosition), x => x.Value.Substring(x.EqualsSignPosition + 1).Trim('"'));
             } catch {
                 throw new FormatException($"Cannot parse HttpSignature from raw value {headerValue}");
             }
             var signature = new HttpSignature();
             foreach (var item in components) {
-                if (signature.ContainsKey(item.Key))
+                if (signature.ContainsKey(item.Key)) {
                     signature[item.Key] = item.Value;
-                else
+                } else {
                     signature.Add(item.Key, item.Value);
+                }
             }
             return signature;
         }
@@ -347,14 +335,13 @@ namespace Indice.Psd2.Cryptography.Tokens.HttpMessageSigning
         /// <param name="requestMethod"></param>
         /// <param name="createdDate"></param>
         /// <param name="responseHeaders"></param>
-        /// <returns></returns>
         public bool Validate(SecurityKey key, Uri requestUri, string requestMethod, string createdDate, IEnumerable<KeyValuePair<string, IEnumerable<string>>> responseHeaders) {
             var headers = responseHeaders.ToDictionary(x => x.Key, x => x.Value.FirstOrDefault(), StringComparer.OrdinalIgnoreCase);
             var rawTarget = requestUri.PathAndQuery;
             headers.Add(HttpRequestTarget.HeaderName, new HttpRequestTarget(requestMethod, rawTarget).ToString());
             headers.Add(HeaderFieldNames.Created, createdDate);
-            foreach (var h in headers) {
-                Debug.WriteLine($"Http Signature: {h.Key}: {h.Value}");
+            foreach (var header in headers) {
+                Debug.WriteLine($"Http Signature: {header.Key}: {header.Value}");
             }
             return Validate(key, headers);
         }
@@ -364,7 +351,6 @@ namespace Indice.Psd2.Cryptography.Tokens.HttpMessageSigning
         /// </summary>
         /// <param name="key">The public key</param>
         /// <param name="headers"></param>
-        /// <returns></returns>
         public bool Validate(SecurityKey key, IDictionary<string, string> headers) {
             var cryptoProviderFactory = key.CryptoProviderFactory;
             var signatureProvider = cryptoProviderFactory.CreateForVerifying(key, InboundAlgorithmMap[Algorithm]);
@@ -373,15 +359,12 @@ namespace Indice.Psd2.Cryptography.Tokens.HttpMessageSigning
                 var message = GenerateMessage(headersToValidate);
                 return signatureProvider.Verify(Encoding.UTF8.GetBytes(message), Convert.FromBase64String(Signature));
             } catch (KeyNotFoundException) {
-                // a header is missing from the list. 
-                // Although defined in the Signature header names 
-                // it is not present in the header values.
+                // A header is missing from the list. Although defined in the signature header names it is not present in the header values.
                 return false;
             } finally {
                 cryptoProviderFactory.ReleaseSignatureProvider(signatureProvider);
             }
         }
-
 
         private static string GenerateMessage(IEnumerable<KeyValuePair<string, string>> headerKeyValues) {
             var message = string.Join("\n", headerKeyValues.Where(x => x.Value != null).Select(x => $"{x.Key.ToLowerInvariant()}: {SerializeComponent(x.Value)}"));

@@ -34,7 +34,11 @@ namespace Indice.Oba.AspNetCore.Middleware
         /// <param name="next"></param>
         /// <param name="options"></param>
         /// <param name="systemClock"></param>
-        public HttpSignatureMiddleware(RequestDelegate next, HttpSignatureOptions options, ISystemClock systemClock) {
+        public HttpSignatureMiddleware(
+            RequestDelegate next, 
+            HttpSignatureOptions options, 
+            ISystemClock systemClock
+        ) {
             _next = next ?? throw new ArgumentNullException(nameof(next));
             _options = options ?? throw new ArgumentNullException(nameof(options));
             _systemClock = systemClock ?? throw new ArgumentNullException(nameof(systemClock));

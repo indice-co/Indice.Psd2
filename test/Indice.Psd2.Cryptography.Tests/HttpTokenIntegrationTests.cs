@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Collections.Generic;
 using System.IO;
 using System.Net.Http;
 using System.Security.Cryptography;
@@ -61,7 +62,7 @@ namespace Indice.Psd2.Cryptography.Tests
                           .ConfigureServices(services => {
                               services.AddHttpSignatures(options => {
                                   options.MapPath("/payments", HeaderFieldNames.RequestTarget, HeaderFieldNames.Created, HttpDigest.HTTPHeaderName, "x-response-id");
-                                  options.MapPath("/payments/execute", HeaderFieldNames.RequestTarget, HeaderFieldNames.Created, HttpDigest.HTTPHeaderName, "x-response-id");
+                                  options.IgnorePath("/payments/execute", HttpMethods.Get);
                                   options.RequestValidation = true;
                                   options.ResponseSigning = true;
                               })
@@ -75,12 +76,24 @@ namespace Indice.Psd2.Cryptography.Tests
                                       context.Response.Headers["Content-Type"] = "application/json;UTF-8";
                                       await context.Response.WriteAsync(@"{""amount"":123.9,""date"":""2019-06-21T12:05:40.111Z""}");
                                   });
+                                  endpoints.MapGet("/payments/execute", async context => {
+                                      context.Response.Headers["Content-Type"] = "application/json;UTF-8";
+                                      await context.Response.WriteAsync(@"{""amount"":123.9,""date"":""2019-06-21T12:05:40.111Z""}");
+                                  });
                               });
                           });
-            }).Build();
+            })
+            .Build();
             host.Start();
             var server = host.GetTestServer();
-            var messageHandler = new HttpSignatureDelegatingHandler(GetSigningCredentials(), new[] { "(request-target)", "(created)", "digest", "x-request-id" }, server.CreateHandler());
+            var messageHandler = new HttpSignatureDelegatingHandler(
+                credential: GetSigningCredentials(),
+                headerNames: new[] { "(request-target)", "(created)", "digest", "x-request-id" },
+                ignoredPaths: new Dictionary<string, string> {
+                    { "payments/EXECUTE", HttpMethods.Get }
+                },
+                innerHandler: server.CreateHandler()
+            );
             _client = new HttpClient(messageHandler) {
                 BaseAddress = server.BaseAddress
             };
@@ -95,12 +108,19 @@ namespace Indice.Psd2.Cryptography.Tests
             Assert.Equal(@"{""amount"":123.9,""date"":""2019-06-21T12:05:40.111Z""}", json);
         }
 
+        [Fact]
+        public async Task CanIgnorePath() {
+            var response = await _client.GetAsync("/payments/execute");
+            var json = await response.Content.ReadAsStringAsync();
+            Assert.Equal(@"{""amount"":123.9,""date"":""2019-06-21T12:05:40.111Z""}", json);
+        }
+
         private static SigningCredentials GetSigningCredentials() {
             var privateKey = TEST_RSA_PrivateKey_256.ReadAsRSAKey();
             var cert = new X509Certificate2(Convert.FromBase64String(TEST_X509_PublicKey_2048));
             var rsa = RSA.Create(privateKey);
-            var signInCred = new SigningCredentials(new X509SecurityKey(cert.CopyWithPrivateKey(rsa)), SecurityAlgorithms.RsaSha256Signature);
-            return signInCred;
+            var signingCredentials = new SigningCredentials(new X509SecurityKey(cert.CopyWithPrivateKey(rsa)), SecurityAlgorithms.RsaSha256Signature);
+            return signingCredentials;
         }
     }
 }
