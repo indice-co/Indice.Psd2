@@ -14,7 +14,6 @@ using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Internal;
 using Microsoft.Extensions.Logging;
 using Microsoft.IdentityModel.Tokens;
-using Microsoft.Net.Http.Headers;
 using Newtonsoft.Json;
 
 namespace Indice.Oba.AspNetCore.Middleware
@@ -24,7 +23,7 @@ namespace Indice.Oba.AspNetCore.Middleware
     /// </summary>
     public class HttpSignatureMiddleware
     {
-        // The middleware delegate to call after this one finishes processing
+        // The middleware delegate to call after this one finishes processing.
         private readonly RequestDelegate _next;
         private readonly HttpSignatureOptions _options;
         private readonly ISystemClock _systemClock;
@@ -48,7 +47,7 @@ namespace Indice.Oba.AspNetCore.Middleware
         /// <param name="logger">A generic interface for logging.</param>
         public async Task Invoke(HttpContext httpContext, ILogger<HttpSignatureMiddleware> logger) {
             var headerNames = new List<string>();
-            var mustValidate = _options.RequestValidation && _options.TryMatch(httpContext.Request.Path, out headerNames);
+            var mustValidate = _options.RequestValidation && _options.TryMatch(httpContext, out headerNames);
             if (mustValidate || httpContext.Request.Headers.ContainsKey(HttpSignature.HTTPHeaderName)) {
                 var rawSignature = httpContext.Request.Headers[HttpSignature.HTTPHeaderName];
                 Debug.WriteLine($"{nameof(HttpSignatureMiddleware)}: Raw Signature: {rawSignature}");
