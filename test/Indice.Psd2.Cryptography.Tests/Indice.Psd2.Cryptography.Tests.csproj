@@ -1,11 +1,8 @@
 ﻿<Project Sdk="Microsoft.NET.Sdk">
-
   <PropertyGroup>
-    <TargetFramework>netcoreapp3.1</TargetFramework>
-
+    <TargetFramework>net5.0</TargetFramework>
     <IsPackable>false</IsPackable>
   </PropertyGroup>
-
   <ItemGroup>
     <PackageReference Include="IdentityModel" Version="5.1.0" />
     <PackageReference Include="Microsoft.AspNetCore.TestHost" Version="3.1.13" />
@@ -17,12 +14,10 @@
       <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
     </PackageReference>
   </ItemGroup>
-
   <ItemGroup>
     <ProjectReference Include="..\..\samples\Indice.Oba.Host\Indice.Oba.Host.csproj" />
     <ProjectReference Include="..\..\src\Indice.Oba.AspNetCore\Indice.Oba.AspNetCore.csproj" />
     <ProjectReference Include="..\..\src\Indice.Psd2.Cryptography\Indice.Psd2.Cryptography.csproj" />
     <ProjectReference Include="..\..\src\Indice.Psd2.IdentityServer4\Indice.Psd2.IdentityServer4.csproj" />
   </ItemGroup>
-
 </Project>
