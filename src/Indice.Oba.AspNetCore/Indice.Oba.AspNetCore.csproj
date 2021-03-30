@@ -2,15 +2,15 @@
   <PropertyGroup>
     <Description>Indice.Oba.AspNetCore Class Library</Description>
     <Copyright>Copyright (c) 2019 Indice</Copyright>
-    <VersionPrefix>3.1.2</VersionPrefix>
+    <VersionPrefix>5.0.0</VersionPrefix>
     <Authors>Constantinos Leftheris, Giannis Tsenes</Authors>
-    <TargetFramework>netcoreapp3.1</TargetFramework>
+    <TargetFrameworks>netcoreapp3.1;net5.0</TargetFrameworks>
     <GenerateDocumentationFile>true</GenerateDocumentationFile>
   </PropertyGroup>
   <PropertyGroup Label="Package">
     <PackageId>Indice.Oba.AspNetCore</PackageId>
     <PackageTags>Psd2;OBA;FAPI;Extensions</PackageTags>
-    <PackageReleaseNotes>Update Indice.Psd2.Cryptography.</PackageReleaseNotes>
+    <PackageReleaseNotes>Support .NET 5.0</PackageReleaseNotes>
     <PackageIcon>icon-128.png</PackageIcon>
     <PackageProjectUrl>https://github.com/indice-co/Indice.Psd2</PackageProjectUrl>
     <PackageLicenseExpression>MIT</PackageLicenseExpression>
@@ -30,8 +30,13 @@
     <FrameworkReference Include="Microsoft.AspNetCore.App" />
   </ItemGroup>
   <ItemGroup>
-    <PackageReference Include="Microsoft.EntityFrameworkCore.SqlServer" Version="3.1.0" />
-    <PackageReference Include="Indice.Psd2.Cryptography" Version="3.1.1" />
+    <PackageReference Include="Indice.Psd2.Cryptography" Version="5.0.0" />
+  </ItemGroup>
+  <ItemGroup Condition=" '$(TargetFramework)' != 'netcoreapp3.1' ">
+    <PackageReference Include="Microsoft.EntityFrameworkCore.SqlServer" Version="5.0.4" />
+  </ItemGroup>
+  <ItemGroup Condition=" '$(TargetFramework)' == 'netcoreapp3.1' ">
+    <PackageReference Include="Microsoft.EntityFrameworkCore.SqlServer" Version="3.1.13" />
   </ItemGroup>
   <ItemGroup>
     <ProjectReference Include="..\Indice.Psd2.Cryptography\Indice.Psd2.Cryptography.csproj" />

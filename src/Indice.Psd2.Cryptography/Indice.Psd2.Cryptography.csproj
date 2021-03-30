@@ -3,9 +3,9 @@
     <Description>Indice.Psd2.Cryptography Class Library</Description>
     <Copyright>Copyright (c) 2019 Indice</Copyright>
     <AssemblyTitle>Indice.Psd2.Cryptography</AssemblyTitle>
-    <VersionPrefix>3.1.1</VersionPrefix>
+    <VersionPrefix>5.0.0</VersionPrefix>
     <Authors>Constantinos Leftheris, Giannis Tsenes</Authors>
-    <TargetFramework>netstandard2.1</TargetFramework>
+    <TargetFrameworks>netstandard2.1;net5.0</TargetFrameworks>
     <AssemblyName>Indice.Psd2.Cryptography</AssemblyName>
     <AssemblyTitle>Indice.Psd2.Cryptography</AssemblyTitle>
     <GenerateDocumentationFile>true</GenerateDocumentationFile>
@@ -14,7 +14,7 @@
   <PropertyGroup Label="Package">
     <PackageId>Indice.Psd2.Cryptography</PackageId>
     <PackageTags>Psd2;Cryptography;Utilities</PackageTags>
-    <PackageReleaseNotes>Make use of (created) header name in message signature.</PackageReleaseNotes>
+    <PackageReleaseNotes>Support .NET 5.0</PackageReleaseNotes>
     <PackageIcon>icon-128.png</PackageIcon>
     <PackageProjectUrl>https://github.com/indice-co/Indice.Psd2</PackageProjectUrl>
     <PackageLicenseExpression>MIT</PackageLicenseExpression>
@@ -31,17 +31,17 @@
     <None Include="..\..\icon\icon-128.png" Pack="true" Visible="false" PackagePath="" />
   </ItemGroup>
   <ItemGroup>
-    <PackageReference Include="System.IdentityModel.Tokens.Jwt" Version="5.5.0" />
-    <PackageReference Include="System.Security.Cryptography.Cng" Version="4.6.0" />
-    <PackageReference Include="System.Security.Cryptography.Pkcs" Version="4.6.0" />
-    <PackageReference Include="System.Security.Cryptography.X509Certificates" Version="4.3.2" />
-    <PackageReference Include="System.Security.Cryptography.Encoding" Version="4.3.0" />
-    <PackageReference Include="System.Security.Cryptography.Primitives" Version="4.3.0" />
-    <PackageReference Include="System.Security.Cryptography.Algorithms" Version="4.3.1" />
-    <PackageReference Include="System.Security.Cryptography.Csp" Version="4.3.0" />
-    <PackageReference Include="System.ComponentModel.Annotations" Version="4.6.0" />
     <PackageReference Include="DerConverter" Version="3.0.0.82" />
-    <PackageReference Include="PemUtils" Version="3.0.0.82" />
     <PackageReference Include="Microsoft.SourceLink.GitHub" Version="1.0.0" PrivateAssets="All" />
+    <PackageReference Include="PemUtils" Version="3.0.0.82" />
+    <PackageReference Include="System.ComponentModel.Annotations" Version="5.0.0" />
+    <PackageReference Include="System.IdentityModel.Tokens.Jwt" Version="6.9.0" />
+    <PackageReference Include="System.Security.Cryptography.Algorithms" Version="4.3.1" />
+    <PackageReference Include="System.Security.Cryptography.Cng" Version="5.0.0" />
+    <PackageReference Include="System.Security.Cryptography.Csp" Version="4.3.0" />
+    <PackageReference Include="System.Security.Cryptography.Encoding" Version="4.3.0" />
+    <PackageReference Include="System.Security.Cryptography.Pkcs" Version="5.0.1" />
+    <PackageReference Include="System.Security.Cryptography.Primitives" Version="4.3.0" />
+    <PackageReference Include="System.Security.Cryptography.X509Certificates" Version="4.3.2" />
   </ItemGroup>
 </Project>
