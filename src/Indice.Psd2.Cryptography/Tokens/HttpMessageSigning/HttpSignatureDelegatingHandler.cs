@@ -33,26 +33,14 @@ namespace Indice.Psd2.Cryptography.Tokens.HttpMessageSigning
         public static string ResponseCreatedHeaderName = "X-Date";
 
         /// <summary>
-        ///  Creates a new instance of the <see cref="HttpSignatureDelegatingHandler"/> class.
+        /// Creates a new instance of the <see cref="HttpSignatureDelegatingHandler"/> class with a specific inner handler.
         /// </summary>
         /// <param name="credential">Signing credentials used to sign outgoing requests.</param>
-        /// <param name="headerNames">Header names to include in the <see cref="HttpSignature"/>.</param>
+        /// <param name="headerNames">Header names to include in the <see cref="HttpSignature"/></param>
         public HttpSignatureDelegatingHandler(
             SigningCredentials credential,
             IEnumerable<string> headerNames
-        ) : this(credential, headerNames, new Dictionary<string, string>()) { }
-
-        /// <summary>
-        /// Creates a new instance of the <see cref="HttpSignatureDelegatingHandler"/> class with a specific inner handler.
-        /// </summary>
-        /// <param name="credential">Signing credentials used to sign outgoing requests.</param>
-        /// <param name="headerNames">Header names to include in the <see cref="HttpSignature"/></param>
-        /// <param name="ignoredPaths">Paths that are exluded, optionally based on provided HTTP method.</param>
-        public HttpSignatureDelegatingHandler(
-            SigningCredentials credential,
-            IEnumerable<string> headerNames,
-            IDictionary<string, string> ignoredPaths
-        ) : this(credential, headerNames, ignoredPaths, null) { }
+        ) : this(credential, headerNames, null) { }
 
         /// <summary>
         /// Creates a new instance of the <see cref="HttpSignatureDelegatingHandler"/> class with a specific inner handler.
@@ -63,29 +51,10 @@ namespace Indice.Psd2.Cryptography.Tokens.HttpMessageSigning
         public HttpSignatureDelegatingHandler(
             SigningCredentials credential,
             IEnumerable<string> headerNames,
-            HttpMessageHandler innerHandler
-        ) : this(credential, headerNames, new Dictionary<string, string>(), innerHandler) { }
-
-        /// <summary>
-        /// Creates a new instance of the <see cref="HttpSignatureDelegatingHandler"/> class with a specific inner handler.
-        /// </summary>
-        /// <param name="credential">Signing credentials used to sign outgoing requests.</param>
-        /// <param name="headerNames">Header names to include in the <see cref="HttpSignature"/></param>
-        /// <param name="ignoredPaths">Paths that are exluded, optionally based on provided HTTP method.</param>
-        /// <param name="innerHandler">The inner handler which is responsible for processing the HTTP response messages.</param>
-        public HttpSignatureDelegatingHandler(
-            SigningCredentials credential,
-            IEnumerable<string> headerNames,
-            IDictionary<string, string> ignoredPaths,
             HttpMessageHandler innerHandler
         ) : base(innerHandler ?? new HttpClientHandler()) {
             Credential = credential;
             HeaderNames = headerNames.ToArray();
-            IgnoredPaths = ignoredPaths.Select(path => new { 
-                Key = path.Key.EnsureLeadingSlash(),
-                path.Value 
-            })
-            .ToDictionary(k => k.Key, v => v.Value, StringComparer.InvariantCultureIgnoreCase);
         }
 
         /// <summary>
@@ -99,7 +68,30 @@ namespace Indice.Psd2.Cryptography.Tokens.HttpMessageSigning
         /// <summary>
         /// Paths that are exluded, optionally based on provided HTTP method.
         /// </summary>
-        public IDictionary<string, string> IgnoredPaths { get; }
+        public IDictionary<string, string> IgnoredPaths { get; } = new Dictionary<string, string>(StringComparer.InvariantCultureIgnoreCase);
+
+        /// <summary>
+        /// Excludes a mapped path, optionally based on the given HTTP method. If HTTP method is not specified, every request to this path will not be used by <see cref="HttpSignatureDelegatingHandler"/>.
+        /// </summary>
+        /// <param name="path">The path to exclude.</param>
+        /// <param name="httpMethod">The HTTP methods to exclude for the given path.</param>
+        public void IgnorePath(string path, string httpMethod = null) {
+            if (string.IsNullOrWhiteSpace(httpMethod)) {
+                IgnoredPaths.Add(path, "*");
+                return;
+            }
+            // Validate HTTP method.
+            var isValidHttpMethod = httpMethod.Equals("GET", StringComparison.OrdinalIgnoreCase)
+                || httpMethod.Equals("POST", StringComparison.OrdinalIgnoreCase)
+                || httpMethod.Equals("PUT", StringComparison.OrdinalIgnoreCase)
+                || httpMethod.Equals("DELETE", StringComparison.OrdinalIgnoreCase)
+                || httpMethod.Equals("PATCH", StringComparison.OrdinalIgnoreCase);
+            if (!isValidHttpMethod) {
+                throw new ArgumentException($"HTTP method {httpMethod} is not valid.");
+            }
+            IgnoredPaths.Add(path.EnsureLeadingSlash(), httpMethod);
+            return;
+        }
 
         /// <summary>
         /// Sends an HTTP request to the inner handler to send to the server as an asynchronous operation.
@@ -202,9 +194,21 @@ namespace Indice.Psd2.Cryptography.Tokens.HttpMessageSigning
             request.Headers.Add(RequestSignatureCertificateHeaderName, Convert.ToBase64String(validationKey.Certificate.Export(X509ContentType.Cert)));
         }
 
-        private bool IsIgnoredPath(string path, string httpMethod) {
-            var isIgnoredpath = IgnoredPaths.ContainsKey(path) && IgnoredPaths[path].Equals(httpMethod, StringComparison.OrdinalIgnoreCase);
-            return isIgnoredpath;
+        private bool IsIgnoredPath(string path, string httpMethod = null) {
+            var isIgnoredpath = IgnoredPaths.ContainsKey(path) && (string.IsNullOrWhiteSpace(httpMethod) || IgnoredPaths[path].Equals(httpMethod, StringComparison.OrdinalIgnoreCase));
+            if (isIgnoredpath) {
+                return true;
+            }
+            var paths = IgnoredPaths.Where(x => path.StartsWith(x.Key));
+            if (!paths.Any()) {
+                return false;
+            }
+            var basePath = paths.OrderBy(x => x.Key.Length).First().Key;
+            var isIgnoredSubPath = IgnoredPaths.ContainsKey(basePath) && (IgnoredPaths[basePath].Equals(httpMethod, StringComparison.OrdinalIgnoreCase) || IgnoredPaths[basePath].Equals("*"));
+            if (isIgnoredSubPath) {
+                return true;
+            }
+            return false;
         }
     }
 }

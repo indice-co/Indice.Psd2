@@ -67,9 +67,9 @@ namespace Indice.Oba.AspNetCore.Middleware
         /// </summary>
         /// <param name="path">The path to exclude.</param>
         /// <param name="httpMethod">The HTTP methods to exclude for the given path.</param>
-        public HttpSignatureOptions IgnorePath(PathString path, string httpMethod) {
+        public HttpSignatureOptions IgnorePath(PathString path, string httpMethod = null) {
             // No HTTP methods specified, so exclude just the path (implies that all HTTP methods will be excluded for this path).
-            if (!(httpMethod?.Length > 0)) {
+            if (string.IsNullOrWhiteSpace(httpMethod)) {
                 IgnoredPaths.Add(path.Value, "*");
                 return this;
             }
@@ -117,8 +117,20 @@ namespace Indice.Oba.AspNetCore.Middleware
         }
 
         private bool IsIgnoredPath(PathString path, string httpMethod) {
-            var isIgnoredpath = IgnoredPaths.ContainsKey(path) && IgnoredPaths[path].Equals(httpMethod, StringComparison.OrdinalIgnoreCase);
-            return isIgnoredpath;
+            var isIgnoredpath = IgnoredPaths.ContainsKey(path) && (string.IsNullOrWhiteSpace(httpMethod) || IgnoredPaths[path].Equals(httpMethod, StringComparison.OrdinalIgnoreCase));
+            if (isIgnoredpath) {
+                return true;
+            }
+            var paths = IgnoredPaths.Where(x => path.StartsWithSegments(x.Key));
+            if (!paths.Any()) {
+                return false;
+            }
+            var basePath = paths.OrderBy(x => x.Key.Length).First().Key;
+            var isIgnoredSubPath = IgnoredPaths.ContainsKey(basePath) && (IgnoredPaths[basePath].Equals(httpMethod, StringComparison.OrdinalIgnoreCase) || IgnoredPaths[basePath].Equals("*"));
+            if (isIgnoredSubPath) {
+                return true;
+            }
+            return false;
         }
     }
 }
