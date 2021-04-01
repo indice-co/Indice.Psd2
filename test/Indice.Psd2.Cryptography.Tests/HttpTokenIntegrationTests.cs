@@ -4,6 +4,7 @@ using System.IO;
 using System.Net.Http;
 using System.Security.Cryptography;
 using System.Security.Cryptography.X509Certificates;
+using System.Text.RegularExpressions;
 using System.Threading.Tasks;
 using Indice.Psd2.Cryptography.Tokens.HttpMessageSigning;
 using Microsoft.AspNetCore.Builder;
@@ -61,10 +62,11 @@ namespace Indice.Psd2.Cryptography.Tests
                           .UseTestServer()
                           .ConfigureServices(services => {
                               services.AddHttpSignatures(options => {
-                                  options.MapPath("/payments", HeaderFieldNames.RequestTarget, HeaderFieldNames.Created, HttpDigest.HTTPHeaderName, "x-response-id");
-                                  options.IgnorePath("/payments/execute", HttpMethods.Get);
-                                  options.IgnorePath("/opendata", HttpMethods.Get);
-                                  options.IgnorePath("/other");
+                                  options.MapPath("/api/psd2", HeaderFieldNames.RequestTarget, HeaderFieldNames.Created, HttpDigest.HTTPHeaderName, "x-response-id");
+                                  options.IgnorePath("/api/psd2/payments/execute", HttpMethods.Get);
+                                  options.IgnorePath("/api/psd2/opendata", HttpMethods.Get);
+                                  options.IgnorePath("/api/psd2/other");
+                                  options.IgnorePath("/api/psd2/consents/{consentId}/status");
                                   options.RequestValidation = true;
                                   options.ResponseSigning = true;
                               })
@@ -74,19 +76,28 @@ namespace Indice.Psd2.Cryptography.Tests
                               app.UseRouting();
                               app.UseHttpSignatures();
                               app.UseEndpoints(endpoints => {
-                                  endpoints.MapGet("/payments", async context => {
+                                  endpoints.MapGet("/api/psd2/payments", async context => {
                                       context.Response.Headers["Content-Type"] = "application/json;UTF-8";
                                       await context.Response.WriteAsync(@"{""amount"":123.9,""date"":""2019-06-21T12:05:40.111Z""}");
                                   });
-                                  endpoints.MapGet("/payments/execute", async context => {
+                                  endpoints.MapGet("/api/psd2/payments/execute", async context => {
                                       context.Response.Headers["Content-Type"] = "application/json;UTF-8";
                                       await context.Response.WriteAsync(@"{""amount"":123.9,""date"":""2019-06-21T12:05:40.111Z""}");
                                   });
-                                  endpoints.MapGet("/opendata/branches", async context => {
+                                  endpoints.MapGet("/api/psd2/opendata/branches", async context => {
                                       context.Response.Headers["Content-Type"] = "application/json;UTF-8";
                                       await context.Response.WriteAsync(@"{""amount"":123.9,""date"":""2019-06-21T12:05:40.111Z""}");
                                   });
-                                  endpoints.MapGet("/other/sub", async context => {
+                                  endpoints.MapGet("/api/psd2/other/sub", async context => {
+                                      context.Response.Headers["Content-Type"] = "application/json;UTF-8";
+                                      await context.Response.WriteAsync(@"{""amount"":123.9,""date"":""2019-06-21T12:05:40.111Z""}");
+                                  });
+                                  endpoints.MapGet("/api/psd2/consents/{consentId}/status", async context => {
+                                      var consentId = context.Request.RouteValues["consentId"];
+                                      context.Response.Headers["Content-Type"] = "application/json;UTF-8";
+                                      await context.Response.WriteAsync(@"{""amount"":123.9,""date"":""2019-06-21T12:05:40.111Z""}");
+                                  });
+                                  endpoints.MapGet("/api/psd2/one/two/three", async context => {
                                       context.Response.Headers["Content-Type"] = "application/json;UTF-8";
                                       await context.Response.WriteAsync(@"{""amount"":123.9,""date"":""2019-06-21T12:05:40.111Z""}");
                                   });
@@ -101,9 +112,10 @@ namespace Indice.Psd2.Cryptography.Tests
                 headerNames: new[] { "(request-target)", "(created)", "digest", "x-request-id" },
                 innerHandler: server.CreateHandler()
             );
-            messageHandler.IgnorePath("payments/EXECUTE", HttpMethods.Get);
-            messageHandler.IgnorePath("/opendata", HttpMethods.Get);
-            messageHandler.IgnorePath("/other");
+            messageHandler.IgnorePath("api/psd2/payments/EXECUTE", HttpMethods.Get);
+            messageHandler.IgnorePath("/api/psd2/opendata", HttpMethods.Get);
+            messageHandler.IgnorePath("/api/psd2/other");
+            messageHandler.IgnorePath("/api/psd2/consents/{consentId}/status");
             _client = new HttpClient(messageHandler) {
                 BaseAddress = server.BaseAddress
             };
@@ -113,28 +125,44 @@ namespace Indice.Psd2.Cryptography.Tests
         public async Task HttpTokenIntegrationTest() {
             _client.DefaultRequestHeaders.Add("X-Date", DateTimeOffset.UtcNow.AddDays(-2).ToString("r"));
             _client.DefaultRequestHeaders.Add("X-Request-Id", Guid.NewGuid().ToString());
-            var response = await _client.GetAsync("/payments?v=ΑΒΓ");
+            var response = await _client.GetAsync("/api/psd2/payments?v=ΑΒΓ");
             var json = await response.Content.ReadAsStringAsync();
             Assert.Equal(@"{""amount"":123.9,""date"":""2019-06-21T12:05:40.111Z""}", json);
         }
 
         [Fact]
         public async Task CanIgnorePathWithSpecifiedMethod() {
-            var response = await _client.GetAsync("/payments/execute");
+            var response = await _client.GetAsync("/api/psd2/payments/execute");
             var json = await response.Content.ReadAsStringAsync();
             Assert.Equal(@"{""amount"":123.9,""date"":""2019-06-21T12:05:40.111Z""}", json);
         }
 
         [Fact]
         public async Task CanIgnoreSubPathWithSpecifiedMethod() {
-            var response = await _client.GetAsync("/opendata/branches");
+            var response = await _client.GetAsync("/api/psd2/opendata/branches");
             var json = await response.Content.ReadAsStringAsync();
             Assert.Equal(@"{""amount"":123.9,""date"":""2019-06-21T12:05:40.111Z""}", json);
         }
 
         [Fact]
         public async Task CanIgnoreSubPathWithoutSpecifiedMethod() {
-            var response = await _client.GetAsync("/other/sub");
+            var response = await _client.GetAsync("/api/psd2/other/sub");
+            var json = await response.Content.ReadAsStringAsync();
+            Assert.Equal(@"{""amount"":123.9,""date"":""2019-06-21T12:05:40.111Z""}", json);
+        }
+
+        [Fact]
+        public async Task CanIgnoreDynamicPath() {
+            var response = await _client.GetAsync("/api/psd2/consents/123/status");
+            var json = await response.Content.ReadAsStringAsync();
+            Assert.Equal(@"{""amount"":123.9,""date"":""2019-06-21T12:05:40.111Z""}", json);
+        }
+
+        [Fact]
+        public async Task CanProcessSameSizeDynamicPath() {
+            _client.DefaultRequestHeaders.Add("X-Date", DateTimeOffset.UtcNow.AddDays(-2).ToString("r"));
+            _client.DefaultRequestHeaders.Add("X-Request-Id", Guid.NewGuid().ToString());
+            var response = await _client.GetAsync("/api/psd2/one/two/three");
             var json = await response.Content.ReadAsStringAsync();
             Assert.Equal(@"{""amount"":123.9,""date"":""2019-06-21T12:05:40.111Z""}", json);
         }

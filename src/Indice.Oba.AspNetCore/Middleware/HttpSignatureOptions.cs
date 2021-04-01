@@ -2,6 +2,7 @@
 using System.Collections.Generic;
 using System.Linq;
 using Microsoft.AspNetCore.Http;
+using Indice.Psd2.Cryptography;
 
 namespace Indice.Oba.AspNetCore.Middleware
 {
@@ -65,12 +66,16 @@ namespace Indice.Oba.AspNetCore.Middleware
         /// <summary>
         /// Excludes a mapped path, optionally based on the given HTTP method. If HTTP method is not specified, every request to this path will not be used by <see cref="HttpSignatureMiddleware"/>.
         /// </summary>
-        /// <param name="path">The path to exclude.</param>
+        /// <param name="pathString">The path to exclude.</param>
         /// <param name="httpMethod">The HTTP methods to exclude for the given path.</param>
-        public HttpSignatureOptions IgnorePath(PathString path, string httpMethod = null) {
+        public HttpSignatureOptions IgnorePath(PathString pathString, string httpMethod = null) {
+            if (pathString == null) {
+                throw new ArgumentNullException(nameof(pathString), "Cannot ignore a null path.");
+            }
+            var path = pathString.Value.EnsureLeadingSlash().ToTemplatedDynamicPath();
             // No HTTP methods specified, so exclude just the path (implies that all HTTP methods will be excluded for this path).
             if (string.IsNullOrWhiteSpace(httpMethod)) {
-                IgnoredPaths.Add(path.Value, "*");
+                IgnoredPaths.Add(path, "*");
                 return this;
             }
             // Validate HTTP method.
@@ -79,7 +84,7 @@ namespace Indice.Oba.AspNetCore.Middleware
             if (!isValidHttpMethod) {
                 throw new ArgumentException($"HTTP method {httpMethod} is not valid.");
             }
-            IgnoredPaths.Add(path.Value, httpMethod);
+            IgnoredPaths.Add(path, httpMethod);
             return this;
         }
 
@@ -93,12 +98,12 @@ namespace Indice.Oba.AspNetCore.Middleware
             headerNames = null;
             if (Mappings.ContainsKey(path)) {
                 headerNames = Mappings[path];
-                return !IsIgnoredPath(path, httpMethod);
+                return !StringExtensions.IsIgnoredPath(IgnoredPaths, path, httpMethod);
             }
             var results = Mappings.Where(x => path.StartsWithSegments(x.Key));
             if (results.Any()) {
                 headerNames = results.OrderByDescending(x => x.Key.Length).First().Value;
-                return !IsIgnoredPath(path, httpMethod);
+                return !StringExtensions.IsIgnoredPath(IgnoredPaths, path, httpMethod);
             }
             return false;
         }
@@ -114,23 +119,6 @@ namespace Indice.Oba.AspNetCore.Middleware
             var isMatch = TryMatch(path, httpMethod, out var headerNamesInner);
             headerNames = headerNamesInner;
             return isMatch;
-        }
-
-        private bool IsIgnoredPath(PathString path, string httpMethod) {
-            var isIgnoredpath = IgnoredPaths.ContainsKey(path) && (string.IsNullOrWhiteSpace(httpMethod) || IgnoredPaths[path].Equals(httpMethod, StringComparison.OrdinalIgnoreCase));
-            if (isIgnoredpath) {
-                return true;
-            }
-            var paths = IgnoredPaths.Where(x => path.StartsWithSegments(x.Key));
-            if (!paths.Any()) {
-                return false;
-            }
-            var basePath = paths.OrderBy(x => x.Key.Length).First().Key;
-            var isIgnoredSubPath = IgnoredPaths.ContainsKey(basePath) && (IgnoredPaths[basePath].Equals(httpMethod, StringComparison.OrdinalIgnoreCase) || IgnoredPaths[basePath].Equals("*"));
-            if (isIgnoredSubPath) {
-                return true;
-            }
-            return false;
         }
     }
 }

@@ -76,6 +76,10 @@ namespace Indice.Psd2.Cryptography.Tokens.HttpMessageSigning
         /// <param name="path">The path to exclude.</param>
         /// <param name="httpMethod">The HTTP methods to exclude for the given path.</param>
         public void IgnorePath(string path, string httpMethod = null) {
+            if (path == null) {
+                throw new ArgumentNullException(nameof(path), "Cannot ignore a null path.");
+            }
+            path = path.EnsureLeadingSlash().ToTemplatedDynamicPath();
             if (string.IsNullOrWhiteSpace(httpMethod)) {
                 IgnoredPaths.Add(path, "*");
                 return;
@@ -89,7 +93,7 @@ namespace Indice.Psd2.Cryptography.Tokens.HttpMessageSigning
             if (!isValidHttpMethod) {
                 throw new ArgumentException($"HTTP method {httpMethod} is not valid.");
             }
-            IgnoredPaths.Add(path.EnsureLeadingSlash(), httpMethod);
+            IgnoredPaths.Add(path, httpMethod);
             return;
         }
 
@@ -107,7 +111,7 @@ namespace Indice.Psd2.Cryptography.Tokens.HttpMessageSigning
         }
 
         private async Task ValidateResponse(HttpRequestMessage request, HttpResponseMessage response) {
-            if (IsIgnoredPath(request.RequestUri.AbsolutePath, request.Method.Method)) {
+            if (StringExtensions.IsIgnoredPath(IgnoredPaths, request.RequestUri.AbsolutePath, request.Method.Method)) {
                 return;
             }
             if (!response.Headers.TryGetValues(HttpSignature.HTTPHeaderName, out var signatureValues) || signatureValues.Count() == 0) {
@@ -153,7 +157,7 @@ namespace Indice.Psd2.Cryptography.Tokens.HttpMessageSigning
         }
 
         private async Task SignRequest(HttpRequestMessage request) {
-            if (IsIgnoredPath(request.RequestUri.AbsolutePath, request.Method.Method)) {
+            if (StringExtensions.IsIgnoredPath(IgnoredPaths, request.RequestUri.AbsolutePath, request.Method.Method)) {
                 return;
             }
             var content = request.Content != null ? (await request.Content.ReadAsByteArrayAsync()) : new byte[0];
@@ -192,23 +196,6 @@ namespace Indice.Psd2.Cryptography.Tokens.HttpMessageSigning
             request.Headers.Add(HttpSignature.HTTPHeaderName, signature.ToString());
             Debug.WriteLine($"HttpSignature: {HttpSignature.HTTPHeaderName} Header: {signature}");
             request.Headers.Add(RequestSignatureCertificateHeaderName, Convert.ToBase64String(validationKey.Certificate.Export(X509ContentType.Cert)));
-        }
-
-        private bool IsIgnoredPath(string path, string httpMethod = null) {
-            var isIgnoredpath = IgnoredPaths.ContainsKey(path) && (string.IsNullOrWhiteSpace(httpMethod) || IgnoredPaths[path].Equals(httpMethod, StringComparison.OrdinalIgnoreCase));
-            if (isIgnoredpath) {
-                return true;
-            }
-            var paths = IgnoredPaths.Where(x => path.StartsWith(x.Key));
-            if (!paths.Any()) {
-                return false;
-            }
-            var basePath = paths.OrderBy(x => x.Key.Length).First().Key;
-            var isIgnoredSubPath = IgnoredPaths.ContainsKey(basePath) && (IgnoredPaths[basePath].Equals(httpMethod, StringComparison.OrdinalIgnoreCase) || IgnoredPaths[basePath].Equals("*"));
-            if (isIgnoredSubPath) {
-                return true;
-            }
-            return false;
         }
     }
 }
