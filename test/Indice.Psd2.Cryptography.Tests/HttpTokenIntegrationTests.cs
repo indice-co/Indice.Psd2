@@ -97,6 +97,11 @@ namespace Indice.Psd2.Cryptography.Tests
                                       context.Response.Headers["Content-Type"] = "application/json;UTF-8";
                                       await context.Response.WriteAsync(@"{""amount"":123.9,""date"":""2019-06-21T12:05:40.111Z""}");
                                   });
+                                  endpoints.MapPost("/api/psd2/consents/{consentId}/status", async context => {
+                                      var consentId = context.Request.RouteValues["consentId"];
+                                      context.Response.Headers["Content-Type"] = "application/json;UTF-8";
+                                      await context.Response.WriteAsync(@"{""amount"":123.9,""date"":""2019-06-21T12:05:40.111Z""}");
+                                  });
                                   endpoints.MapGet("/api/psd2/one/two/three", async context => {
                                       context.Response.Headers["Content-Type"] = "application/json;UTF-8";
                                       await context.Response.WriteAsync(@"{""amount"":123.9,""date"":""2019-06-21T12:05:40.111Z""}");
@@ -153,7 +158,14 @@ namespace Indice.Psd2.Cryptography.Tests
 
         [Fact]
         public async Task CanIgnoreDynamicPath() {
-            var response = await _client.GetAsync("/api/psd2/consents/123/status");
+            var response = await _client.GetAsync("/api/psd2/consents/psd2:ais:hAQQYJQk3UW5uV00lfq9qg:Aa0ibG9jYWxob3N0/status");
+            var json = await response.Content.ReadAsStringAsync();
+            Assert.Equal(@"{""amount"":123.9,""date"":""2019-06-21T12:05:40.111Z""}", json);
+        }
+
+        [Fact]
+        public async Task CanProcessDynamicPathWithSpecialCharacters() {
+            var response = await _client.PostAsync("/api/psd2/consents/psd2:ais:hAQQYJQk3UW5uV00lfq9qg:Aa0ibG9jYWxob3N0/status", null);
             var json = await response.Content.ReadAsStringAsync();
             Assert.Equal(@"{""amount"":123.9,""date"":""2019-06-21T12:05:40.111Z""}", json);
         }

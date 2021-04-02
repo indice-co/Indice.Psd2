@@ -163,7 +163,7 @@ namespace Indice.Psd2.Cryptography.Tokens.HttpMessageSigning
             var content = request.Content != null ? (await request.Content.ReadAsByteArrayAsync()) : new byte[0];
             var validationKey = Credential.Key as X509SecurityKey;
             var extraHeaders = new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase) {
-                [HttpRequestTarget.HeaderName] = new HttpRequestTarget(request.Method.Method, request.RequestUri.PathAndQuery).ToString(),
+                [HttpRequestTarget.HeaderName] = new HttpRequestTarget(request.Method.Method, $"{request.RequestUri.LocalPath}{request.RequestUri.Query}").ToString(),
                 [HttpDigest.HTTPHeaderName] = new HttpDigest(Credential.Algorithm, content).ToString(),
                 [HeaderFieldNames.Created] = request.Headers.TryGetValues(RequestCreatedHeaderName, out var createdDate) ? createdDate.First() : DateTimeOffset.UtcNow.ToString("r")
             };

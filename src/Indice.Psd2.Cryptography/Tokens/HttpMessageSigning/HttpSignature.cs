@@ -337,7 +337,7 @@ namespace Indice.Psd2.Cryptography.Tokens.HttpMessageSigning
         /// <param name="responseHeaders"></param>
         public bool Validate(SecurityKey key, Uri requestUri, string requestMethod, string createdDate, IEnumerable<KeyValuePair<string, IEnumerable<string>>> responseHeaders) {
             var headers = responseHeaders.ToDictionary(x => x.Key, x => x.Value.FirstOrDefault(), StringComparer.OrdinalIgnoreCase);
-            var rawTarget = requestUri.PathAndQuery;
+            var rawTarget = $"{requestUri.LocalPath}{requestUri.Query}";
             headers.Add(HttpRequestTarget.HeaderName, new HttpRequestTarget(requestMethod, rawTarget).ToString());
             headers.Add(HeaderFieldNames.Created, createdDate);
             foreach (var header in headers) {
