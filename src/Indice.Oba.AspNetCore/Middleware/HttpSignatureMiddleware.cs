@@ -130,8 +130,9 @@ namespace Indice.Oba.AspNetCore.Middleware
                     var validationKeys = await validationKeysStore.GetValidationKeysAsync();
                     var validationKey = validationKeys.First() as X509SecurityKey;
                     Debug.WriteLine($"{nameof(HttpSignatureMiddleware)}: Validation Key: {validationKey.KeyId}");
-                    var requestFeature = httpContext.Features.Get<IHttpRequestFeature>();
-                    var rawTarget = $"{requestFeature.Path}{requestFeature.QueryString}";
+                    //var requestFeature = httpContext.Features.Get<IHttpRequestFeature>();
+                    //var uri = new Uri($"{httpContext.Request.Path}{requestFeature.QueryString}", UriKind.Relative);
+                    var rawTarget = httpContext.GetPathAndQuery();
                     Debug.WriteLine($"{nameof(HttpSignatureMiddleware)}: Raw Target: {rawTarget}");
                     var extraHeaders = new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase) {
                         [HttpRequestTarget.HeaderName] = new HttpRequestTarget(httpContext.Request.Method, rawTarget).ToString(),
