@@ -3,7 +3,7 @@
     <Description>Indice.Psd2.Cryptography Class Library</Description>
     <Copyright>Copyright (c) 2019 Indice</Copyright>
     <AssemblyTitle>Indice.Psd2.Cryptography</AssemblyTitle>
-    <VersionPrefix>5.0.5</VersionPrefix>
+    <VersionPrefix>5.0.6</VersionPrefix>
     <Authors>Constantinos Leftheris, Giannis Tsenes</Authors>
     <TargetFrameworks>netstandard2.1;net5.0</TargetFrameworks>
     <AssemblyName>Indice.Psd2.Cryptography</AssemblyName>
@@ -14,7 +14,7 @@
   <PropertyGroup Label="Package">
     <PackageId>Indice.Psd2.Cryptography</PackageId>
     <PackageTags>Psd2;Cryptography;Utilities</PackageTags>
-    <PackageReleaseNotes>Calculate query and path as url-encoded.</PackageReleaseNotes>
+    <PackageReleaseNotes>Add support for ignoring multiple http methods for a path.</PackageReleaseNotes>
     <PackageIcon>icon-128.png</PackageIcon>
     <PackageProjectUrl>https://github.com/indice-co/Indice.Psd2</PackageProjectUrl>
     <PackageLicenseExpression>MIT</PackageLicenseExpression>

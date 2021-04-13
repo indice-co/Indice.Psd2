@@ -8,7 +8,6 @@ using System.Security.Cryptography.X509Certificates;
 using System.Threading.Tasks;
 using Indice.Psd2.Cryptography.Tokens.HttpMessageSigning;
 using Microsoft.AspNetCore.Http;
-using Microsoft.AspNetCore.Http.Features;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Internal;
@@ -130,14 +129,12 @@ namespace Indice.Oba.AspNetCore.Middleware
                     var validationKeys = await validationKeysStore.GetValidationKeysAsync();
                     var validationKey = validationKeys.First() as X509SecurityKey;
                     Debug.WriteLine($"{nameof(HttpSignatureMiddleware)}: Validation Key: {validationKey.KeyId}");
-                    //var requestFeature = httpContext.Features.Get<IHttpRequestFeature>();
-                    //var uri = new Uri($"{httpContext.Request.Path}{requestFeature.QueryString}", UriKind.Relative);
                     var rawTarget = httpContext.GetPathAndQuery();
                     Debug.WriteLine($"{nameof(HttpSignatureMiddleware)}: Raw Target: {rawTarget}");
                     var extraHeaders = new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase) {
                         [HttpRequestTarget.HeaderName] = new HttpRequestTarget(httpContext.Request.Method, rawTarget).ToString(),
                         [HttpDigest.HTTPHeaderName] = new HttpDigest(signingCredentials.Algorithm, content).ToString(),
-                        [HeaderFieldNames.Created] = _systemClock.UtcNow.ToString("r"), //DateTimeOffset.UtcNow.ToString("r"),
+                        [HeaderFieldNames.Created] = _systemClock.UtcNow.ToString("r"),
                         [_options.ResponseIdHeaderName] = Guid.NewGuid().ToString()
                     };
                     var includedHeaders = new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase);

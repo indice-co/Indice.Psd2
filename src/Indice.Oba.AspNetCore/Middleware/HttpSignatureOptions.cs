@@ -67,23 +67,26 @@ namespace Indice.Oba.AspNetCore.Middleware
         /// Excludes a mapped path, optionally based on the given HTTP method. If HTTP method is not specified, every request to this path will not be used by <see cref="HttpSignatureMiddleware"/>.
         /// </summary>
         /// <param name="pathString">The path to exclude.</param>
-        /// <param name="httpMethod">The HTTP methods to exclude for the given path.</param>
-        public HttpSignatureOptions IgnorePath(PathString pathString, string httpMethod = null) {
+        /// <param name="httpMethods">The HTTP methods to exclude for the given path.</param>
+        public HttpSignatureOptions IgnorePath(PathString pathString, params string[] httpMethods) {
             if (pathString == null) {
                 throw new ArgumentNullException(nameof(pathString), "Cannot ignore a null path.");
             }
             var path = pathString.Value.EnsureLeadingSlash().ToTemplatedDynamicPath();
             // No HTTP methods specified, so exclude just the path (implies that all HTTP methods will be excluded for this path).
-            if (string.IsNullOrWhiteSpace(httpMethod)) {
+            if (httpMethods?.Length == 0) {
                 IgnoredPaths.Add(path, "*");
                 return this;
             }
             // Validate HTTP method.
             // There are more of course, but this seems enough for our needs.
-            var isValidHttpMethod = HttpMethods.IsGet(httpMethod) || HttpMethods.IsPost(httpMethod) || HttpMethods.IsPut(httpMethod) || HttpMethods.IsDelete(httpMethod) || HttpMethods.IsPatch(httpMethod);
-            if (!isValidHttpMethod) {
-                throw new ArgumentException($"HTTP method {httpMethod} is not valid.");
+            foreach (var method in httpMethods) {
+                var isValidHttpMethod = HttpMethods.IsGet(method) || HttpMethods.IsPost(method) || HttpMethods.IsPut(method) || HttpMethods.IsDelete(method) || HttpMethods.IsPatch(method);
+                if (!isValidHttpMethod) {
+                    throw new ArgumentException($"HTTP method {method} is not valid.");
+                }
             }
+            var httpMethod = string.Join('|', httpMethods);
             IgnoredPaths.Add(path, httpMethod);
             return this;
         }

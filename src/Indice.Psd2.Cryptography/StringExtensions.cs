@@ -49,15 +49,16 @@ namespace Indice.Psd2.Cryptography
         /// <returns></returns>
         public static bool IsIgnoredPath(IDictionary<string, string> ignoredPaths, string path, string httpMethod) {
             // Check if specified path matches exactly an ignored path.
-            var isExactMatch = ignoredPaths.ContainsKey(path) && (string.IsNullOrWhiteSpace(httpMethod) || ignoredPaths[path].Equals(httpMethod, StringComparison.OrdinalIgnoreCase));
+            var isExactMatch = ignoredPaths.ContainsKey(path) && (string.IsNullOrWhiteSpace(httpMethod) || ignoredPaths[path].Split('|').Any(method => method.Equals(httpMethod, StringComparison.OrdinalIgnoreCase)));
             if (isExactMatch) {
                 return true;
             }
             // Check if specified path is a subpath of an ignored path.
-            var paths = ignoredPaths.Where(x => path.StartsWith(x.Key));
+            var paths = ignoredPaths.Where(p => path.StartsWith(p.Key));
             if (paths.Any()) {
+                // Order found paths in ascending order, based on size. 
                 var basePath = paths.OrderBy(x => x.Key.Length).First().Key;
-                var isSubPath = ignoredPaths.ContainsKey(basePath) && (ignoredPaths[basePath].Equals(httpMethod, StringComparison.OrdinalIgnoreCase) || ignoredPaths[basePath].Equals("*"));
+                var isSubPath = ignoredPaths.ContainsKey(basePath) && (ignoredPaths[basePath].Split('|').Any(method => method.Equals(httpMethod, StringComparison.OrdinalIgnoreCase)) || ignoredPaths[basePath].Equals("*"));
                 if (isSubPath) {
                     return true;
                 }
@@ -65,7 +66,10 @@ namespace Indice.Psd2.Cryptography
             // Check if specified dynamic path is an exact match of an ignored path.
             var pathParts = path.TrimStart('/').Split('/');
             var segmentsLength = pathParts.Length;
-            var sameSizePaths = ignoredPaths.Where(path => path.Key.TrimStart('/').Split('/').Length == segmentsLength && (path.Value.Equals("*") || path.Value.Equals(httpMethod, StringComparison.OrdinalIgnoreCase)));
+            var sameSizePaths = ignoredPaths.Where(path => 
+                path.Key.TrimStart('/').Split('/').Length == segmentsLength && 
+                (path.Value.Equals("*") || path.Value.Split('|').Any(method => method.Equals(httpMethod, StringComparison.OrdinalIgnoreCase)))
+            );
             if (!sameSizePaths.Any()) {
                 return false;
             }

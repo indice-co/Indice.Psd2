@@ -2,7 +2,7 @@
   <PropertyGroup>
     <Description>Indice.Oba.AspNetCore Class Library</Description>
     <Copyright>Copyright (c) 2019 Indice</Copyright>
-    <VersionPrefix>5.0.4</VersionPrefix>
+    <VersionPrefix>5.0.5</VersionPrefix>
     <Authors>Constantinos Leftheris, Giannis Tsenes</Authors>
     <TargetFrameworks>netcoreapp3.1;net5.0</TargetFrameworks>
     <GenerateDocumentationFile>true</GenerateDocumentationFile>
@@ -10,7 +10,7 @@
   <PropertyGroup Label="Package">
     <PackageId>Indice.Oba.AspNetCore</PackageId>
     <PackageTags>Psd2;OBA;FAPI;Extensions</PackageTags>
-    <PackageReleaseNotes>Update Indice.Psd2.Cryptography.</PackageReleaseNotes>
+    <PackageReleaseNotes>Add support for ignoring multiple http methods for a path.</PackageReleaseNotes>
     <PackageIcon>icon-128.png</PackageIcon>
     <PackageProjectUrl>https://github.com/indice-co/Indice.Psd2</PackageProjectUrl>
     <PackageLicenseExpression>MIT</PackageLicenseExpression>
@@ -30,7 +30,7 @@
     <FrameworkReference Include="Microsoft.AspNetCore.App" />
   </ItemGroup>
   <ItemGroup>
-    <PackageReference Include="Indice.Psd2.Cryptography" Version="5.0.5" />
+    <PackageReference Include="Indice.Psd2.Cryptography" Version="5.0.6" />
   </ItemGroup>
   <ItemGroup Condition=" '$(TargetFramework)' != 'netcoreapp3.1' ">
     <PackageReference Include="Microsoft.EntityFrameworkCore.SqlServer" Version="5.0.4" />

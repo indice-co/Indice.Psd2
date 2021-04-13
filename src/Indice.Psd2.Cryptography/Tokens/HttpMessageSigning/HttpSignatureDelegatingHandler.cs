@@ -74,25 +74,28 @@ namespace Indice.Psd2.Cryptography.Tokens.HttpMessageSigning
         /// Excludes a mapped path, optionally based on the given HTTP method. If HTTP method is not specified, every request to this path will not be used by <see cref="HttpSignatureDelegatingHandler"/>.
         /// </summary>
         /// <param name="path">The path to exclude.</param>
-        /// <param name="httpMethod">The HTTP methods to exclude for the given path.</param>
-        public void IgnorePath(string path, string httpMethod = null) {
+        /// <param name="httpMethods">The HTTP methods to exclude for the given path.</param>
+        public void IgnorePath(string path, params string[] httpMethods) {
             if (path == null) {
                 throw new ArgumentNullException(nameof(path), "Cannot ignore a null path.");
             }
             path = path.EnsureLeadingSlash().ToTemplatedDynamicPath();
-            if (string.IsNullOrWhiteSpace(httpMethod)) {
+            if (httpMethods?.Length == 0) {
                 IgnoredPaths.Add(path, "*");
                 return;
             }
-            // Validate HTTP method.
-            var isValidHttpMethod = httpMethod.Equals("GET", StringComparison.OrdinalIgnoreCase)
-                || httpMethod.Equals("POST", StringComparison.OrdinalIgnoreCase)
-                || httpMethod.Equals("PUT", StringComparison.OrdinalIgnoreCase)
-                || httpMethod.Equals("DELETE", StringComparison.OrdinalIgnoreCase)
-                || httpMethod.Equals("PATCH", StringComparison.OrdinalIgnoreCase);
-            if (!isValidHttpMethod) {
-                throw new ArgumentException($"HTTP method {httpMethod} is not valid.");
+            // Validate HTTP methods.
+            foreach (var method in httpMethods) {
+                var isValidHttpMethod = method.Equals("GET", StringComparison.OrdinalIgnoreCase)
+                    || method.Equals("POST", StringComparison.OrdinalIgnoreCase)
+                    || method.Equals("PUT", StringComparison.OrdinalIgnoreCase)
+                    || method.Equals("DELETE", StringComparison.OrdinalIgnoreCase)
+                    || method.Equals("PATCH", StringComparison.OrdinalIgnoreCase);
+                if (!isValidHttpMethod) {
+                    throw new ArgumentException($"HTTP method {method} is not valid.");
+                }
             }
+            var httpMethod = string.Join('|', httpMethods);
             IgnoredPaths.Add(path, httpMethod);
             return;
         }
