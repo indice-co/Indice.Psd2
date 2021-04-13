@@ -14,7 +14,6 @@ namespace Indice.Oba.AspNetCore.Middleware
     /// </summary>
     public static class HttpSignatureExtensions
     {
-
         /// <summary>
         /// Validate the signature against the requested payload.
         /// </summary>
@@ -39,8 +38,7 @@ namespace Indice.Oba.AspNetCore.Middleware
         /// <param name="key">The public key</param>
         /// <param name="headers"></param>
         /// <returns></returns>
-        public static bool Validate(this HttpSignature signature, SecurityKey key, IDictionary<string, StringValues> headers) {
-            return signature.Validate(key, headers.ToDictionary(x => x.Key, x => (string)x.Value, StringComparer.OrdinalIgnoreCase));
-        }
+        public static bool Validate(this HttpSignature signature, SecurityKey key, IDictionary<string, StringValues> headers) => 
+            signature.Validate(key, headers.ToDictionary(x => x.Key, x => (string)x.Value, StringComparer.OrdinalIgnoreCase));
     }
 }

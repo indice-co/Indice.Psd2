@@ -86,8 +86,12 @@ namespace Indice.Oba.AspNetCore.Middleware
                     throw new ArgumentException($"HTTP method {method} is not valid.");
                 }
             }
-            var httpMethod = string.Join('|', httpMethods);
-            IgnoredPaths.Add(path, httpMethod);
+            if (!IgnoredPaths.ContainsKey(path)) {
+                IgnoredPaths.Add(path, string.Join('|', httpMethods));
+            } else {
+                var methods = IgnoredPaths[path].Split('|').Union(httpMethods);
+                IgnoredPaths[path] = string.Join('|', methods);
+            }
             return this;
         }
 

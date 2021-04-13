@@ -4,6 +4,7 @@ using System.IO;
 using System.Net.Http;
 using System.Security.Cryptography;
 using System.Security.Cryptography.X509Certificates;
+using System.Text;
 using System.Text.RegularExpressions;
 using System.Threading.Tasks;
 using Indice.Psd2.Cryptography.Tokens.HttpMessageSigning;
@@ -66,7 +67,7 @@ namespace Indice.Psd2.Cryptography.Tests
                                   options.IgnorePath("/api/psd2/payments/execute", HttpMethods.Get);
                                   options.IgnorePath("/api/psd2/opendata", HttpMethods.Get);
                                   options.IgnorePath("/api/psd2/other");
-                                  options.IgnorePath("/api/psd2/consents/{consentId}/status");
+                                  //options.IgnorePath("/api/psd2/consents/{consentId}/status");
                                   options.RequestValidation = true;
                                   options.ResponseSigning = true;
                               })
@@ -120,7 +121,7 @@ namespace Indice.Psd2.Cryptography.Tests
             messageHandler.IgnorePath("api/psd2/payments/EXECUTE", HttpMethods.Get);
             messageHandler.IgnorePath("/api/psd2/opendata", HttpMethods.Get);
             messageHandler.IgnorePath("/api/psd2/other");
-            messageHandler.IgnorePath("/api/psd2/consents/{consentId}/status");
+            //messageHandler.IgnorePath("/api/psd2/consents/{consentId}/status");
             _client = new HttpClient(messageHandler) {
                 BaseAddress = server.BaseAddress
             };
@@ -165,7 +166,10 @@ namespace Indice.Psd2.Cryptography.Tests
 
         [Fact]
         public async Task CanProcessDynamicPathWithSpecialCharacters() {
-            var response = await _client.PostAsync("/api/psd2/consents/psd2:ais:hAQQYJQk3UW5uV00lfq9qg:Aa0ibG9jYWxob3N0/status", null);
+            //_client.DefaultRequestHeaders.Add("X-Date", "Tue, 13 Apr 2021 21:00:33 GMT");
+            _client.DefaultRequestHeaders.Add("X-Request-Id", "5f6f209b-78f8-4e8f-b429-2a0c20316ef9");
+            var request = @"{""availableAccountTypes"":""AllAccountsWithBalances"",""recurringIndicator"":true,""validUntil"":""2021-07-11T17:48:27.9804584+00:00"",""frequencyPerDay"":5,""combinedServiceIndicator"":false}";
+            var response = await _client.PostAsync("/api/psd2/consents/psd2:ais:hAQQYJQk3UW5uV00lfq9qg:Aa0ibG9jYWxob3N0/status", new StringContent(request, Encoding.UTF8, "application/json"));
             var json = await response.Content.ReadAsStringAsync();
             Assert.Equal(@"{""amount"":123.9,""date"":""2019-06-21T12:05:40.111Z""}", json);
         }

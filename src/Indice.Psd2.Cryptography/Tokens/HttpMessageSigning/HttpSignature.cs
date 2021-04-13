@@ -69,9 +69,7 @@ namespace Indice.Psd2.Cryptography.Tokens.HttpMessageSigning
                 var hashingAlgorithm = signingCredentials.Algorithm == OutboundAlgorithmMap[SecurityAlgorithms.RsaSha512Signature] ? HashAlgorithmName.SHA512 : HashAlgorithmName.SHA256;
                 if (signingCredentials is X509SigningCredentials x509SigningCredentials) {
                     using (var key = x509SigningCredentials.Certificate.GetRSAPrivateKey()) {
-                        this[HttpSignatureParameterNames.Signature] = Convert.ToBase64String(key.SignData(Encoding.UTF8.GetBytes(message),
-                                                                                              hashingAlgorithm,
-                                                                                              RSASignaturePadding.Pkcs1));
+                        this[HttpSignatureParameterNames.Signature] = Convert.ToBase64String(key.SignData(Encoding.UTF8.GetBytes(message), hashingAlgorithm, RSASignaturePadding.Pkcs1));
                     }
                 } else if (signingCredentials.Key is RsaSecurityKey rsaKey) {
                     this[HttpSignatureParameterNames.Signature] = Convert.ToBase64String(HashAndSignBytes(Encoding.UTF8.GetBytes(message), rsaKey.Parameters, hashingAlgorithm));
@@ -366,9 +364,7 @@ namespace Indice.Psd2.Cryptography.Tokens.HttpMessageSigning
             }
         }
 
-        private static string GenerateMessage(IEnumerable<KeyValuePair<string, string>> headerKeyValues) {
-            var message = string.Join("\n", headerKeyValues.Where(x => x.Value != null).Select(x => $"{x.Key.ToLowerInvariant()}: {SerializeComponent(x.Value)}"));
-            return message;
-        }
+        private static string GenerateMessage(IEnumerable<KeyValuePair<string, string>> headerKeyValues) => 
+            string.Join("\n", headerKeyValues.Where(x => x.Value != null).Select(x => $"{x.Key.ToLowerInvariant()}: {SerializeComponent(x.Value)}"));
     }
 }
