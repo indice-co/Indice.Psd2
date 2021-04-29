@@ -39,7 +39,7 @@ namespace Microsoft.Extensions.DependencyInjection
         /// <returns></returns>
         public static IHttpSignatureBuilder AddSigningCredential(this IHttpSignatureBuilder builder, SigningCredentials credential) {
             if (!(credential.Key is AsymmetricSecurityKey || (credential.Key is JsonWebKey key && key.HasPrivateKey))) {
-                throw new InvalidOperationException("Signing key is not asymmetric");
+                throw new InvalidOperationException("Signing key is not asymmetric.");
             }
             builder.Services.AddSingleton<IHttpSigningCredentialsStore>(new DefaultHttpSigningCredentialsStore(credential));
             builder.Services.AddSingleton<IHttpValidationKeysStore>(new DefaultHttpValidationKeysStore(new[] { credential.Key }));

@@ -15,6 +15,11 @@ namespace Indice.Oba.AspNetCore.Middleware
         /// <param name="httpContext">Encapsulates all HTTP-specific information about an individual HTTP request.</param>
         public static string GetPathAndQuery(this HttpContext httpContext) {
             var requestFeature = httpContext.Features.Get<IHttpRequestFeature>();
+            var options = (HttpSignatureOptions)httpContext.RequestServices.GetService(typeof(HttpSignatureOptions));
+            var forwardedPath = httpContext.Request.Headers[options.ForwardedPathHeaderName];
+            if (!string.IsNullOrWhiteSpace(forwardedPath)) {
+                return forwardedPath;
+            }
             var uri = new Uri($"http://localhost{httpContext.Request.Path}{requestFeature.QueryString}", UriKind.Absolute);
             return uri.PathAndQuery;
         }

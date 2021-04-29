@@ -22,31 +22,35 @@ namespace Indice.Oba.AspNetCore.Middleware
         /// <summary>
         /// The header name where the certificate used for signing the request will reside, in base64 encoding. This header will be present in the request object if a signature is contained.
         /// </summary>
-        public string RequestSignatureCertificateHeaderName { get; } = "TTP-Signature-Certificate";
+        public string RequestSignatureCertificateHeaderName { get; set; } = "TTP-Signature-Certificate";
         /// <summary>
         /// The header name where the certificate used for validating the response will reside, in base64 encoding. This header will be present in the request object if a signature is contained.
         /// </summary>
-        public string ResponseSignatureCertificateHeaderName { get; } = "ASPSP-Signature-Certificate";
+        public string ResponseSignatureCertificateHeaderName { get; set; } = "ASPSP-Signature-Certificate";
         /// <summary>
         /// The header name where the Response Id will be populated.  This is usualy a GUID.
         /// </summary>
-        public string ResponseIdHeaderName { get; } = "X-Response-Id";
+        public string ResponseIdHeaderName { get; set; } = "X-Response-Id";
         /// <summary>
         /// The header name where the request was created. Defaults to 'X-Date'. This header is used when validating the signature of a request as the (created) parameter.
         /// </summary>
-        public string RequestCreatedHeaderName { get; } = "X-Date";
+        public string RequestCreatedHeaderName { get; set; } = "X-Date";
         /// <summary>
         /// The header name where the response was created. Defaults to 'X-Date'. This header is used when generating the signature for the response as the (created) parameter.
         /// </summary>
-        public string ResponseCreatedHeaderName { get; } = "X-Date";
+        public string ResponseCreatedHeaderName { get; set; } = "X-Date";
         /// <summary>
         /// Enables request validation.
         /// </summary>
         public bool RequestValidation { get; set; } = true;
         /// <summary>
-        /// Enalbes response signing.
+        /// Enables response signing.
         /// </summary>
         public bool? ResponseSigning { get; set; } = true;
+        /// <summary>
+        /// A header used to discover the initial request path when API resides behind a proxy.
+        /// </summary>
+        public string ForwardedPathHeaderName { get; set; } = "X-Forwarded-Path";
 
         /// <summary>
         /// Adds a new map entry to the dictionary of mappings. This will be picked up by the <see cref="HttpSignatureMiddleware"/> in order to determine which headers are included in each transmission.

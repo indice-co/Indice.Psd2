@@ -80,7 +80,7 @@ namespace Indice.Oba.AspNetCore.Middleware
                 Debug.WriteLine($"{nameof(HttpSignatureMiddleware)}: Validation Key: {validationKey.KeyId}");
                 var httpSignature = HttpSignature.Parse(rawSignature);
                 Debug.WriteLine($"{nameof(HttpSignatureMiddleware)}: HTTP Signature: {httpSignature}");
-                var requestBody = new byte[0];
+                var requestBody = Array.Empty<byte>();
                 switch (httpContext.Request.Method) {
                     case "POST":
                     case "PUT":
