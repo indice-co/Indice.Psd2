@@ -18,7 +18,7 @@ namespace Indice.Psd2.Cryptography.Tokens.HttpMessageSigning
         /// <summary>
         /// The header name where the certificate used for signing the request will reside, in base64 encoding.  This header will be present in the request object if a signature is contained.
         /// </summary>
-        public static string RequestSignatureCertificateHeaderName = "TTP-Signature-Certificate";
+        public string RequestSignatureCertificateHeaderName { get; set; } = "TTP-Signature-Certificate";
         /// <summary>
         /// The header name where the certificate used for validating the response will reside, in base64 encoding.  This header will be present in the request object if a signature is contained.
         /// </summary>
