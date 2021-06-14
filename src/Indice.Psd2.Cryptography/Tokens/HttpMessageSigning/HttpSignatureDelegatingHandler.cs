@@ -16,6 +16,10 @@ namespace Indice.Psd2.Cryptography.Tokens.HttpMessageSigning
     public class HttpSignatureDelegatingHandler : DelegatingHandler
     {
         /// <summary>
+        /// Defines if the response will be validated
+        /// </summary>
+        private bool _validateResponse = true;
+        /// <summary>
         /// The header name where the certificate used for signing the request will reside, in base64 encoding.  This header will be present in the request object if a signature is contained.
         /// </summary>
         public static string RequestSignatureCertificateHeaderName = "TTP-Signature-Certificate";
@@ -66,7 +70,7 @@ namespace Indice.Psd2.Cryptography.Tokens.HttpMessageSigning
         /// </summary>
         public string[] HeaderNames { get; }
         /// <summary>
-        /// Paths that are exluded, optionally based on provided HTTP method.
+        /// Paths that are excluded, optionally based on provided HTTP method.
         /// </summary>
         public IDictionary<string, string> IgnoredPaths { get; } = new Dictionary<string, string>(StringComparer.InvariantCultureIgnoreCase);
 
@@ -101,6 +105,13 @@ namespace Indice.Psd2.Cryptography.Tokens.HttpMessageSigning
         }
 
         /// <summary>
+        /// Ignores the Response Validation 
+        /// </summary>
+        public void IgnoreResponseValidation() {
+            _validateResponse = false;
+        }
+
+        /// <summary>
         /// Sends an HTTP request to the inner handler to send to the server as an asynchronous operation.
         /// </summary>
         /// <param name="request">The HTTP request message to send to the server.</param>
@@ -109,7 +120,9 @@ namespace Indice.Psd2.Cryptography.Tokens.HttpMessageSigning
         protected override async Task<HttpResponseMessage> SendAsync(HttpRequestMessage request, CancellationToken cancellationToken) {
             await SignRequest(request);
             var response = await base.SendAsync(request, cancellationToken);
-            await ValidateResponse(request, response);
+            if (_validateResponse) {
+                await ValidateResponse(request, response);
+            }
             return response;
         }
 

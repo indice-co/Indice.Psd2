@@ -53,6 +53,7 @@ namespace Indice.Psd2.Cryptography.Tests
             -----END RSA PRIVATE KEY-----";
 
         private readonly HttpClient _client;
+        private readonly IHost _host;
 
         public HttpTokenIntegrationTests() {
             var host = Host.CreateDefaultBuilder().ConfigureWebHostDefaults(webBuilder => {
@@ -109,6 +110,7 @@ namespace Indice.Psd2.Cryptography.Tests
                           });
             })
             .Build();
+            _host = host;
             host.Start();
             var server = host.GetTestServer();
             var messageHandler = new HttpSignatureDelegatingHandler(
@@ -176,6 +178,25 @@ namespace Indice.Psd2.Cryptography.Tests
             _client.DefaultRequestHeaders.Add("X-Date", DateTimeOffset.UtcNow.AddDays(-2).ToString("r"));
             _client.DefaultRequestHeaders.Add("X-Request-Id", Guid.NewGuid().ToString());
             var response = await _client.GetAsync("/api/psd2/one/two/three");
+            var json = await response.Content.ReadAsStringAsync();
+            Assert.Equal(@"{""amount"":123.9,""date"":""2019-06-21T12:05:40.111Z""}", json);
+        }
+
+        [Fact]
+        public async Task CanIgnoreResponseValidation() {
+            var server = _host.GetTestServer();
+            var messageHandler = new HttpSignatureDelegatingHandler(
+                credential: GetSigningCredentials(),
+                headerNames: new[] { "(request-target)", "(created)", "digest", "x-request-id" },
+                innerHandler: server.CreateHandler()
+            );
+            messageHandler.IgnoreResponseValidation();
+            var client = new HttpClient(messageHandler) {
+                BaseAddress = server.BaseAddress
+            };
+            client.DefaultRequestHeaders.Add("X-Date", DateTimeOffset.UtcNow.AddDays(-2).ToString("r"));
+            client.DefaultRequestHeaders.Add("X-Request-Id", Guid.NewGuid().ToString());
+            var response = await client.GetAsync("/api/psd2/one/two/three");
             var json = await response.Content.ReadAsStringAsync();
             Assert.Equal(@"{""amount"":123.9,""date"":""2019-06-21T12:05:40.111Z""}", json);
         }
