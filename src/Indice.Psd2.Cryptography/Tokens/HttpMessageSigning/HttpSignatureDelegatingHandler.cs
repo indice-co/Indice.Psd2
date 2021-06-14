@@ -16,9 +16,9 @@ namespace Indice.Psd2.Cryptography.Tokens.HttpMessageSigning
     public class HttpSignatureDelegatingHandler : DelegatingHandler
     {
         /// <summary>
-        /// Defines if the response will be validated
+        /// Defines if the response will be validated or not
         /// </summary>
-        private bool _validateResponse = true;
+        private bool _ignoreResponseValidation = false;
         /// <summary>
         /// The header name where the certificate used for signing the request will reside, in base64 encoding.  This header will be present in the request object if a signature is contained.
         /// </summary>
@@ -108,7 +108,7 @@ namespace Indice.Psd2.Cryptography.Tokens.HttpMessageSigning
         /// Ignores the Response Validation 
         /// </summary>
         public void IgnoreResponseValidation() {
-            _validateResponse = false;
+            _ignoreResponseValidation = true;
         }
 
         /// <summary>
@@ -120,13 +120,14 @@ namespace Indice.Psd2.Cryptography.Tokens.HttpMessageSigning
         protected override async Task<HttpResponseMessage> SendAsync(HttpRequestMessage request, CancellationToken cancellationToken) {
             await SignRequest(request);
             var response = await base.SendAsync(request, cancellationToken);
-            if (_validateResponse) {
-                await ValidateResponse(request, response);
-            }
+            await ValidateResponse(request, response);
             return response;
         }
 
         private async Task ValidateResponse(HttpRequestMessage request, HttpResponseMessage response) {
+            if (_ignoreResponseValidation) {
+                return;
+            }
             if (StringExtensions.IsIgnoredPath(IgnoredPaths, request.RequestUri.AbsolutePath, request.Method.Method)) {
                 return;
             }
