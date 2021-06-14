@@ -16,9 +16,9 @@ namespace Indice.Psd2.Cryptography.Tokens.HttpMessageSigning
     public class HttpSignatureDelegatingHandler : DelegatingHandler
     {
         /// <summary>
-        /// Defines if the response will be validated or not
+        /// Ignores the Response Validation 
         /// </summary>
-        private bool _ignoreResponseValidation = false;
+        public bool IgnoreResponseValidation { get; set; } 
         /// <summary>
         /// The header name where the certificate used for signing the request will reside, in base64 encoding.  This header will be present in the request object if a signature is contained.
         /// </summary>
@@ -105,13 +105,6 @@ namespace Indice.Psd2.Cryptography.Tokens.HttpMessageSigning
         }
 
         /// <summary>
-        /// Ignores the Response Validation 
-        /// </summary>
-        public void IgnoreResponseValidation() {
-            _ignoreResponseValidation = true;
-        }
-
-        /// <summary>
         /// Sends an HTTP request to the inner handler to send to the server as an asynchronous operation.
         /// </summary>
         /// <param name="request">The HTTP request message to send to the server.</param>
@@ -125,7 +118,7 @@ namespace Indice.Psd2.Cryptography.Tokens.HttpMessageSigning
         }
 
         private async Task ValidateResponse(HttpRequestMessage request, HttpResponseMessage response) {
-            if (_ignoreResponseValidation) {
+            if (IgnoreResponseValidation) {
                 return;
             }
             if (StringExtensions.IsIgnoredPath(IgnoredPaths, request.RequestUri.AbsolutePath, request.Method.Method)) {
