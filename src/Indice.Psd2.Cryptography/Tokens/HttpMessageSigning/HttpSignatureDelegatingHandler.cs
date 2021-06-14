@@ -101,6 +101,14 @@ namespace Indice.Psd2.Cryptography.Tokens.HttpMessageSigning
         }
 
         /// <summary>
+        /// Change the default name of the <see cref="RequestSignatureCertificateHeaderName"/> and use a specific one
+        /// </summary>
+        /// <param name="name">The new name that will be used in signature certificate header</param>
+        public void SetRequestSignatureCertificateHeaderName(string name) {
+            RequestSignatureCertificateHeaderName = name;
+        }
+
+        /// <summary>
         /// Sends an HTTP request to the inner handler to send to the server as an asynchronous operation.
         /// </summary>
         /// <param name="request">The HTTP request message to send to the server.</param>
