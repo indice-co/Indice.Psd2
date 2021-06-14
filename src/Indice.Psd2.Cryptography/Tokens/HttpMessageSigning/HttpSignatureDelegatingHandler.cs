@@ -16,6 +16,10 @@ namespace Indice.Psd2.Cryptography.Tokens.HttpMessageSigning
     public class HttpSignatureDelegatingHandler : DelegatingHandler
     {
         /// <summary>
+        /// Ignores the Response Validation 
+        /// </summary>
+        public bool IgnoreResponseValidation { get; set; } 
+        /// <summary>
         /// The header name where the certificate used for signing the request will reside, in base64 encoding.  This header will be present in the request object if a signature is contained.
         /// </summary>
         public string RequestSignatureCertificateHeaderName { get; set; } = "TTP-Signature-Certificate";
@@ -66,7 +70,7 @@ namespace Indice.Psd2.Cryptography.Tokens.HttpMessageSigning
         /// </summary>
         public string[] HeaderNames { get; }
         /// <summary>
-        /// Paths that are exluded, optionally based on provided HTTP method.
+        /// Paths that are excluded, optionally based on provided HTTP method.
         /// </summary>
         public IDictionary<string, string> IgnoredPaths { get; } = new Dictionary<string, string>(StringComparer.InvariantCultureIgnoreCase);
 
@@ -114,6 +118,9 @@ namespace Indice.Psd2.Cryptography.Tokens.HttpMessageSigning
         }
 
         private async Task ValidateResponse(HttpRequestMessage request, HttpResponseMessage response) {
+            if (IgnoreResponseValidation) {
+                return;
+            }
             if (StringExtensions.IsIgnoredPath(IgnoredPaths, request.RequestUri.AbsolutePath, request.Method.Method)) {
                 return;
             }
