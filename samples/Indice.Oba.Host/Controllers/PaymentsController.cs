@@ -19,7 +19,7 @@ namespace Indice.Oba.Host.Controllers
             [FromHeader(Name = "X-Request-Id")] string requestId, 
             [FromHeader(Name = "Digest")] string digest,
             [FromHeader(Name = "Signature")] string signature,
-            [FromHeader(Name = "TTP-Signature-Certificate")] string cert, 
+            [FromHeader(Name = "TPP-Signature-Certificate")] string cert, 
             [FromBody]Payment payment) {
             payment.Status = "Initiated";
             Payments.TryAdd(payment.Id, payment);
@@ -32,7 +32,7 @@ namespace Indice.Oba.Host.Controllers
             [FromHeader(Name = "X-Request-Id")] string requestId,
             [FromHeader(Name = "Digest")] string digest,
             [FromHeader(Name = "Signature")] string signature,
-            [FromHeader(Name = "TTP-Signature-Certificate")] string cert,
+            [FromHeader(Name = "TPP-Signature-Certificate")] string cert,
             [FromBody]ExecutePaymentRequest request) {
             if (!Payments.TryGetValue(request.Id, out var payment)) {
                 ModelState.AddModelError("", $"Invalid payment {request.Id}");
@@ -48,7 +48,7 @@ namespace Indice.Oba.Host.Controllers
             [FromHeader(Name = "X-Request-Id")] string requestId,
             [FromHeader(Name = "Digest")] string digest,
             [FromHeader(Name = "Signature")] string signature,
-            [FromHeader(Name = "TTP-Signature-Certificate")] string cert,
+            [FromHeader(Name = "TPP-Signature-Certificate")] string cert,
             [FromQuery]string status = null) {
             return Ok(Payments.Values.Where(x => status == null || x.Status.Equals(status, StringComparison.OrdinalIgnoreCase)).ToList());
         }
@@ -59,7 +59,7 @@ namespace Indice.Oba.Host.Controllers
             [FromHeader(Name = "X-Request-Id")] string requestId,
             [FromHeader(Name = "Digest")] string digest,
             [FromHeader(Name = "Signature")] string signature,
-            [FromHeader(Name = "TTP-Signature-Certificate")] string cert) {
+            [FromHeader(Name = "TPP-Signature-Certificate")] string cert) {
 
             //var httpClient = new HttpClient(new HttpSignatureDelegatingHandler());
             

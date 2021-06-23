@@ -190,7 +190,7 @@ namespace Indice.Psd2.Cryptography.Tests
                 headerNames: new[] { "(request-target)", "(created)", "digest", "x-request-id" },
                 innerHandler: server.CreateHandler()
             );
-            messageHandler.IgnoreResponseValidation();
+            messageHandler.IgnoreResponseValidation = true;
             var client = new HttpClient(messageHandler) {
                 BaseAddress = server.BaseAddress
             };
