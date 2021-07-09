@@ -173,29 +173,28 @@ namespace Indice.Psd2.Cryptography.Tokens.HttpMessageSigning
             var content = request.Content != null ? (await request.Content.ReadAsByteArrayAsync()) : new byte[0];
             var validationKey = Credential.Key as X509SecurityKey;
             var pathAndQuery = Uri.UnescapeDataString(request.RequestUri.AbsolutePath) + request.RequestUri.Query;
-            var extraHeaders = new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase) {
-                [HttpRequestTarget.HeaderName] = new HttpRequestTarget(request.Method.Method, pathAndQuery).ToString(),
-                [HttpDigest.HTTPHeaderName] = new HttpDigest(Credential.Algorithm, content).ToString(),
-                [HeaderFieldNames.Created] = request.Headers.TryGetValues(RequestCreatedHeaderName, out var createdDate) ? createdDate.First() : DateTimeOffset.UtcNow.ToString("r")
-            };
+            var headersToSign = new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase);
             foreach (var name in HeaderNames) {
                 if (HttpRequestTarget.HeaderName.Equals(name, StringComparison.OrdinalIgnoreCase)) {
+                    headersToSign.Add(HttpRequestTarget.HeaderName, new HttpRequestTarget(request.Method.Method, pathAndQuery).ToString());
                     continue;
                 } else if (HttpDigest.HTTPHeaderName.Equals(name, StringComparison.OrdinalIgnoreCase)) {
-                    request.Headers.Add(HttpDigest.HTTPHeaderName, extraHeaders[name]);
+                    headersToSign.Add(HttpDigest.HTTPHeaderName, new HttpDigest(Credential.Algorithm, content).ToString());
+                    request.Headers.Add(HttpDigest.HTTPHeaderName, headersToSign[name]);
                     continue;
                 } else if (HeaderFieldNames.Created.Equals(name, StringComparison.OrdinalIgnoreCase)) {
+                    headersToSign.Add(HeaderFieldNames.Created, request.Headers.TryGetValues(RequestCreatedHeaderName, out var createdDate) ? createdDate.First() : DateTimeOffset.UtcNow.ToString("r"));
                     if (!request.Headers.Contains(RequestCreatedHeaderName)) {
-                        request.Headers.Add(RequestCreatedHeaderName, extraHeaders[HeaderFieldNames.Created]);
+                        request.Headers.Add(RequestCreatedHeaderName, headersToSign[HeaderFieldNames.Created]);
                     }
                     continue;
                 } else {
                     if (request.Headers.Contains(name)) {
                         var value = request.Headers.GetValues(name).FirstOrDefault();
-                        if (extraHeaders.ContainsKey(name)) {
-                            extraHeaders[name] = value;
+                        if (headersToSign.ContainsKey(name)) {
+                            headersToSign[name] = value;
                         } else {
-                            extraHeaders.Add(name, value);
+                            headersToSign.Add(name, value);
                         }
                         Debug.WriteLine($"HttpSignature: Include '{name}: {value}'");
                     } else {
@@ -203,7 +202,7 @@ namespace Indice.Psd2.Cryptography.Tokens.HttpMessageSigning
                     }
                 }
             }
-            var signature = new HttpSignature(Credential, extraHeaders, DateTime.UtcNow, null);
+            var signature = new HttpSignature(Credential, headersToSign, DateTime.UtcNow, null);
             request.Headers.Add(HttpSignature.HTTPHeaderName, signature.ToString());
             Debug.WriteLine($"HttpSignature: {HttpSignature.HTTPHeaderName} Header: {signature}");
             request.Headers.Add(RequestSignatureCertificateHeaderName, Convert.ToBase64String(validationKey.Certificate.Export(X509ContentType.Cert)));
