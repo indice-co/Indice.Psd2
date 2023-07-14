@@ -178,13 +178,15 @@ public class CertificateRevocationListSequence : DerAsnSequence
         foreach (var item in list) {
             var serialNumber = item.Value[0] as DerAsnInteger;
             var revocationDate = item.Value[1] as DerAsnUtcTime;
-            var reasonData = ((DerAsnSequence)((DerAsnSequence)item.Value[2]).Value[0]).Value[1];
             var reason = default(RevokedCertificate.CRLReasonCode);
-            if (reasonData is OctetStringSequence) {
-                var reasonSeq = reasonData as OctetStringSequence;
-                reason = (RevokedCertificate.CRLReasonCode)((DerAsnEnumerated)reasonSeq.Value[0]).Value;
-            } else if (reasonData is DerAsnOctetString) {
-                reason = (RevokedCertificate.CRLReasonCode)((DerAsnOctetString)reasonData).Value[2];
+            if (item.Value.Length > 2) {
+                var reasonData = ((DerAsnSequence)((DerAsnSequence)item.Value[2]).Value[0]).Value[1];
+                if (reasonData is OctetStringSequence) {
+                    var reasonSeq = reasonData as OctetStringSequence;
+                    reason = (RevokedCertificate.CRLReasonCode)((DerAsnEnumerated)reasonSeq.Value[0]).Value;
+                } else if (reasonData is DerAsnOctetString) {
+                    reason = (RevokedCertificate.CRLReasonCode)((DerAsnOctetString)reasonData).Value[2];
+                }
             }
             crl.Items.Add(new RevokedCertificate {
                 RevocationDate = revocationDate.Value.DateTime,

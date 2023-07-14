@@ -74,7 +74,7 @@ public class CertificateTests
     [Fact]
     public async Task Import_CRL() {
         var http = new HttpClient();
-        var rawData = await http.GetByteArrayAsync("http://crl.pki.goog/GTSGIAG3.crl");
+        var rawData = await http.GetByteArrayAsync("http://crls.pki.goog/gts1c3/zdATt0Ex_Fk.crl");
         var crlSeq = CertificateRevocationListSequence.Load(rawData);
         var crl = crlSeq.Extract();
         Assert.True(true);
