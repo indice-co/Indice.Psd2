@@ -28,7 +28,6 @@ public class Startup
     // This method gets called by the runtime. Use this method to add services to the container.
     public void ConfigureServices(IServiceCollection services) {
         services.AddControllersWithViews()
-                .SetCompatibilityVersion(CompatibilityVersion.Latest)
                 .AddCertificateEndpoints(x => {
                     x.IssuerDomain = Configuration["Certificates:Issuer"];
                     x.AddEntityFrameworkStore(options => {
