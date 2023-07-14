@@ -1,9 +1,13 @@
 ﻿
 Microsoft Visual Studio Solution File, Format Version 12.00
-# Visual Studio Version 16
-VisualStudioVersion = 16.0.28803.156
+# Visual Studio Version 17
+VisualStudioVersion = 17.6.33815.320
 MinimumVisualStudioVersion = 10.0.40219.1
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "src", "src", "{66A73EAA-84CC-4337-B935-DEB6DCAF28B7}"
+	ProjectSection(SolutionItems) = preProject
+		src\Directory.Build.props = src\Directory.Build.props
+		src\Directory.Build.targets = src\Directory.Build.targets
+	EndProjectSection
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Indice.Psd2.Cryptography", "src\Indice.Psd2.Cryptography\Indice.Psd2.Cryptography.csproj", "{352918EA-3375-4EBF-B256-FF109D7AF753}"
 EndProject
@@ -16,6 +20,9 @@ EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Indice.Psd2.Cryptography.Tests", "test\Indice.Psd2.Cryptography.Tests\Indice.Psd2.Cryptography.Tests.csproj", "{66B31386-719D-469A-9886-12EF68013F62}"
 EndProject
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "test", "test", "{FEF9802E-74D6-4EB4-940C-82860B709F09}"
+	ProjectSection(SolutionItems) = preProject
+		test\Directory.Build.props = test\Directory.Build.props
+	EndProjectSection
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Indice.Psd2.IdentityServer4", "src\Indice.Psd2.IdentityServer4\Indice.Psd2.IdentityServer4.csproj", "{B72932D7-243E-4CA6-8E72-6552C7AA2CD9}"
 EndProject

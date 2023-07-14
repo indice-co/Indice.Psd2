@@ -14,16 +14,16 @@ using Microsoft.IdentityModel.Tokens;
 using Newtonsoft.Json;
 using Xunit;
 
-namespace Indice.Psd2.Cryptography.Tests
+namespace Indice.Psd2.Cryptography.Tests;
+
+public class JwtTokenValidationTests
 {
-    public class JwtTokenValidationTests
-    {
-        private const string ValidAudience = "identity.indice.gr";
-        private const string ValidIssuer = "www.indice.gr";
-        private const string ValidSubject = "GR-BOG-800000005";
-        private const string TEST_X509_PublicKey_2048 = "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";
-        private const string TEST_RSA_PrivateKey_256 = 
-            @"-----BEGIN RSA PRIVATE KEY-----
+    private const string ValidAudience = "identity.indice.gr";
+    private const string ValidIssuer = "www.indice.gr";
+    private const string ValidSubject = "GR-BOG-800000005";
+    private const string TEST_X509_PublicKey_2048 = "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";
+    private const string TEST_RSA_PrivateKey_256 = 
+        @"-----BEGIN RSA PRIVATE KEY-----
               MIIEowIBAAKCAQEAqz0wUEKPdxlYKYBQp0TyInlUPuWVH6J1MkLOn20I/gFyu387
               CDiP3wTnK4Kz382H7vfzHtPyo5WnGKN2RRZF0HXVSEIaCfcYKOsKYzh16d0x7wuJ
               RSPUV9AqdlNCC5wWYF+NM4KFFlOym6xOYbcQI/KWP9n2ToNC/vDJaXaQ0tpzAP7m
@@ -51,78 +51,77 @@ namespace Indice.Psd2.Cryptography.Tests
               cIrtF3LFmXhdwJUAkgTLTZt7RYi/KKRCL0om7SEsM/QOjbWkrRl+
               -----END RSA PRIVATE KEY-----";
 
-        [Fact]
-        public void JwtTokenValidationTest() {
-            IdentityModelEventSource.ShowPII = true;
-            JwtSecurityTokenHandler.DefaultInboundClaimTypeMap.Clear();
-            // Create JWT client authentication payload.
-            var claims = new[] {
-                new  Claim(JwtClaimTypes.Subject, ValidSubject),
-            };
-            var privateKey = TEST_RSA_PrivateKey_256.ReadAsRSAKey();
-            var cert = new X509Certificate2(Convert.FromBase64String(TEST_X509_PublicKey_2048));
-            var securityKey = new RsaSecurityKey(privateKey) {
-                KeyId = cert.GetSubjectKeyIdentifier()
-            };
-            var signingCredentials = new SigningCredentials(new RsaSecurityKey(privateKey), SecurityAlgorithms.RsaSha256Signature);
-            var token = new JwtSecurityToken(
-                issuer: ValidIssuer,
-                audience: ValidAudience,
-                expires: DateTime.Now.AddMinutes(3),
-                claims: claims,                      
-                signingCredentials: signingCredentials
-            );
-            // End of custom claims.
-            var jwt = new JwtSecurityTokenHandler().WriteToken(token);
-            // Validate.
-            var validationParameters = new TokenValidationParameters {
-                IssuerSigningKey = new X509SecurityKey(new X509Certificate2(Convert.FromBase64String(TEST_X509_PublicKey_2048))),
-                ValidAudience = ValidAudience,
-                ValidIssuer = ValidIssuer,
-                ValidateIssuerSigningKey = true,
-                IssuerSigningKeyValidator = new Psd2IssuerSigningKeyValidator().Validate
-            };
-            var principal = new JwtSecurityTokenHandler().ValidateToken(jwt, validationParameters, out var validatedToken);
-            Assert.Equal(ValidSubject, principal.FindFirst("sub").Value);
+    [Fact]
+    public void JwtTokenValidationTest() {
+        IdentityModelEventSource.ShowPII = true;
+        JwtSecurityTokenHandler.DefaultInboundClaimTypeMap.Clear();
+        // Create JWT client authentication payload.
+        var claims = new[] {
+            new  Claim(JwtClaimTypes.Subject, ValidSubject),
+        };
+        var privateKey = TEST_RSA_PrivateKey_256.ReadAsRSAKey();
+        var cert = new X509Certificate2(Convert.FromBase64String(TEST_X509_PublicKey_2048));
+        var securityKey = new RsaSecurityKey(privateKey) {
+            KeyId = cert.GetSubjectKeyIdentifier()
+        };
+        var signingCredentials = new SigningCredentials(new RsaSecurityKey(privateKey), SecurityAlgorithms.RsaSha256Signature);
+        var token = new JwtSecurityToken(
+            issuer: ValidIssuer,
+            audience: ValidAudience,
+            expires: DateTime.Now.AddMinutes(3),
+            claims: claims,                      
+            signingCredentials: signingCredentials
+        );
+        // End of custom claims.
+        var jwt = new JwtSecurityTokenHandler().WriteToken(token);
+        // Validate.
+        var validationParameters = new TokenValidationParameters {
+            IssuerSigningKey = new X509SecurityKey(new X509Certificate2(Convert.FromBase64String(TEST_X509_PublicKey_2048))),
+            ValidAudience = ValidAudience,
+            ValidIssuer = ValidIssuer,
+            ValidateIssuerSigningKey = true,
+            IssuerSigningKeyValidator = new Psd2IssuerSigningKeyValidator().Validate
+        };
+        var principal = new JwtSecurityTokenHandler().ValidateToken(jwt, validationParameters, out var validatedToken);
+        Assert.Equal(ValidSubject, principal.FindFirst("sub").Value);
+    }
+}
+
+public class JwtTokenValidation
+{
+    public async Task<Dictionary<string, X509Certificate2>> FetchGoogleCertificates() {
+        using (var http = new HttpClient()) {
+            var response = await http.GetAsync("https://www.googleapis.com/oauth2/v1/certs");
+            var json = await response.Content.ReadAsStringAsync();
+            var dictionary = JsonConvert.DeserializeObject<Dictionary<string, string>>(json);
+            return dictionary.ToDictionary(x => x.Key, x => new X509Certificate2(Encoding.UTF8.GetBytes(x.Value)));
         }
     }
 
-    public class JwtTokenValidation
-    {
-        public async Task<Dictionary<string, X509Certificate2>> FetchGoogleCertificates() {
-            using (var http = new HttpClient()) {
-                var response = await http.GetAsync("https://www.googleapis.com/oauth2/v1/certs");
-                var json = await response.Content.ReadAsStringAsync();
-                var dictionary = JsonConvert.DeserializeObject<Dictionary<string, string>>(json);
-                return dictionary.ToDictionary(x => x.Key, x => new X509Certificate2(Encoding.UTF8.GetBytes(x.Value)));
-            }
-        }
+    private readonly string CLIENT_ID = "xxxx.apps.googleusercontent.com";
 
-        private readonly string CLIENT_ID = "xxxx.apps.googleusercontent.com";
-
-        public async Task<ClaimsPrincipal> ValidateToken(string idToken) {
-            var certificates = await FetchGoogleCertificates();
-            var validationParameters = new TokenValidationParameters() {
-                ValidateActor = false, // Check the profile id.
-                ValidateAudience = true, // Check the client id.
-                ValidAudience = CLIENT_ID,
-                ValidateIssuer = true, // Check token came from Google.
-                ValidIssuers = new List<string> { "accounts.google.com", "https://accounts.google.com" },
-                ValidateIssuerSigningKey = true,
-                RequireSignedTokens = true,
-                IssuerSigningKeys = certificates.Values.Select(x => new X509SecurityKey(x)),
-                IssuerSigningKeyResolver = (token, securityToken, kid, parameters) => {
-                    return certificates
-                    .Where(x => x.Key.ToUpper() == kid.ToUpper())
-                    .Select(x => new X509SecurityKey(x.Value));
-                },
-                ValidateLifetime = true,
-                RequireExpirationTime = true,
-                ClockSkew = TimeSpan.FromHours(13)
-            };
-            var handler = new JwtSecurityTokenHandler();
-            var principal = handler.ValidateToken(idToken, validationParameters, out var validatedToken);
-            return principal;
-        }
+    public async Task<ClaimsPrincipal> ValidateToken(string idToken) {
+        var certificates = await FetchGoogleCertificates();
+        var validationParameters = new TokenValidationParameters() {
+            ValidateActor = false, // Check the profile id.
+            ValidateAudience = true, // Check the client id.
+            ValidAudience = CLIENT_ID,
+            ValidateIssuer = true, // Check token came from Google.
+            ValidIssuers = new List<string> { "accounts.google.com", "https://accounts.google.com" },
+            ValidateIssuerSigningKey = true,
+            RequireSignedTokens = true,
+            IssuerSigningKeys = certificates.Values.Select(x => new X509SecurityKey(x)),
+            IssuerSigningKeyResolver = (token, securityToken, kid, parameters) => {
+                return certificates
+                .Where(x => x.Key.ToUpper() == kid.ToUpper())
+                .Select(x => new X509SecurityKey(x.Value));
+            },
+            ValidateLifetime = true,
+            RequireExpirationTime = true,
+            ClockSkew = TimeSpan.FromHours(13)
+        };
+        var handler = new JwtSecurityTokenHandler();
+        var principal = handler.ValidateToken(idToken, validationParameters, out var validatedToken);
+        return principal;
     }
 }

@@ -1,46 +1,19 @@
 ﻿<Project Sdk="Microsoft.NET.Sdk">
-  <PropertyGroup>
-    <Description>Indice.Psd2.Cryptography Class Library</Description>
-    <Copyright>Copyright (c) 2019 Indice</Copyright>
-    <AssemblyTitle>Indice.Psd2.Cryptography</AssemblyTitle>
-    <VersionPrefix>5.0.10</VersionPrefix>
-    <Authors>Constantinos Leftheris, Giannis Tsenes</Authors>
-    <TargetFrameworks>netstandard2.1;net5.0</TargetFrameworks>
-    <AssemblyName>Indice.Psd2.Cryptography</AssemblyName>
-    <AssemblyTitle>Indice.Psd2.Cryptography</AssemblyTitle>
-    <GenerateDocumentationFile>true</GenerateDocumentationFile>
-    <RootNamespace>Indice.Psd2.Cryptography</RootNamespace> 
-  </PropertyGroup>
   <PropertyGroup Label="Package">
-    <PackageId>Indice.Psd2.Cryptography</PackageId>
+    <TargetFrameworks>netstandard2.1;net6.0;net7.0</TargetFrameworks>
     <PackageTags>Psd2;Cryptography;Utilities</PackageTags>
     <PackageReleaseNotes>Expose header name.</PackageReleaseNotes>
-    <PackageIcon>icon-128.png</PackageIcon>
-    <PackageProjectUrl>https://github.com/indice-co/Indice.Psd2</PackageProjectUrl>
-    <PackageLicenseExpression>MIT</PackageLicenseExpression>
-    <RepositoryType>git</RepositoryType>
-    <RepositoryUrl>https://github.com/indice-co/Indice.Psd2</RepositoryUrl>
-    <Company>Indice</Company>
-    <GeneratePackageOnBuild>true</GeneratePackageOnBuild>
-    <!-- including PDB files in NuGet for source link because symbolsource.org does not support portable PDBs -->
-    <PublishRepositoryUrl>true</PublishRepositoryUrl> 
-    <EmbedUntrackedSources>true</EmbedUntrackedSources>
-    <AllowedOutputExtensionsInPackageBuildOutputFolder>$(AllowedOutputExtensionsInPackageBuildOutputFolder);.pdb</AllowedOutputExtensionsInPackageBuildOutputFolder> 
   </PropertyGroup>
   <ItemGroup>
-    <None Include="..\..\icon\icon-128.png" Pack="true" Visible="false" PackagePath="" />
-  </ItemGroup>
-  <ItemGroup>
     <PackageReference Include="DerConverter" Version="3.0.0.82" />
-    <PackageReference Include="Microsoft.SourceLink.GitHub" Version="1.0.0" PrivateAssets="All" />
     <PackageReference Include="PemUtils" Version="3.0.0.82" />
     <PackageReference Include="System.ComponentModel.Annotations" Version="5.0.0" />
-    <PackageReference Include="System.IdentityModel.Tokens.Jwt" Version="6.9.0" />
+    <PackageReference Include="System.IdentityModel.Tokens.Jwt" Version="6.21.0" />
     <PackageReference Include="System.Security.Cryptography.Algorithms" Version="4.3.1" />
     <PackageReference Include="System.Security.Cryptography.Cng" Version="5.0.0" />
     <PackageReference Include="System.Security.Cryptography.Csp" Version="4.3.0" />
     <PackageReference Include="System.Security.Cryptography.Encoding" Version="4.3.0" />
-    <PackageReference Include="System.Security.Cryptography.Pkcs" Version="5.0.1" />
+    <PackageReference Include="System.Security.Cryptography.Pkcs" Version="7.0.3" />
     <PackageReference Include="System.Security.Cryptography.Primitives" Version="4.3.0" />
     <PackageReference Include="System.Security.Cryptography.X509Certificates" Version="4.3.2" />
   </ItemGroup>

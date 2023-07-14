@@ -1,21 +1,20 @@
-﻿namespace Indice.Psd2.Cryptography.Tokens.HttpMessageSigning
+﻿namespace Indice.Psd2.Cryptography.Tokens.HttpMessageSigning;
+
+/// <summary>
+/// Special header names used to specify the list of HTTP headers included when generating the signature for the message.
+/// </summary>
+public class HeaderFieldNames
 {
     /// <summary>
-    /// Special header names used to specify the list of HTTP headers included when generating the signature for the message.
+    /// Contains the creation time of the HTTP signature, expressed as a Unix timestamp integer value.
     /// </summary>
-    public class HeaderFieldNames
-    {
-        /// <summary>
-        /// Contains the creation time of the HTTP signature, expressed as a Unix timestamp integer value.
-        /// </summary>
-        public const string Created = "(created)";
-        /// <summary>
-        /// include the HTTP request target.
-        /// </summary>
-        public const string RequestTarget = "(request-target)";
-        /// <summary>
-        /// Contains the creation time of the HTTP signature, expressed as a Unix timestamp integer value..
-        /// </summary>
-        public const string Expires = "(expires)";
-    }
+    public const string Created = "(created)";
+    /// <summary>
+    /// include the HTTP request target.
+    /// </summary>
+    public const string RequestTarget = "(request-target)";
+    /// <summary>
+    /// Contains the creation time of the HTTP signature, expressed as a Unix timestamp integer value..
+    /// </summary>
+    public const string Expires = "(expires)";
 }

@@ -1,0 +1,33 @@
+<Project>
+    <PropertyGroup Label="Assembly Common">
+      <Copyright>Copyright (c) 2019 Indice</Copyright>
+      <TargetFrameworks>net6.0;net7.0;</TargetFrameworks>
+      <VersionPrefix>7.0.0</VersionPrefix>
+      <!--<VersionSuffix>beta-01</VersionSuffix>-->
+      <Authors>Constantinos Leftheris, Giannis Tsenes</Authors>
+      <GenerateDocumentationFile>true</GenerateDocumentationFile>
+      <LangVersion>Latest</LangVersion>
+      <ImplicitUsings>disable</ImplicitUsings>
+      <Nullable>disable</Nullable>
+      <CheckEolTargetFramework>false</CheckEolTargetFramework>
+    </PropertyGroup>
+    <PropertyGroup Label="Package Common">
+      <PackageReleaseNotes></PackageReleaseNotes>
+      <PackageTags></PackageTags>
+      <IsPackable>true</IsPackable>
+      <PackageIcon>icon-310.png</PackageIcon>
+      <PackageProjectUrl>https://github.com/indice-co/Indice.Psd2</PackageProjectUrl>
+      <PackageLicenseExpression>MIT</PackageLicenseExpression>
+      <RepositoryType>git</RepositoryType>
+      <RepositoryUrl>https://github.com/indice-co/Indice.Psd2</RepositoryUrl>
+      <Company>Indice</Company>
+      <!--<GeneratePackageOnBuild>true</GeneratePackageOnBuild>-->
+      <!-- Optional: Publish the repository URL in the built .nupkg (in the NuSpec <Repository> element) -->
+      <PublishRepositoryUrl>true</PublishRepositoryUrl>
+      <!-- Optional: Embed source files that are not tracked by the source control manager in the PDB -->
+      <EmbedUntrackedSources>true</EmbedUntrackedSources>
+      <!-- Optional: Build symbol package (.snupkg) to distribute the PDB containing Source Link -->
+      <IncludeSymbols>true</IncludeSymbols>
+      <SymbolPackageFormat>snupkg</SymbolPackageFormat>
+  </PropertyGroup>
+</Project>

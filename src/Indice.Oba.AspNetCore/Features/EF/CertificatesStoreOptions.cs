@@ -1,33 +1,32 @@
 ﻿using System;
 using Microsoft.EntityFrameworkCore;
 
-namespace Indice.Oba.AspNetCore.Features.EF
+namespace Indice.Oba.AspNetCore.Features.EF;
+
+/// <summary>
+/// Options for configuring the CertificatesStore context.
+/// </summary>
+public class CertificatesStoreOptions
 {
     /// <summary>
-    /// Options for configuring the CertificatesStore context.
+    /// Callback to configure the EF DbContext.
     /// </summary>
-    public class CertificatesStoreOptions
-    {
-        /// <summary>
-        /// Callback to configure the EF DbContext.
-        /// </summary>
-        /// <value>
-        /// The configure database context.
-        /// </value>
-        public Action<DbContextOptionsBuilder> ConfigureDbContext { get; set; }
-        /// <summary>
-        /// Callback in DI to resolve the EF DbContextOptions. If set, ConfigureDbContext will not be used.
-        /// </summary>
-        /// <value>
-        /// The configure database context.
-        /// </value>
-        public Action<IServiceProvider, DbContextOptionsBuilder> ResolveDbContextOptions { get; set; }
-        /// <summary>
-        /// Gets or sets the default schema.
-        /// </summary>
-        /// <value>
-        /// The default schema.
-        /// </value>
-        public string DefaultSchema { get; set; } = null;
-    }
+    /// <value>
+    /// The configure database context.
+    /// </value>
+    public Action<DbContextOptionsBuilder> ConfigureDbContext { get; set; }
+    /// <summary>
+    /// Callback in DI to resolve the EF DbContextOptions. If set, ConfigureDbContext will not be used.
+    /// </summary>
+    /// <value>
+    /// The configure database context.
+    /// </value>
+    public Action<IServiceProvider, DbContextOptionsBuilder> ResolveDbContextOptions { get; set; }
+    /// <summary>
+    /// Gets or sets the default schema.
+    /// </summary>
+    /// <value>
+    /// The default schema.
+    /// </value>
+    public string DefaultSchema { get; set; } = null;
 }
