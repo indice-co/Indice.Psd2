@@ -4,7 +4,7 @@ using System.Reflection;
 using Microsoft.AspNetCore.Mvc.ApplicationParts;
 using Microsoft.AspNetCore.Mvc.Controllers;
 
-namespace Indice.Oba.AspNetCore.Features;
+namespace Indice.Oba.AspNetCore.Features.Mvc;
 
 /// <summary>
 /// Certificates feature implementation for <see cref="IApplicationFeatureProvider{ControllerFeature}"/>

@@ -11,7 +11,7 @@ using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.Extensions.DependencyInjection;
 
-namespace Indice.Oba.AspNetCore.Features;
+namespace Indice.Oba.AspNetCore.Features.Mvc;
 
 /// <summary>
 /// Controller that contains methods to manage PSD2 certificates.
@@ -48,7 +48,7 @@ internal class CertificatesController : ControllerBase
     [Produces("application/json")]
     [ProducesResponseType(statusCode: 200, type: typeof(CertificateDetails))]
     [HttpPost]
-    public async Task<IActionResult> CreateCertificate([FromBody]Psd2CertificateRequest request) {
+    public async Task<IActionResult> CreateCertificate([FromBody] Psd2CertificateRequest request) {
         var issuer = new X509Certificate2(Path.Combine(Options.Path, "ca.pfx"), Options.PfxPassphrase, X509KeyStorageFlags.MachineKeySet);
         var manager = new CertificateManager();
         var cert = manager.CreateQWACs(request, Options.IssuerDomain, issuer, out _);
@@ -67,7 +67,7 @@ internal class CertificatesController : ControllerBase
     [Produces("application/json", "application/x-x509-user-cert", "application/pkix-cert", "application/pkcs8", "application/x-pkcs12")]
     [ProducesResponseType(statusCode: 200, type: typeof(CertificateDetails))]
     [HttpGet("{keyId}.{format?}")]
-    public async Task<IActionResult> Export([FromRoute]string keyId, [FromRoute]string format, [FromQuery]string password) {
+    public async Task<IActionResult> Export([FromRoute] string keyId, [FromRoute] string format, [FromQuery] string password) {
         var response = await Store.GetById(keyId);
         if (response == null) {
             return NotFound();
@@ -87,7 +87,7 @@ internal class CertificatesController : ControllerBase
     [Produces("application/json")]
     [ProducesResponseType(statusCode: 204, type: typeof(void))]
     [HttpPut("{keyId}/revoke")]
-    public async Task<IActionResult> Revoke([FromRoute]string keyId) {
+    public async Task<IActionResult> Revoke([FromRoute] string keyId) {
         await Store.Revoke(keyId);
         return NoContent();
     }
@@ -101,7 +101,7 @@ internal class CertificatesController : ControllerBase
     [Produces("application/json")]
     [ProducesResponseType(statusCode: 200, type: typeof(List<CertificateDetails>))]
     [HttpGet]
-    public async Task<IActionResult> GetList([FromQuery]DateTime? notBefore = null, [FromQuery]bool? revoked = null, [FromQuery]string authorityKeyId = null) {
+    public async Task<IActionResult> GetList([FromQuery] DateTime? notBefore = null, [FromQuery] bool? revoked = null, [FromQuery] string authorityKeyId = null) {
         var results = await Store.GetList(notBefore, revoked, authorityKeyId);
         return Ok(results);
     }
@@ -131,7 +131,7 @@ internal class CertificatesController : ControllerBase
             .ToList()
         };
         var crlSeq = new CertificateRevocationListSequence(crl);
-        var data = crlSeq.SignAndSerialize(issuer.PrivateKey as RSA);
+        var data = crlSeq.SignAndSerialize(issuer.GetRSAPrivateKey());
         return File(data, "application/x-pkcs7-crl", "revoked.crl");
     }
 }

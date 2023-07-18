@@ -6,7 +6,7 @@ using System.Threading.Tasks;
 using Microsoft.AspNetCore.Mvc.Formatters;
 using Microsoft.Extensions.Logging;
 
-namespace Indice.Oba.AspNetCore.Features;
+namespace Indice.Oba.AspNetCore.Features.Mvc;
 
 /// <summary>
 /// <see cref="OutputFormatter"/> for converting <seealso cref="CertificateDetails"/> to PEM format.
