@@ -21,6 +21,7 @@ public static class CertificateConfigurationExtensions
     /// <returns></returns>
     public static IServiceCollection AddCertificateServer(this IServiceCollection services, IWebHostEnvironment hostEnvironment, Action<CertificateEndpointsOptions> configureAction = null) {
         AddCertificateServerInternal(services, hostEnvironment, configureAction);
+        services.AddEndpointsApiExplorer();
 #if !NET7_0_OR_GREATER
         services.AddMvc().AddCertificateEndpoints();
 #endif

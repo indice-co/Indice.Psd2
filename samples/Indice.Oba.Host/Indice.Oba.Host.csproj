@@ -25,5 +25,8 @@
   <ItemGroup>
     <ProjectReference Include="..\..\src\Indice.Oba.AspNetCore\Indice.Oba.AspNetCore.csproj" />
   </ItemGroup>
+  <ItemGroup>
+    <Folder Include="App_Data\certs\" />
+  </ItemGroup>
 
 </Project>

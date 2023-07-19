@@ -15,6 +15,8 @@
   </ItemGroup>
   <ItemGroup Condition=" '$(TargetFramework)' == 'net7.0' ">
     <PackageReference Include="Microsoft.EntityFrameworkCore.SqlServer" Version="7.0.0" />
+    <PackageReference Include="Microsoft.AspNetCore.OpenApi" Version="7.0.9" />
+    <PackageReference Include="Microsoft.OpenApi" Version="1.6.4-preview2" />
   </ItemGroup>
   <ItemGroup>
     <ProjectReference Include="..\Indice.Psd2.Cryptography\Indice.Psd2.Cryptography.csproj" />

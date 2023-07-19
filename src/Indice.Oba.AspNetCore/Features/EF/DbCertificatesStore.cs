@@ -43,7 +43,7 @@ public class DbCertificatesStore : ICertificatesStore
     /// <param name="notBefore"></param>
     /// <param name="revoked"></param>
     /// <param name="authorityKeyId"></param>
-    public async Task<List<CertificateDetails>> GetList(DateTime? notBefore = null, bool? revoked = null, string authorityKeyId = null) {
+    public async Task<List<CertificateDetails>> GetList(DateTimeOffset? notBefore = null, bool? revoked = null, string authorityKeyId = null) {
         var results = await DbContext.Certificates
                                      .Where(x => (notBefore == null || x.CreatedDate >= notBefore)
                                               && (revoked == null || x.Revoked == revoked)
@@ -55,7 +55,7 @@ public class DbCertificatesStore : ICertificatesStore
     /// Gets list of certificates by parameters.
     /// </summary>
     /// <param name="notBefore"></param>
-    public async Task<List<RevokedCertificateDetails>> GetRevocationList(DateTime? notBefore = null) {
+    public async Task<List<RevokedCertificateDetails>> GetRevocationList(DateTimeOffset? notBefore = null) {
         var results = await DbContext.Certificates
                                      .Where(x => (notBefore == null || x.CreatedDate >= notBefore)
                                                && x.Revoked == true)

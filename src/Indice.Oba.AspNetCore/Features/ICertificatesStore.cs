@@ -39,13 +39,13 @@ public interface ICertificatesStore {
     /// <param name="revoked"></param>
     /// <param name="authorityKeyId"></param>
     /// <returns></returns>
-    Task<List<CertificateDetails>> GetList(DateTime? notBefore = null, bool? revoked = null, string authorityKeyId = null);
+    Task<List<CertificateDetails>> GetList(DateTimeOffset? notBefore = null, bool? revoked = null, string authorityKeyId = null);
     /// <summary>
     /// Gets list of certificates by parameters
     /// </summary>
     /// <param name="notBefore"></param>
     /// <returns></returns>
-    Task<List<RevokedCertificateDetails>> GetRevocationList(DateTime? notBefore = null);
+    Task<List<RevokedCertificateDetails>> GetRevocationList(DateTimeOffset? notBefore = null);
 }
 
 /// <summary>
