@@ -2,15 +2,14 @@
 #nullable enable 
 
 using Indice.Psd2.Cryptography;
+using Indice.Psd2.Cryptography.X509Certificates;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Http.HttpResults;
-using Microsoft.AspNetCore.Mvc;
 using Microsoft.Extensions.DependencyInjection;
-using Microsoft.Extensions.Options;
 using System;
 using System.Collections.Generic;
 using System.IO;
-using System.IO.Pipes;
+using System.Linq;
 using System.Security.Cryptography.X509Certificates;
 using System.Threading.Tasks;
 
@@ -51,11 +50,43 @@ internal static class CertificateHandlers
         return Results.Extensions.Certificate(response, format, password);
     }
 
+    public static async Task<NoContent> Revoke(
+            ICertificatesStore store,
+            string keyId) {
+        await store.Revoke(keyId);
+        return TypedResults.NoContent();
+    }
+
     public static async Task<Ok<List<CertificateDetails>>> GetList(
             ICertificatesStore store,
             DateTimeOffset? notBefore, bool? revoked, string? authorityKeyId) {
         var results = await store.GetList(notBefore, revoked, authorityKeyId);
         return TypedResults.Ok(results);
+    }
+
+    public static async Task<FileContentHttpResult> RevocationList(
+            ICertificatesStore store,
+            CertificateEndpointsOptions options) {
+        var issuer = new X509Certificate2(Path.Combine(options.Path, "ca.pfx"), options.PfxPassphrase);
+        var results = await store.GetRevocationList();
+        var crl = new CertificateRevocationList {
+            AuthorizationKeyId = issuer.GetSubjectKeyIdentifier().ToLower(),
+            Country = "GR",
+            Organization = "Sample Authority",
+            IssuerCommonName = "Some Cerification Authority CA",
+            CrlNumber = 234,
+            EffectiveDate = results.OrderByDescending(x => x.RevocationDate).Select(x => (DateTime?)x.RevocationDate).FirstOrDefault() ?? DateTime.UtcNow,
+            NextUpdate = DateTime.UtcNow.AddDays(1),
+            Items = results.Select(x => new RevokedCertificate {
+                ReasonCode = RevokedCertificate.CRLReasonCode.Superseded,
+                RevocationDate = x.RevocationDate,
+                SerialNumber = x.SerialNumber
+            })
+            .ToList()
+        };
+        var crlSeq = new CertificateRevocationListSequence(crl);
+        var data = crlSeq.SignAndSerialize(issuer.GetRSAPrivateKey());
+        return TypedResults.File(data, contentType:"application/x-pkcs7-crl", fileDownloadName: "revoked.crl", lastModified: (DateTimeOffset)crl.EffectiveDate);
     }
 }
 #nullable disable
