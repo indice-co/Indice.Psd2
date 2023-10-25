@@ -220,14 +220,14 @@ public class CertificateManager
 
 
     /// <summary>
-    /// Creates a QWAC certificate on the fly
+    /// Creates a QWAC/QSEAL certificate on the fly
     /// </summary>
     /// <param name="request"></param>
     /// <param name="issuerDomain"></param>
     /// <param name="issuer">The issuer certificate if none one will be created on the fly. Used in case that there is a fix issuing CA cert used for all generated</param>
     /// <param name="privateKey"></param>
     /// <returns></returns>
-    public X509Certificate2 CreateQWACs(Psd2CertificateRequest request, string issuerDomain, X509Certificate2 issuer, out RSA privateKey) {
+    public X509Certificate2 CreateQualifiedCertificate(Psd2CertificateRequest request, string issuerDomain, X509Certificate2 issuer, out RSA privateKey) {
         var notBefore = DateTimeOffset.UtcNow.AddDays(-1);
         var notAfter = DateTimeOffset.UtcNow.AddDays(request.ValidityInDays);
         var authorizationNumber = new NCAId("PSD", request.CountryCode, request.AuthorityId, request.AuthorizationNumber);
@@ -265,7 +265,7 @@ public class CertificateManager
             isQSCD: true,                                                           // optional
             limit: new QcMonetaryValue { CurrencyCode = "EUR", Value = 456000 },   // optional
             pdsLocations: new List<PdsLocation> { new PdsLocation { Language = "EN", Url = "https://www.etsi.org/deliver/etsi_en/319400_319499/31941205/02.02.03_20/en_31941205v020203a.pdf" } },
-            type: QcTypeIdentifiers.Web,
+            type: request.QcType,
             critical: false);
         var authorityInformation = new AuthorityInformationAccessExtension(new[] {
             new AccessDescription {
@@ -291,7 +291,15 @@ public class CertificateManager
         extensions.Add(organizationIdentifier);
         var certificate = CreateCertificate(issuer ?? CreateRootCACertificate(issuerDomain), subject, extensions, notBefore, notAfter, out privateKey);
         if (RuntimeInformation.IsOSPlatform(OSPlatform.Windows)) {
-            certificate.FriendlyName = "Qualified website authentication certificate QWAC";
+            switch (request.QcType) {
+                case QcTypeIdentifiers.Web:
+                    certificate.FriendlyName = "Qualified website authentication certificate QWAC";
+                    break;
+                case QcTypeIdentifiers.eSeal:
+                    certificate.FriendlyName = "Qualified certificate for electronic seals QSEAL";
+                    break;
+            }
+            
         }
         return certificate.CopyWithPrivateKey(privateKey);
     }

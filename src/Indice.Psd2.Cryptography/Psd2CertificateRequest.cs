@@ -2,6 +2,7 @@
 using System.Collections.Generic;
 using System.ComponentModel.DataAnnotations;
 using System.Text;
+using Indice.Psd2.Cryptography.X509Certificates;
 
 namespace Indice.Psd2.Cryptography;
 
@@ -74,6 +75,11 @@ public class Psd2CertificateRequest
     /// </summary>
     [Required]
     public Psd2RoleFlags Roles { get; set; } = new Psd2RoleFlags();
+
+    /// <summary>
+    /// QC type identifiers QWAC QSEAL etc.
+    /// </summary>
+    public QcTypeIdentifiers QcType { get; set; } = QcTypeIdentifiers.Web;
 
     /// <summary>
     /// Wrapper class that holds requested Role flags to be included in the certificate.

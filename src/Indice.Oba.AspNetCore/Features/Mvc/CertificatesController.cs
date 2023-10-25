@@ -51,7 +51,7 @@ internal class CertificatesController : ControllerBase
     public async Task<IActionResult> CreateCertificate([FromBody] Psd2CertificateRequest request) {
         var issuer = new X509Certificate2(Path.Combine(Options.Path, "ca.pfx"), Options.PfxPassphrase, X509KeyStorageFlags.MachineKeySet);
         var manager = new CertificateManager();
-        var cert = manager.CreateQWACs(request, Options.IssuerDomain, issuer, out _);
+        var cert = manager.CreateQualifiedCertificate(request, Options.IssuerDomain, issuer, out _);
         var response = await Store.Add(cert, request);
         cert.Dispose();
         return Ok(response);

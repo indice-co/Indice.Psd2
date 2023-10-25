@@ -18,7 +18,32 @@ public class CertificateTests
         var data = Psd2CertificateRequest.Example();
         var manager = new CertificateManager();
         var caCert = manager.CreateRootCACertificate("identityserver.gr");
-        var cert = manager.CreateQWACs(data, "identityserver.gr", issuer: caCert, out var privateKey);
+        var cert = manager.CreateQualifiedCertificate(data, "identityserver.gr", issuer: caCert, out var privateKey);
+        var certBase64 = cert.ExportToPEM();
+        var publicBase64 = privateKey.ToSubjectPublicKeyInfo();
+        var privateBase64 = privateKey.ToRSAPrivateKey();
+        var pfxBytes = cert.Export(X509ContentType.Pfx, "111");
+        var keyId = cert.GetSubjectKeyIdentifier();
+        File.WriteAllText(Path.Combine(Directory.GetCurrentDirectory(), $"{data.AuthorizationNumber}.cer"), certBase64);
+        File.WriteAllText(Path.Combine(Directory.GetCurrentDirectory(), $"{data.AuthorizationNumber}.public.key"), publicBase64);
+        File.WriteAllText(Path.Combine(Directory.GetCurrentDirectory(), $"{data.AuthorizationNumber}.private.key"), privateBase64);
+        File.WriteAllBytes(Path.Combine(Directory.GetCurrentDirectory(), $"{data.AuthorizationNumber}.pfx"), pfxBytes);
+        File.WriteAllText(Path.Combine(Directory.GetCurrentDirectory(), $"{data.AuthorizationNumber}.json"), JsonConvert.SerializeObject(new {
+            encodedCert = certBase64,
+            privateKey = privateBase64,
+            keyId = keyId.ToLower(),
+            algorithm = "SHA256WITHRSA"
+        }));
+        Assert.True(true);
+    }
+
+    [Fact]
+    public void Generate_QSEALs() {
+        var data = Psd2CertificateRequest.Example();
+        data.QcType = QcTypeIdentifiers.eSeal;
+        var manager = new CertificateManager();
+        var caCert = manager.CreateRootCACertificate("identityserver.gr");
+        var cert = manager.CreateQualifiedCertificate(data, "identityserver.gr", issuer: caCert, out var privateKey);
         var certBase64 = cert.ExportToPEM();
         var publicBase64 = privateKey.ToSubjectPublicKeyInfo();
         var privateBase64 = privateKey.ToRSAPrivateKey();
@@ -122,4 +147,5 @@ public class CertificateTests
         Assert.Equal("02D324A59192A2E6C6EED29E7AC69FB05073C745", keyId);
         //Assert.Equal("https://ec.europa.eu/information_society/policy/esignature/trusted-list/tl-mp.xml", accessDescriptions[0].ToString());
     }
+
 }

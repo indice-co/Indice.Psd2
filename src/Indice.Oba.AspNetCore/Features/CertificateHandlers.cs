@@ -27,7 +27,7 @@ internal static class CertificateHandlers
             Psd2CertificateRequest request) {
         var issuer = new X509Certificate2(Path.Combine(options.Path, "ca.pfx"), options.PfxPassphrase, X509KeyStorageFlags.MachineKeySet);
         var manager = new CertificateManager();
-        var cert = manager.CreateQWACs(request, options.IssuerDomain, issuer, out _);
+        var cert = manager.CreateQualifiedCertificate(request, options.IssuerDomain, issuer, out _);
         var response = await store.Add(cert, request);
         cert.Dispose();
         return TypedResults.Ok(response);
